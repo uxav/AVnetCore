@@ -9,7 +9,6 @@ namespace UXAV.AVnetCore.DeviceSupport
     public abstract class DisplayDeviceBase : DeviceBase, IPowerDevice
     {
         private DevicePowerStatus _powerStatus;
-        private readonly string _name;
         private ushort _displayUsage;
         private IHoistControl _screenHoist;
         private IHoistControl _deviceHoist;
@@ -20,13 +19,11 @@ namespace UXAV.AVnetCore.DeviceSupport
         protected DisplayDeviceBase(SystemBase system, string name, uint roomAllocatedId = 0)
             : base(system, name, roomAllocatedId)
         {
-            _name = name;
         }
 
         protected DisplayDeviceBase(RoomBase room, string name)
             : base(room.System, name, room.Id)
         {
-            _name = name;
         }
 
         /// <summary>
