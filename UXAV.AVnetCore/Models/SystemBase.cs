@@ -300,7 +300,7 @@ namespace UXAV.AVnetCore.Models
             try
             {
                 Logger.Log("Looking for webapp resource file to unzip");
-                var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("UXAV.AVnet.webapp.zip");
+                var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("UXAV.AVnetCore.webapp.zip");
                 if (resource != null)
                 {
                     var newFileNames = new List<string>();
