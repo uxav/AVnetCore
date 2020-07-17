@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UXAV.AVnetCore.Logging;
 using UXAV.AVnetCore.Models;
 using UXAV.AVnetCore.Models.Rooms;
-using UXAV.PaymentSense.Devices;
 
 namespace UXAV.AVnetCore.DeviceSupport
 {

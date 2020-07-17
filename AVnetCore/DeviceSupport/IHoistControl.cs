@@ -1,4 +1,4 @@
-namespace UXAV.PaymentSense.Devices
+namespace UXAV.AVnetCore.DeviceSupport
 {
     public interface IHoistControl
     {
