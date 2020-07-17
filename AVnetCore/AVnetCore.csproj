@@ -8,7 +8,7 @@
         <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
         <RootNamespace>UXAV.AVnetCore</RootNamespace>
-        <AssemblyName>AVnetCore</AssemblyName>
+        <AssemblyName>UXAV.AVnetCore</AssemblyName>
         <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
         <LangVersion>7.3</LangVersion>
@@ -32,6 +32,7 @@
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
         <DocumentationFile>bin\Release\UXAV.AVnetCore.xml</DocumentationFile>
+        <NoWarn>1591</NoWarn>
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="Crestron.SimplSharpPro.DeviceSupport, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">

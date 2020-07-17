@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("AVnetCore Library")]
 [assembly: AssemblyDescription("A Crestron Simpl# Pro Library")]
 [assembly: AssemblyCompany("UXAV")]
-[assembly: AssemblyProduct("AVnetCore")]
+[assembly: AssemblyProduct("AVnetCore Library")]
 [assembly: AssemblyCopyright("Copyright © UXAV Solutions Limited 2020")]
 [assembly: AssemblyCulture("")]
 
