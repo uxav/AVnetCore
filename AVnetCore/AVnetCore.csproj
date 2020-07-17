@@ -1,0 +1,266 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{9B3BAD80-9F92-4687-915E-C02F3910DCEF}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>UXAV.AVnetCore</RootNamespace>
+        <AssemblyName>AVnetCore</AssemblyName>
+        <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+        <FileAlignment>512</FileAlignment>
+        <LangVersion>7.3</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>portable</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <DocumentationFile>bin\Release\UXAV.AVnetCore.xml</DocumentationFile>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="Crestron.SimplSharpPro.DeviceSupport, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\Crestron.SimplSharpPro.DeviceSupport.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="Crestron.SimplSharpPro.Fusion, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\Crestron.SimplSharpPro.Fusion.dll</HintPath>
+        </Reference>
+        <Reference Include="Crestron.SimplSharpPro.Gateways, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\Crestron.SimplSharpPro.Gateways.dll</HintPath>
+        </Reference>
+        <Reference Include="Crestron.SimplSharpPro.UC, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\Crestron.SimplSharpPro.UC.dll</HintPath>
+        </Reference>
+        <Reference Include="Crestron.SimplSharpPro.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\Crestron.SimplSharpPro.UI.dll</HintPath>
+        </Reference>
+        <Reference Include="Figgle, Version=0.3.0.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\packages\Figgle.0.3.0\lib\net45\Figgle.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="Microsoft.CSharp" />
+        <Reference Include="mscorlib" />
+        <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
+          <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="Newtonsoft.Json.Schema, Version=3.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
+          <HintPath>..\packages\Newtonsoft.Json.Schema.3.0.13\lib\net45\Newtonsoft.Json.Schema.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="Scriban, Version=2.1.3.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\packages\Scriban.2.1.3\lib\net45\Scriban.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="SimplSharpAutoUpdateInterface, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\SimplSharpAutoUpdateInterface.dll</HintPath>
+        </Reference>
+        <Reference Include="SimplSharpCustomAttributesInterface, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\SimplSharpCustomAttributesInterface.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="SimplSharpCWSHelperInterface, Version=2.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\SimplSharpCWSHelperInterface.dll</HintPath>
+        </Reference>
+        <Reference Include="SimplSharpHelperInterface, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\SimplSharpHelperInterface.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="SimplSharpPro, Version=1.5.3.17, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\SimplSharpPro.exe</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="SimplSharpReflectionInterface, Version=1.0.5583.25238, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.12.41\lib\net47\SimplSharpReflectionInterface.dll</HintPath>
+        </Reference>
+        <Reference Include="System" />
+        <Reference Include="System.ComponentModel.Composition" />
+        <Reference Include="System.Core" />
+        <Reference Include="System.Data" />
+        <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+          <HintPath>..\packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.IO.Compression" />
+        <Reference Include="System.Net" />
+        <Reference Include="System.Net.Http, Version=4.1.1.3, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+          <HintPath>..\packages\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Net.Http.Extensions, Version=2.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+          <HintPath>..\packages\System.Net.Http.Formatting.Extension.5.2.3.0\lib\System.Net.Http.Extensions.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+          <HintPath>..\packages\System.Net.Http.Formatting.Extension.5.2.3.0\lib\System.Net.Http.Formatting.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+          <HintPath>..\packages\System.Net.Http.Formatting.Extension.5.2.3.0\lib\System.Net.Http.Primitives.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Runtime, Version=4.1.1.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+          <HintPath>..\packages\System.Runtime.4.3.1\lib\net462\System.Runtime.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+          <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.7.1\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Security.Cryptography.Algorithms, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+          <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.1\lib\net463\System.Security.Cryptography.Algorithms.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+          <HintPath>..\packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+          <HintPath>..\packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+          <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.2\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
+          <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="System.Web" />
+        <Reference Include="System.Xml" />
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="Ansi.cs" />
+        <Compile Include="AutoDiscovery.cs" />
+        <Compile Include="AutoDiscoveryResult.cs" />
+        <Compile Include="Config\ConfigBase.cs" />
+        <Compile Include="Config\ConfigManager.cs" />
+        <Compile Include="Config\IConfigItem.cs" />
+        <Compile Include="ConsoleTable.cs" />
+        <Compile Include="DeviceSupport\ComPortHandler.cs" />
+        <Compile Include="DeviceSupport\DisplayDeviceBase.cs" />
+        <Compile Include="DeviceSupport\IDevice.cs" />
+        <Compile Include="DeviceSupport\IDeviceConnection.cs" />
+        <Compile Include="DeviceSupport\IHoistControl.cs" />
+        <Compile Include="DeviceSupport\IPowerDevice.cs" />
+        <Compile Include="DeviceSupport\ISigProvider.cs" />
+        <Compile Include="DeviceSupport\SigProviderDevice.cs" />
+        <Compile Include="Logging\Console\ConsoleCommand.cs" />
+        <Compile Include="Logging\Console\ConsoleConnection.cs" />
+        <Compile Include="Logging\Console\ConsoleServer.cs" />
+        <Compile Include="Logging\Logger.cs" />
+        <Compile Include="Logging\LoggerMessage.cs" />
+        <Compile Include="Logging\MessageStack.cs" />
+        <Compile Include="Models\CipDevices.cs" />
+        <Compile Include="Models\Collections\UXCollection.cs" />
+        <Compile Include="Models\DeviceBase.cs" />
+        <Compile Include="Models\Diagnostics\DeviceMessageExtenders.cs" />
+        <Compile Include="Models\Diagnostics\DiagnosticMessage.cs" />
+        <Compile Include="Models\Diagnostics\DiagnosticService.cs" />
+        <Compile Include="Models\Diagnostics\IDiagnosticItem.cs" />
+        <Compile Include="Models\DisplayControllerBase.cs" />
+        <Compile Include="Models\EventMessage.cs" />
+        <Compile Include="Models\EventService.cs" />
+        <Compile Include="Models\IGenericItem.cs" />
+        <Compile Include="Models\IInitializable.cs" />
+        <Compile Include="Models\RoomClock.cs" />
+        <Compile Include="Models\Rooms\RoomBase.cs" />
+        <Compile Include="Models\Rooms\RoomCollection.cs" />
+        <Compile Include="Models\Sources\SourceBase.cs" />
+        <Compile Include="Models\Sources\SourceCollection.cs" />
+        <Compile Include="Models\SystemBase.cs" />
+        <Compile Include="Models\UxEnvironment.cs" />
+        <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="ShellHelper.cs" />
+        <Compile Include="Tools.cs" />
+        <Compile Include="UI\Components\IButtonCollection.cs" />
+        <Compile Include="UI\Components\IButtons.cs" />
+        <Compile Include="UI\Components\UIButton.cs" />
+        <Compile Include="UI\Components\UIButtonCollection.cs" />
+        <Compile Include="UI\Components\UIDynamicButtonList.cs" />
+        <Compile Include="UI\Components\UIDynamicButtonListItem.cs" />
+        <Compile Include="UI\Components\UIGenericSubPageReferenceList.cs" />
+        <Compile Include="UI\Components\UIGenericSubPageReferenceListItem.cs" />
+        <Compile Include="UI\Components\UIHardButton.cs" />
+        <Compile Include="UI\Components\UILabel.cs" />
+        <Compile Include="UI\Components\UIObject.cs" />
+        <Compile Include="UI\Components\UISubPageReferenceList.cs" />
+        <Compile Include="UI\Components\UISubPageReferenceListItem.cs" />
+        <Compile Include="UI\Components\UITabBar.cs" />
+        <Compile Include="UI\Components\UITextButton.cs" />
+        <Compile Include="UI\Components\Views\UIPageCollection.cs" />
+        <Compile Include="UI\Components\Views\UIPageViewController.cs" />
+        <Compile Include="UI\Components\Views\UISubPageViewController.cs" />
+        <Compile Include="UI\Components\Views\UITabViewBase.cs" />
+        <Compile Include="UI\Components\Views\UIViewCollection.cs" />
+        <Compile Include="UI\Components\Views\UIViewControllerBase.cs" />
+        <Compile Include="UI\Core3ControllerBase.cs" />
+        <Compile Include="UI\Core3Controllers.cs" />
+        <Compile Include="UI\IButton.cs" />
+        <Compile Include="UI\IEnableItem.cs" />
+        <Compile Include="UI\ITextItem.cs" />
+        <Compile Include="UI\IVisibleItem.cs" />
+        <Compile Include="UI\ReservedJoins\Serial.cs" />
+        <Compile Include="WebScripting\ApiRequestHandler.cs" />
+        <Compile Include="WebScripting\ApiWebScriptingServer.cs" />
+        <Compile Include="WebScripting\AppAuthentication.cs" />
+        <Compile Include="WebScripting\Dashboard\DashboardHandler.cs" />
+        <Compile Include="WebScripting\Dashboard\LoginHander.cs" />
+        <Compile Include="WebScripting\Dashboard\LogoutHandler.cs" />
+        <Compile Include="WebScripting\Download\ServicePackageFileHandler.cs" />
+        <Compile Include="WebScripting\FileHandlerBase.cs" />
+        <Compile Include="WebScripting\InternalApi\AppControlApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\AuthenticationApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\AutoDiscoveryApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\ConfigApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\ConsoleApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\DiagnosticsApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\EventsApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\EventsSession.cs" />
+        <Compile Include="WebScripting\InternalApi\LogsApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\RoomsApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\SourcesApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\StatusApiHandler.cs" />
+        <Compile Include="WebScripting\NvramFileRequestHandler.cs" />
+        <Compile Include="WebScripting\RequestHandler.cs" />
+        <Compile Include="WebScripting\SecureRequestAttribute.cs" />
+        <Compile Include="WebScripting\StaticFiles\InternalFileHandler.cs" />
+        <Compile Include="WebScripting\StaticFiles\WebAppFileHandler.cs" />
+        <Compile Include="WebScripting\UserFileRequestHandler.cs" />
+        <Compile Include="WebScripting\WebScriptingRequest.cs" />
+        <Compile Include="WebScripting\WebScriptingServer.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="packages.config" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="webapp.zip" />
+      <Content Include="WebScripting\StaticFiles\img\ux_logo.svg" />
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+
+</Project>
