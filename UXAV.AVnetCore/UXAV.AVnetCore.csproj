@@ -127,8 +127,8 @@
         </Reference>
         <Reference Include="System.Web" />
         <Reference Include="System.Xml" />
-        <Reference Include="UXAV.Logging, Version=1.0.1.2, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\packages\UXAV.Logging.1.0.1.2\lib\net47\UXAV.Logging.dll</HintPath>
+        <Reference Include="UXAV.Logging, Version=1.0.1.3, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\packages\UXAV.Logging.1.0.1.3\lib\net47\UXAV.Logging.dll</HintPath>
           <Private>True</Private>
         </Reference>
     </ItemGroup>
