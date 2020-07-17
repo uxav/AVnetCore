@@ -44,7 +44,7 @@ jobs:
 
       # Pack Nuget
       - name: Pack Nuget
-        run: nuget pack AVnetCore/AVnetCore.csproj
+        run: nuget pack UXAV.AVnetCore/UXAV.AVnetCore.csproj
 
       # Publish Nuget
       - name: Push generated package to GitHub registry

@@ -9,7 +9,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/uxav/AVnetCore/</projectUrl>
-    <repository type="git" url="https://github.com/uxav/AVnetCore.git" branch="master" />
+    <repository type="git" url="https://github.com/uxav/AVnetCore.git"/>
     <description>$description$</description>
     <copyright>Copyright 2020 UXAV Solutions Limited</copyright>
     <tags>uxav avnet crestron simplsharp simplsharppro</tags>
