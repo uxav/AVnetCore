@@ -152,6 +152,7 @@ namespace UXAV.AVnetCore.Models
                 ApiServer.AddRoute(@"/api/autodiscovery", typeof(AutoDiscoveryApiHandler));
                 ApiServer.AddRoute(@"/api/console", typeof(ConsoleApiHandler));
                 ApiServer.AddRoute(@"/api/diagnostics", typeof(DiagnosticsApiHandler));
+                ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
             }
             catch (Exception e)
             {
@@ -226,6 +227,8 @@ namespace UXAV.AVnetCore.Models
                 return _programRootDirectory;
             }
         }
+
+        public static string ProgramApplicationDirectory => InitialParametersClass.ProgramDirectory.ToString();
 
         public static string ProgramUserDirectory => ProgramRootDirectory + "/user";
 
