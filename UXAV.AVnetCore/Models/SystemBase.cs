@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -174,6 +173,37 @@ namespace UXAV.AVnetCore.Models
                 return;
             }
 
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            {
+                Logger.Log("Device is appliance, Creating default index redirect to cws app");
+                try
+                {
+                    var path = ProgramHtmlDirectory + "/index.html";
+                    using (var file = File.CreateText(path))
+                    {
+                        file.Write(@"<meta http-equiv=""refresh"" content=""0; URL=/cws/app"" />");
+                    }
+
+                    Logger.Log($"Created file: \"{path}\"");
+
+                    path = ProgramHtmlDirectory + "/_config_ini_";
+                    using (var file = File.CreateText(path))
+                    {
+                        file.Write(@"webdefault=index.html");
+                    }
+
+                    Logger.Log($"Created file: \"{path}\"");
+
+                    var response = string.Empty;
+                    CrestronConsole.SendControlSystemCommand("webinit", ref response);
+                    Logger.Highlight($"webinit response: {response}");
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Error trying to init web server index, {e.Message}");
+                }
+            }
+
             // Wait for above handlers to start accepting requests and update.
             Thread.Sleep(1000);
             Logger.Success(".ctor() Complete", true);
@@ -300,54 +330,6 @@ namespace UXAV.AVnetCore.Models
 
         private void AppShouldRunUpgradeScriptsInternal()
         {
-            try
-            {
-                Logger.Log("Looking for webapp resource file to unzip");
-                var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("UXAV.AVnetCore.webapp.zip");
-                if (resource != null)
-                {
-                    var newFileNames = new List<string>();
-                    Logger.Log("Found resource for webapp");
-                    using (var zip = new ZipArchive(resource, ZipArchiveMode.Read))
-                    {
-                        foreach (var zipEntry in zip.Entries)
-                        {
-                            var name = zipEntry.FullName;
-                            var path = SystemBase.ProgramHtmlDirectory + $"/{name}";
-                            newFileNames.Add(path);
-                            if (path.EndsWith("/"))
-                            {
-                                if (!Directory.Exists(path))
-                                {
-                                    Logger.Log("Creating directory: " + path);
-                                    Directory.CreateDirectory(path);
-                                }
-
-                                continue;
-                            }
-
-                            Logger.Log($"Unzipping file: {name}");
-                            var stream = zipEntry.Open();
-                            var fileStream = File.Create(path);
-                            stream.CopyTo(fileStream);
-                            fileStream.Close();
-                        }
-
-                        var projectDir = new DirectoryInfo(SystemBase.ProgramHtmlDirectory + "/dist/app");
-                        foreach (var file in projectDir.GetFiles("*", SearchOption.AllDirectories))
-                        {
-                            if (newFileNames.Contains(file.FullName)) continue;
-                            Logger.Log("Removing old file: {0}", file.FullName);
-                            file.Delete();
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
-            }
-
             AppShouldRunUpgradeScripts();
         }
 
