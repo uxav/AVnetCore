@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
+using UXAV.AVnetCore.Cloud;
 using UXAV.AVnetCore.Config;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models.Diagnostics;
@@ -234,9 +235,27 @@ namespace UXAV.AVnetCore.Models
                 CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
                     .EthernetLANAdapter));
 
+        public static string DomainName =>
+            CrestronEthernetHelper.GetEthernetParameter(
+                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_DOMAIN_NAME,
+                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
+                    .EthernetLANAdapter));
+
+        public static string DhcpStatus =>
+            CrestronEthernetHelper.GetEthernetParameter(
+                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_STARTUP_DHCP_STATUS,
+                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
+                    .EthernetLANAdapter));
+
         public static string IpAddress =>
             CrestronEthernetHelper.GetEthernetParameter(
                 CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_CURRENT_IP_ADDRESS,
+                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
+                    .EthernetLANAdapter));
+
+        public static string MacAddress =>
+            CrestronEthernetHelper.GetEthernetParameter(
+                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_MAC_ADDRESS,
                 CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
                     .EthernetLANAdapter));
 
@@ -338,6 +357,11 @@ namespace UXAV.AVnetCore.Models
         internal bool ConfigCheckIfRestartIsRequired(string configString)
         {
             return _initialConfig != configString;
+        }
+
+        public void InitCloudConnector(Assembly assembly, string token)
+        {
+            CloudConnector.Init(assembly, token);
         }
 
         public void RebootAppliance()

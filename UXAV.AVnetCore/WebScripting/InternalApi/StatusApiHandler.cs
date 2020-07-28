@@ -2,6 +2,7 @@ using System;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
 using Newtonsoft.Json.Linq;
+using UXAV.AVnetCore.Cloud;
 using UXAV.AVnetCore.Models;
 using UXAV.Logging;
 using s = System;
@@ -60,6 +61,9 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                     InitialParametersClass.RoomName,
                     SystemBase.SystemName,
                     SystemBase.IpAddress,
+                    SystemBase.MacAddress,
+                    CrestronEnvironment.SystemInfo.SerialNumber,
+                    @CloudInstanceId = CloudConnector.InstanceId,
                     @AppVersion = Server.System.AppVersion.ToString(),
                     @ProgramDirectory = InitialParametersClass.ProgramDirectory.ToString(),
                     @BootStatus = UxEnvironment.System.BootStatus.ToString(),
