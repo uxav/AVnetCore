@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using Crestron.SimplSharp;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnetCore.Models;
@@ -28,7 +29,8 @@ namespace UXAV.AVnetCore.Cloud
             HttpClient = new HttpClient();
         }
 
-        private static string CheckinUrl => BaseUrl + $"/{_applicationName}/checkin/{InstanceId}";
+        private static string CheckinUrl =>
+            BaseUrl + $"/{_applicationName}/checkin/{HttpUtility.UrlEncode(InstanceId)}";
 
         internal static string InstanceId
         {
@@ -39,8 +41,8 @@ namespace UXAV.AVnetCore.Cloud
                     CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_MAC_ADDRESS,
                     CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
                         .EthernetLANAdapter));
-                _instanceId = Regex.Replace(macString, @"\:", @"") +
-                              InitialParametersClass.ApplicationNumber.ToString("X2");
+                _instanceId = Regex.Replace(macString, @"[-:]", @"") + "\\" +
+                              InitialParametersClass.ApplicationNumber.ToString("D2");
                 return _instanceId;
             }
         }
