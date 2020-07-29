@@ -71,9 +71,8 @@ namespace UXAV.AVnetCore.Cloud
 
         private static void CrestronEnvironmentOnProgramStatusEventHandler(eProgramStatusEventType programEventType)
         {
-            if (programEventType == eProgramStatusEventType.Stopping)
-            {
-            }
+            if (programEventType != eProgramStatusEventType.Stopping) return;
+            _waitHandle.Set();
         }
 
         private static void CheckIn()
