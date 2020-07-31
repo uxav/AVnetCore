@@ -65,7 +65,7 @@ namespace UXAV.AVnetCore.Cloud
             {
                 Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
                 CheckIn();
-                if (!_waitHandle.WaitOne(TimeSpan.FromSeconds(60))) continue;
+                if (!_waitHandle.WaitOne(TimeSpan.FromMinutes(5))) continue;
                 Logger.Warn($"{nameof(CloudConnector)} leaving checkin process!");
                 return;
             }
