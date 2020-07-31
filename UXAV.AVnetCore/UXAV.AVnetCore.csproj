@@ -135,6 +135,7 @@
     <ItemGroup>
         <Compile Include="AutoDiscovery.cs" />
         <Compile Include="AutoDiscoveryResult.cs" />
+        <Compile Include="Cloud\CloudConnector.cs" />
         <Compile Include="Config\ConfigBase.cs" />
         <Compile Include="Config\ConfigManager.cs" />
         <Compile Include="Config\IConfigItem.cs" />
