@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -11,6 +10,7 @@ using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
+using UXAV.AVnetCore.Cloud;
 using UXAV.AVnetCore.Config;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models.Diagnostics;
@@ -146,12 +146,14 @@ namespace UXAV.AVnetCore.Models
                 ApiServer.AddRoute(@"/api/sources", typeof(SourcesApiHandler));
                 ApiServer.AddRoute(@"/api/events/<method:\w+>", typeof(EventsApiHandler));
                 ApiServer.AddRoute(@"/api/events/<method:\w+>/<id:\d+>", typeof(EventsApiHandler));
-                ApiServer.AddRoute(@"/api/logs", typeof(LogsApiHandler));
+                ApiServer.AddRoute(@"/api/logs", typeof(LoggerApiHandler));
+                ApiServer.AddRoute(@"/api/plog", typeof(PlogApiHandler));
                 ApiServer.AddRoute(@"/api/authentication", typeof(AuthenticationApiHandler));
                 ApiServer.AddRoute(@"/api/appcontrol", typeof(AppControlApiHandler));
                 ApiServer.AddRoute(@"/api/autodiscovery", typeof(AutoDiscoveryApiHandler));
                 ApiServer.AddRoute(@"/api/console", typeof(ConsoleApiHandler));
                 ApiServer.AddRoute(@"/api/diagnostics", typeof(DiagnosticsApiHandler));
+                ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
             }
             catch (Exception e)
             {
@@ -171,6 +173,37 @@ namespace UXAV.AVnetCore.Models
                 Logger.Error("Could not load angular app web scripting server, {0}", e.Message);
                 UpdateBootStatus(EBootStatus.DidNotBoot, $"{GetType().Name}.CTOR FAIL, {e.Message}", 0);
                 return;
+            }
+
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            {
+                Logger.Log("Device is appliance, Creating default index redirect to cws app");
+                try
+                {
+                    var path = ProgramHtmlDirectory + "/index.html";
+                    using (var file = File.CreateText(path))
+                    {
+                        file.Write(@"<meta http-equiv=""refresh"" content=""0; URL=/cws/app"" />");
+                    }
+
+                    Logger.Log($"Created file: \"{path}\"");
+
+                    path = ProgramHtmlDirectory + "/_config_ini_";
+                    using (var file = File.CreateText(path))
+                    {
+                        file.Write(@"webdefault=index.html");
+                    }
+
+                    Logger.Log($"Created file: \"{path}\"");
+
+                    var response = string.Empty;
+                    CrestronConsole.SendControlSystemCommand("webinit", ref response);
+                    Logger.Highlight($"webinit response: {response}");
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Error trying to init web server index, {e.Message}");
+                }
             }
 
             // Wait for above handlers to start accepting requests and update.
@@ -203,9 +236,27 @@ namespace UXAV.AVnetCore.Models
                 CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
                     .EthernetLANAdapter));
 
+        public static string DomainName =>
+            CrestronEthernetHelper.GetEthernetParameter(
+                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_DOMAIN_NAME,
+                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
+                    .EthernetLANAdapter));
+
+        public static string DhcpStatus =>
+            CrestronEthernetHelper.GetEthernetParameter(
+                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_STARTUP_DHCP_STATUS,
+                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
+                    .EthernetLANAdapter));
+
         public static string IpAddress =>
             CrestronEthernetHelper.GetEthernetParameter(
                 CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_CURRENT_IP_ADDRESS,
+                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
+                    .EthernetLANAdapter));
+
+        public static string MacAddress =>
+            CrestronEthernetHelper.GetEthernetParameter(
+                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_MAC_ADDRESS,
                 CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
                     .EthernetLANAdapter));
 
@@ -226,6 +277,8 @@ namespace UXAV.AVnetCore.Models
                 return _programRootDirectory;
             }
         }
+
+        public static string ProgramApplicationDirectory => InitialParametersClass.ProgramDirectory.ToString();
 
         public static string ProgramUserDirectory => ProgramRootDirectory + "/user";
 
@@ -297,54 +350,6 @@ namespace UXAV.AVnetCore.Models
 
         private void AppShouldRunUpgradeScriptsInternal()
         {
-            try
-            {
-                Logger.Log("Looking for webapp resource file to unzip");
-                var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("UXAV.AVnetCore.webapp.zip");
-                if (resource != null)
-                {
-                    var newFileNames = new List<string>();
-                    Logger.Log("Found resource for webapp");
-                    using (var zip = new ZipArchive(resource, ZipArchiveMode.Read))
-                    {
-                        foreach (var zipEntry in zip.Entries)
-                        {
-                            var name = zipEntry.FullName;
-                            var path = SystemBase.ProgramHtmlDirectory + $"/{name}";
-                            newFileNames.Add(path);
-                            if (path.EndsWith("/"))
-                            {
-                                if (!Directory.Exists(path))
-                                {
-                                    Logger.Log("Creating directory: " + path);
-                                    Directory.CreateDirectory(path);
-                                }
-
-                                continue;
-                            }
-
-                            Logger.Log($"Unzipping file: {name}");
-                            var stream = zipEntry.Open();
-                            var fileStream = File.Create(path);
-                            stream.CopyTo(fileStream);
-                            fileStream.Close();
-                        }
-
-                        var projectDir = new DirectoryInfo(SystemBase.ProgramHtmlDirectory + "/dist/app");
-                        foreach (var file in projectDir.GetFiles("*", SearchOption.AllDirectories))
-                        {
-                            if (newFileNames.Contains(file.FullName)) continue;
-                            Logger.Log("Removing old file: {0}", file.FullName);
-                            file.Delete();
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
-            }
-
             AppShouldRunUpgradeScripts();
         }
 
@@ -353,6 +358,11 @@ namespace UXAV.AVnetCore.Models
         internal bool ConfigCheckIfRestartIsRequired(string configString)
         {
             return _initialConfig != configString;
+        }
+
+        public void InitCloudConnector(Assembly assembly, string token)
+        {
+            CloudConnector.Init(assembly, token);
         }
 
         public void RebootAppliance()

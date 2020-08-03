@@ -4,6 +4,7 @@ using System.Web;
 using Crestron.SimplSharp.CrestronIO;
 using Crestron.SimplSharp.Reflection;
 using UXAV.Logging;
+using File = System.IO.File;
 
 namespace UXAV.AVnetCore.WebScripting
 {
@@ -11,7 +12,6 @@ namespace UXAV.AVnetCore.WebScripting
     {
         protected FileHandlerBase(WebScriptingServer server, WebScriptingRequest request) : base(server, request)
         {
-
         }
 
         protected abstract string RootFilePath { get; }
@@ -28,6 +28,7 @@ namespace UXAV.AVnetCore.WebScripting
                     HandleNotFound();
                     return;
                 }
+
                 Response.Write(stream, true);
             }
             catch (Exception e)
@@ -46,11 +47,13 @@ namespace UXAV.AVnetCore.WebScripting
             var pathSlash = Path.DirectorySeparatorChar.ToString();
             if (RootFilePath.Contains(pathSlash))
             {
-                var filePath = RootFilePath + Path.DirectorySeparatorChar + fileName.Replace('/', Path.DirectorySeparatorChar);
+                var filePath = RootFilePath + Path.DirectorySeparatorChar +
+                               fileName.Replace('/', Path.DirectorySeparatorChar);
 
-                Logger.Log("Looking for file", filePath);
+                Logger.Debug($"Looking for file: {filePath}");
 
                 var fileInfo = new FileInfo(filePath);
+                Logger.Debug($"File found: {fileInfo.FullName}");
                 Response.ContentType = MimeMapping.GetMimeMapping(fileInfo.Extension);
                 Response.Headers.Add("Last-Modified", fileInfo.LastWriteTime.ToUniversalTime().ToString("R"));
                 try
@@ -73,6 +76,7 @@ namespace UXAV.AVnetCore.WebScripting
                 {
                     return null;
                 }
+
                 var fPath = pathMatch.Groups[1].Value;
                 var fName = pathMatch.Groups[2].Value;
                 fPath = Regex.Replace(fPath, @"[\x20\[\]]", "_");
@@ -88,6 +92,7 @@ namespace UXAV.AVnetCore.WebScripting
                     {
                         Logger.Log("Possible resource: {0}", resourceName);
                     }
+
                     var result = assembly.GetManifestResourceStream(resourcePath);
                     if (result != null)
                     {

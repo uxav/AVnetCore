@@ -11,7 +11,7 @@ namespace UXAV.AVnetCore.WebScripting.StaticFiles
         {
         }
 
-        protected override string RootFilePath => SystemBase.ProgramHtmlDirectory + "/dist/app";
+        protected override string RootFilePath => SystemBase.ProgramApplicationDirectory + "/webapp";
 
         public override void Get()
         {
