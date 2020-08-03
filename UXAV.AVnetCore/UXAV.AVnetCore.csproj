@@ -212,6 +212,7 @@
         <Compile Include="WebScripting\InternalApi\EventsSession.cs" />
         <Compile Include="WebScripting\InternalApi\FileUploadApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\LoggerApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\PlogApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\RoomsApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\SourcesApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\StatusApiHandler.cs" />

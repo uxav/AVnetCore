@@ -147,6 +147,7 @@ namespace UXAV.AVnetCore.Models
                 ApiServer.AddRoute(@"/api/events/<method:\w+>", typeof(EventsApiHandler));
                 ApiServer.AddRoute(@"/api/events/<method:\w+>/<id:\d+>", typeof(EventsApiHandler));
                 ApiServer.AddRoute(@"/api/logs", typeof(LoggerApiHandler));
+                ApiServer.AddRoute(@"/api/plog", typeof(PlogApiHandler));
                 ApiServer.AddRoute(@"/api/authentication", typeof(AuthenticationApiHandler));
                 ApiServer.AddRoute(@"/api/appcontrol", typeof(AppControlApiHandler));
                 ApiServer.AddRoute(@"/api/autodiscovery", typeof(AutoDiscoveryApiHandler));
