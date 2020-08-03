@@ -33,7 +33,7 @@ namespace UXAV.AVnetCore.WebScripting
                 @Code = Response.StatusCode,
                 @Response = response
             });
-            Response.Write(json.ToString(Formatting.Indented), true);
+            Response.Write(json.ToString(Formatting.None), true);
         }
     }
 }
