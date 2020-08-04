@@ -142,7 +142,7 @@
           <Private>True</Private>
         </Reference>
         <Reference Include="SimplSharpNewtonsoft, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
-          <HintPath>../../packages/Crestron.SimplSharp.SDK.Library.2.14.53/lib/net47/SimplSharpNewtonsoft.dll</HintPath>
+          <HintPath>$(SolutionDir)/packages/Crestron.SimplSharp.SDK.Library.2.14.53/lib/net47/SimplSharpNewtonsoft.dll</HintPath>
           <Private>True</Private>
           <Aliases>CrestronNewtonsoft</Aliases>
         </Reference>
