@@ -3,7 +3,7 @@ name: Build and Package
 on:
   release:
     types:
-      - created
+      - published
     branches:
       - main
 
