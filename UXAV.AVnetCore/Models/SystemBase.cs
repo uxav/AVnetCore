@@ -69,7 +69,9 @@ namespace UXAV.AVnetCore.Models
             Logger.Log("ProgramIDTag: {0}", InitialParametersClass.ProgramIDTag);
             Logger.Log("ApplicationNumber: {0}", InitialParametersClass.ApplicationNumber);
             Logger.Log("FirmwareVersion: {0}", InitialParametersClass.FirmwareVersion);
-            Logger.Log("App Version: {0}", callingAssembly.GetName().Version);
+            Logger.Log("App Info: {0}", callingAssembly.GetName().FullName);
+            var avnetInfo = Assembly.GetExecutingAssembly().GetName();
+            Logger.Log("{0} Version: {1}", avnetInfo.Name, avnetInfo.Version);
             Logger.Log("Starting app version {0}", callingAssembly.GetName().Version);
             Logger.Log("ProcessId: {0}", Process.GetCurrentProcess().Id);
             Logger.Log("Room Name: {0}", InitialParametersClass.RoomName);
