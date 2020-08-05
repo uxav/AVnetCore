@@ -236,6 +236,8 @@
         <Compile Include="Config\IConfigItem.cs" />
         <Compile Include="DeviceSupport\ComPortHandler.cs" />
         <Compile Include="DeviceSupport\DisplayDeviceBase.cs" />
+        <Compile Include="DeviceSupport\IVolumeControl.cs" />
+        <Compile Include="DeviceSupport\IVolumeLevelDevice.cs" />
         <Compile Include="DeviceSupport\IDevice.cs" />
         <Compile Include="DeviceSupport\IDeviceConnection.cs" />
         <Compile Include="DeviceSupport\IHoistControl.cs" />
