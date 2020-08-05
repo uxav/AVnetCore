@@ -12,12 +12,12 @@ namespace UXAV.AVnetCore.DeviceSupport
         bool Muted { get; set; }
         void Mute();
         void Unmute();
-        event AudioMuteChangeEventHandler MuteChange;
-        event AudioLevelChangeEventHandler LevelChange;
+        event MuteChangeEventHandler MuteChange;
+        event VolumeLevelChangeEventHandler VolumeLevelChange;
     }
 
-    public delegate void AudioMuteChangeEventHandler(bool muted);
-    public delegate void AudioLevelChangeEventHandler(ushort level);
+    public delegate void MuteChangeEventHandler(bool muted);
+    public delegate void VolumeLevelChangeEventHandler(ushort level);
 
     public enum AudioLevelControlChangeEventType
     {
