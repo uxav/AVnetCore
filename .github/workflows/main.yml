@@ -43,8 +43,16 @@ jobs:
       - name: Build
         run: msbuild AVnetCore.sln /p:Configuration=Release
 
+      # Get version number of the new dll file
+      - name: Set Version Number
+        shell: powershell
+        run: |
+          $version = ./.github/scripts/GenerateVersionNumber.ps1 -Path UXAV.AVnetCore/bin/Release/UXAV.AVnetCore.dll
+          Write-Output "PS returned version: $version"
+          Write-Output "::set-env name=VERSION::$version"
+
       - name: Pack Nuget
-        run: nuget pack UXAV.AVnetCore/UXAV.AVnetCore.csproj
+        run: nuget pack UXAV.AVnetCore/UXAV.AVnetCore.csproj -Version ${{ env.VERSION }}
 
       - name: Push generated package to GitHub registry
         run: nuget push *.nupkg -source "uxav"

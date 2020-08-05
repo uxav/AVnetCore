@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Crestron.SimplSharp;
@@ -23,13 +24,14 @@ namespace UXAV.AVnetCore.Config
         private static readonly object LockWrite = new object();
         private static JSchema _schema;
         private static string _filePath;
-        private static readonly Regex FilePattern = new Regex(@"(?:(\w+)\.)?config\.json");
 
         static ConfigManager()
         {
             Logger.AddCommand(ConfigPrintToConsole, "ConfigPrint", "Print the current config");
             Logger.AddCommand(ConfigPrintInfoToConsole, "ConfigInfo",
                 "Print the current config file path and last save time");
+            ConfigNameSpace = Assembly.GetCallingAssembly().GetName().Name.ToLower();
+            Logger.Highlight($"Config namespace is \"{ConfigNameSpace}\"");
         }
 
         public static string ConfigDirectory
@@ -59,7 +61,24 @@ namespace UXAV.AVnetCore.Config
             }
         }
 
-        public static string DefaultConfigPath => ConfigDirectory + "/config.json";
+        public static string ConfigNameSpace { get; }
+
+        public static string DefaultConfigPath
+        {
+            get
+            {
+                var path = ConfigDirectory + "/";
+                if (!string.IsNullOrEmpty(ConfigNameSpace))
+                {
+                    path = path + ConfigNameSpace + ".";
+                }
+
+                path += "config.json";
+                return path;
+            }
+        }
+
+        private static Regex FilePattern => new Regex($"(?:(\\w+)\\.)?{ConfigNameSpace}\\.config\\.json");
 
         /// <summary>
         /// The config path for the json formatted config file
@@ -304,7 +323,7 @@ namespace UXAV.AVnetCore.Config
             var name = Regex.Replace(configName, " ", "_");
             if (name.ToLower() == "default")
                 throw new InvalidOperationException("Cannot have a file with the name " + configName);
-            name = configName.ToLower() + ".config.json";
+            name = configName.ToLower() + (string.IsNullOrEmpty(ConfigNameSpace) ? "" : "." + ConfigNameSpace) + ".config.json";
             var path = ConfigDirectory + "/" + name;
             if (File.Exists(path)) throw new InvalidOperationException("File already exists called: " + path);
             ConfigPath = path;
