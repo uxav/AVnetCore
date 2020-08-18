@@ -136,6 +136,10 @@ namespace UXAV.AVnetCore.WebScripting.Download
                                                 .CopyTo(entryStream);
                                         }
                                     }
+                                    catch (UnauthorizedAccessException)
+                                    {
+                                        Logger.Warn($"No access to the file: {fileInfo.FullName}");
+                                    }
                                     catch (Exception e)
                                     {
                                         Logger.Error(e);
