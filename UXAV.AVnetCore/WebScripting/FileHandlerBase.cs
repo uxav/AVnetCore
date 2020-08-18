@@ -20,9 +20,9 @@ namespace UXAV.AVnetCore.WebScripting
         {
             try
             {
-                Logger.Log("Looking for file resource: {0}", Request.RoutePatternArgs["filepath"]);
+                Logger.Debug("Looking for file resource: {0}", Request.RoutePatternArgs["filepath"]);
                 var stream = GetResourceStream(Assembly.GetExecutingAssembly(), Request.RoutePatternArgs["filepath"]);
-                Logger.Log("Stream = " + stream);
+                //Logger.Debug("Stream = " + stream);
                 if (stream == null)
                 {
                     HandleNotFound();
