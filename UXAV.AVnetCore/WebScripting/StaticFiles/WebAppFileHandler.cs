@@ -23,15 +23,15 @@ namespace UXAV.AVnetCore.WebScripting.StaticFiles
                     path = Request.RoutePatternArgs["filepath"];
                 }
 
-                Logger.Log("Looking for file resource: {0}", path);
+                //Logger.Debug("Looking for file resource: {0}", path);
                 var stream = GetResourceStream(Assembly.GetExecutingAssembly(), path);
                 if (stream == null)
                 {
-                    Logger.Log("File not found, defaulting to index.html !");
+                    //Logger.Debug("File not found, defaulting to index.html !");
                     stream = GetResourceStream(Assembly.GetExecutingAssembly(), "index.html");
                 }
 
-                Logger.Log("Stream = " + stream);
+                //Logger.Debug("Stream = " + stream);
                 if (stream == null)
                 {
                     HandleNotFound();

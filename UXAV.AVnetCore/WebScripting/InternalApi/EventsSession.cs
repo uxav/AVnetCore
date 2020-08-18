@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using UXAV.AVnetCore.Models;
 using UXAV.Logging;
 
@@ -62,6 +63,8 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
             {
                 return messages;
             }
+            
+            Thread.Sleep(200);
 
             return messages;
         }

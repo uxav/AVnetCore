@@ -63,7 +63,7 @@ namespace UXAV.AVnetCore.Cloud
         {
             while (true)
             {
-                Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
+                //Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
                 CheckIn();
                 if (!_waitHandle.WaitOne(TimeSpan.FromMinutes(5))) continue;
                 Logger.Warn($"{nameof(CloudConnector)} leaving checkin process!");
@@ -97,7 +97,7 @@ namespace UXAV.AVnetCore.Cloud
                 var json = JToken.FromObject(data);
                 var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
                 var result = HttpClient.PostAsync(CheckinUrl, content).Result;
-                Logger.Log($"{nameof(CloudConnector)}.{nameof(CheckIn)}() result = {result.StatusCode}");
+                Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckIn)}() result = {result.StatusCode}");
             }
             catch (Exception e)
             {
