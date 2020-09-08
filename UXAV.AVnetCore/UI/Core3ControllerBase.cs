@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.DeviceSupport;
+using Crestron.SimplSharpPro.UI;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models;
 using UXAV.AVnetCore.Models.Rooms;
@@ -86,10 +87,14 @@ namespace UXAV.AVnetCore.UI
             ExtenderSystem?.SetUShortPropertyValue("LcdBrightness", ushort.MaxValue);
             ExtenderSystem2 = UseDeviceExtenderByName("ExtenderSystem2ReservedSigs");
             ExtenderSystem3 = UseDeviceExtenderByName("ExtenderSystem3ReservedSigs");
+            ExtenderSystem4 = UseDeviceExtenderByName("ExtenderSystem4ReservedSigs");
             ExtenderUsbLedAccessory = UseDeviceExtenderByName("ExtenderUsbLedAccessoryControlReservedSigs");
             ExtenderIntegratedLightBar = UseDeviceExtenderByName("ExtenderIntegratedLightBarReservedSigs");
             ExtenderScreenSaver = UseDeviceExtenderByName("ExtenderScreenSaverReservedSigs");
             ExtenderTouchDetection = UseDeviceExtenderByName("ExtenderTouchDetectionReservedSigs");
+            ExtenderCrestronAppFunctions = UseDeviceExtenderByName("ExtenderCrestronAppFunctions");
+            ExtenderPinPoint = UseDeviceExtenderByName("ExtenderPinPointReservedSigs");
+            ExtenderSetup = UseDeviceExtenderByName("ExtenderSetupReservedSigs");
 
             Pages = new UIPageCollection(this);
 
@@ -123,7 +128,7 @@ namespace UXAV.AVnetCore.UI
             }
         }
 
-        private DeviceExtender UseDeviceExtenderByName(string name)
+        protected DeviceExtender UseDeviceExtenderByName(string name)
         {
             try
             {
@@ -131,7 +136,7 @@ namespace UXAV.AVnetCore.UI
                     .GetProperties(BindingFlags.Public | BindingFlags.Instance)
                     .FirstOrDefault(p => p.Name == name)
                     ?.GetValue(Device, null);
-                if (extender != null)
+                if (extender != null && !_deviceExtenderNames.ContainsKey(extender))
                 {
                     extender.Use();
                     extender.DeviceExtenderSigChange += OnDeviceExtenderSigChange;
@@ -193,6 +198,8 @@ namespace UXAV.AVnetCore.UI
 
         protected DeviceExtender ExtenderSystem3 { get; }
 
+        protected DeviceExtender ExtenderSystem4 { get; }
+
         protected DeviceExtender ExtenderUsbLedAccessory { get; }
 
         protected DeviceExtender ExtenderIntegratedLightBar { get; }
@@ -202,6 +209,21 @@ namespace UXAV.AVnetCore.UI
         protected DeviceExtender ExtenderTouchDetection { get; }
 
         protected DeviceExtender ExtenderAutoUpdate { get; }
+
+        public DeviceExtender ExtenderSetup { get; }
+
+        public DeviceExtender ExtenderPinPoint { get; }
+
+        public DeviceExtender ExtenderCrestronAppFunctions { get; }
+
+        protected string AppProjectName
+        {
+            get => !(Device is CrestronAppBase device) ? string.Empty : device.ParameterProjectName.Value;
+            set
+            {
+                if (Device is CrestronAppBase device) device.ParameterProjectName.Value = value;
+            }
+        }
 
         private void OnIpInformationChange(GenericBase currentdevice, ConnectedIpEventArgs args)
         {
@@ -233,7 +255,7 @@ namespace UXAV.AVnetCore.UI
             }
         }
 
-        private void OnDeviceExtenderSigChange(DeviceExtender extender, SigEventArgs args)
+        protected void OnDeviceExtenderSigChange(DeviceExtender extender, SigEventArgs args)
         {
             var extenderName = _deviceExtenderNames.ContainsKey(extender)
                 ? _deviceExtenderNames[extender]
