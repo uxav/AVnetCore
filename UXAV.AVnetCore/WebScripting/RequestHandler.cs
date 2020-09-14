@@ -52,7 +52,7 @@ namespace UXAV.AVnetCore.WebScripting
                 Response.SetCookie(new HttpCwsCookie("sessionId")
                 {
                     Value = string.Empty,
-                    Expires = new DateTime(),
+                    Expires = new DateTime().ToUniversalTime(),
                     Path = "/",
                 });
                 return null;
@@ -61,7 +61,7 @@ namespace UXAV.AVnetCore.WebScripting
             Response.SetCookie(new HttpCwsCookie("sessionId")
             {
                 Value = cookie.Value,
-                Expires = session.ExpiryTime,
+                Expires = session.ExpiryTime.ToUniversalTime(),
                 Path = "/",
                 HttpOnly = true,
                 Secure = false,
