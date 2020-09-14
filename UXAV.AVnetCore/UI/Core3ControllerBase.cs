@@ -308,7 +308,14 @@ namespace UXAV.AVnetCore.UI
 
         protected virtual void ShowDefaultPage()
         {
-            Pages.FirstOrDefault()?.Show();
+            try
+            {
+                Pages.FirstOrDefault()?.Show();
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"{ToString()}: Could not show default page, {e.Message}");
+            }
         }
 
         public void BrowserOpen()
