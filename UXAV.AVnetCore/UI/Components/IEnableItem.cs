@@ -1,6 +1,6 @@
 ﻿using UXAV.AVnetCore.DeviceSupport;
 
-namespace UXAV.AVnetCore.UI
+namespace UXAV.AVnetCore.UI.Components
 {
     /// <summary>
     /// A UI item which can be enabled or disabled by a digital enable join

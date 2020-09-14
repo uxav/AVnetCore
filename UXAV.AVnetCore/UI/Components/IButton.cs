@@ -1,9 +1,8 @@
 using System;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models;
-using UXAV.AVnetCore.UI.Components;
 
-namespace UXAV.AVnetCore.UI
+namespace UXAV.AVnetCore.UI.Components
 {
     public interface IButton : ISigProvider, IGenericItem
     {

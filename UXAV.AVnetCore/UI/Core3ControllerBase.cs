@@ -15,6 +15,7 @@ using UXAV.AVnetCore.UI.Components;
 using UXAV.AVnetCore.UI.Components.Views;
 using UXAV.AVnetCore.UI.ReservedJoins;
 using UXAV.Logging;
+using IButton = UXAV.AVnetCore.UI.Components.IButton;
 
 namespace UXAV.AVnetCore.UI
 {

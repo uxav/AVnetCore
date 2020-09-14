@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models.Collections;
 
 namespace UXAV.AVnetCore.UI.Components
@@ -49,6 +50,13 @@ namespace UXAV.AVnetCore.UI.Components
             }
         }
 
+        public new void Add(IButton button)
+        {
+            base.Add(button);
+            if(_subscribeCount == 0) return;
+            button.ButtonEvent += OnButtonEvent;
+        }
+
         private void OnButtonEvent(IButton button, ButtonEventArgs args)
         {
             _buttonEvent?.Invoke(button, new ButtonEventArgs(args.EventType, args.HoldTime, this,
@@ -74,6 +82,23 @@ namespace UXAV.AVnetCore.UI.Components
             {
                 button.Feedback = false;
             }
+        }
+
+        public static UIButtonCollection CreateSequencedCollection(ISigProvider provider, uint startJoinNumber, uint count)
+        {
+            return CreateSequencedCollection(provider, startJoinNumber, 1, count);
+        }
+
+        public static UIButtonCollection CreateSequencedCollection(ISigProvider provider, uint startJoinNumber, uint firstId, uint count)
+        {
+            var list = new List<IButton>();
+            for (var b = 0U; b < count; b++)
+            {
+                var button = new UIButton(provider, startJoinNumber + b);
+                button.SetId(b + firstId);
+                list.Add(button);
+            }
+            return new UIButtonCollection(list);
         }
     }
 }
