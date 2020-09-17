@@ -97,8 +97,15 @@ namespace UXAV.AVnetCore.Cloud
                 };
                 var json = JToken.FromObject(data);
                 var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
-                var result = HttpClient.PostAsync(CheckinUrl, content).Result;
-                Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckIn)}() result = {result.StatusCode}");
+                try
+                {
+                    var result = HttpClient.PostAsync(CheckinUrl, content).Result;
+                    Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckIn)}() result = {result.StatusCode}");
+                }
+                catch (Exception e)
+                {
+                    Logger.Warn($"Could not checkin to cloud, {e.Message}");
+                }
             }
             catch (Exception e)
             {
