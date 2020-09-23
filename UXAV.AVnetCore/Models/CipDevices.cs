@@ -46,17 +46,6 @@ namespace UXAV.AVnetCore.Models
             return device;
         }
 
-        private static void DeviceOnOnlineStatusChange(GenericBase currentdevice, OnlineOfflineEventArgs args)
-        {
-            EventService.Notify(EventMessageType.DeviceConnectionChange, new
-            {
-                @Device = currentdevice.Name,
-                @Description = currentdevice.Description,
-                @ConnectionInfo = $"IP ID: {currentdevice.ID:X2}",
-                @Online = args.DeviceOnLine
-            });
-        }
-
         public static GenericDevice CreateDevice(string typeName, uint ipId, string ipAddressOrHostname,
             string description)
         {
@@ -82,6 +71,17 @@ namespace UXAV.AVnetCore.Models
             device.Description = description;
             Devices[device.ID] = device;
             return device;
+        }
+
+        private static void DeviceOnOnlineStatusChange(GenericBase currentdevice, OnlineOfflineEventArgs args)
+        {
+            EventService.Notify(EventMessageType.DeviceConnectionChange, new
+            {
+                @Device = currentdevice.Name,
+                @Description = currentdevice.Description,
+                @ConnectionInfo = $"IP ID: {currentdevice.ID:X2}",
+                @Online = args.DeviceOnLine
+            });
         }
 
         private static Type GetType(string name)
