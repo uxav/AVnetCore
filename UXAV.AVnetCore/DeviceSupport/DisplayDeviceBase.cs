@@ -57,7 +57,8 @@ namespace UXAV.AVnetCore.DeviceSupport
                 if (_powerStatus == value) return;
                 var oldState = _powerStatus;
                 _powerStatus = value;
-                Logger.Log("{0} PowerStatus = {1}", this, value);
+                Logger.Debug("{0} PowerStatus = {1}", this, value);
+
                 OnPowerStatusChange(this, new DevicePowerStatusEventArgs(_powerStatus, oldState));
             }
         }
@@ -227,6 +228,7 @@ namespace UXAV.AVnetCore.DeviceSupport
         BuiltIn,
         Wireless,
         AirPlay,
-        SDI
+        SDI,
+        USB
     }
 }

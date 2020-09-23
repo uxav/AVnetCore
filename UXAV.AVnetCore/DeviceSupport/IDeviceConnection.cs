@@ -6,6 +6,7 @@ namespace UXAV.AVnetCore.DeviceSupport
         void Disconnect();
         bool Connected { get; }
         string Address { get; }
+        bool DebugEnabled { get; set; }
         event ConnectedStatusChangeEventHandler ConnectedChange;
         event ReceivedDataEventHandler ReceivedData;
         void Send(byte[] bytes, int index, int count);
