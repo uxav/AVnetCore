@@ -332,6 +332,11 @@ namespace UXAV.AVnetCore.UI.Components
             if (!disposing) return;
             _holdTimer.Dispose();
         }
+
+        public override string ToString()
+        {
+            return $"{SigProvider.Device} Button {DigitalJoinNumber}";
+        }
     }
 
     /// <summary>

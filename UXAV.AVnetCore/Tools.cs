@@ -103,6 +103,11 @@ namespace UXAV.AVnetCore
             }
         }
 
+        public static double GetPercentage(this ushort ushortValue)
+        {
+            return ScaleRange(ushortValue, ushort.MinValue, ushort.MaxValue, 0, 1);
+        }
+
         public static SystemBase CreateSystem(this CrestronControlSystem controlSystem, Assembly assembly,
             string typeName)
         {
@@ -289,6 +294,27 @@ namespace UXAV.AVnetCore
             {
                 Logger.Warn($"Could not get property with name \"{propertyName}\" on {extender}, {e.Message}");
             }
+        }
+
+        private static readonly string[] SizeSuffixes =
+            {"bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+
+        /// <summary>
+        /// Get a string showing size from bytes
+        /// </summary>
+        /// <param name="value">number of bytes</param>
+        /// <param name="decimalPlaces">number of decimal places</param>
+        public static string PrettyByteSize(Int64 value, int decimalPlaces)
+        {
+            var i = 0;
+            var dValue = (decimal) value;
+            while (Math.Round(dValue, decimalPlaces) >= 1000)
+            {
+                dValue /= 1024;
+                i++;
+            }
+
+            return string.Format("{0:n" + decimalPlaces + "} {1}", dValue, SizeSuffixes[i]);
         }
 
         #endregion

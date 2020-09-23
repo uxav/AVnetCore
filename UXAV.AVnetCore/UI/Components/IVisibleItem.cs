@@ -1,6 +1,6 @@
 ﻿using UXAV.AVnetCore.DeviceSupport;
 
-namespace UXAV.AVnetCore.UI
+namespace UXAV.AVnetCore.UI.Components
 {
     public interface IVisibleItem : ISigProvider
     {

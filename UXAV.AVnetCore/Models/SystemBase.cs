@@ -630,7 +630,14 @@ namespace UXAV.AVnetCore.Models
         {
             foreach (var controller in Core3Controllers.Get())
             {
-                controller.InitializeInternal();
+                try
+                {
+                    controller.InitializeInternal();
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
             }
         }
     }

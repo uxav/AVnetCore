@@ -15,6 +15,7 @@ using UXAV.AVnetCore.UI.Components;
 using UXAV.AVnetCore.UI.Components.Views;
 using UXAV.AVnetCore.UI.ReservedJoins;
 using UXAV.Logging;
+using IButton = UXAV.AVnetCore.UI.Components.IButton;
 
 namespace UXAV.AVnetCore.UI
 {
@@ -308,7 +309,14 @@ namespace UXAV.AVnetCore.UI
 
         protected virtual void ShowDefaultPage()
         {
-            Pages.FirstOrDefault()?.Show();
+            try
+            {
+                Pages.FirstOrDefault()?.Show();
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"{ToString()}: Could not show default page, {e.Message}");
+            }
         }
 
         public void BrowserOpen()

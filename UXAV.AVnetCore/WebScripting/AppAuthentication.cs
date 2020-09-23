@@ -108,7 +108,7 @@ namespace UXAV.AVnetCore.WebScripting
 
                 lock (Sessions)
                 {
-                    var newExpiry = DateTime.Now + TimeSpan.FromHours(1);
+                    var newExpiry = DateTime.Now + TimeSpan.FromHours(12);
                     session.ExpiryTime = newExpiry;
                     _updated = true;
                     //Logger.Debug("Session {0} extended to {1}", session.SessionId, session.ExpiryTime);
@@ -163,7 +163,7 @@ namespace UXAV.AVnetCore.WebScripting
             var sessionId = Convert.ToBase64String(Guid.NewGuid().ToByteArray())
                 .Replace("=", "")
                 .Replace("+", "");
-            var expiry = DateTime.Now + TimeSpan.FromHours(1);
+            var expiry = DateTime.Now + TimeSpan.FromHours(12);
             var session = new Session(sessionId, userToken.UserName, expiry);
             //Logger.Log("Created new WebApp Session {0}, Expires {1}", sessionId, expiry.ToString("R"));
             lock (Sessions)

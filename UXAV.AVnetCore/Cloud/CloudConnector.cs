@@ -88,6 +88,7 @@ namespace UXAV.AVnetCore.Cloud
                     @domain_name = SystemBase.DomainName,
                     @dhcp = SystemBase.DhcpStatus,
                     @mac_address = SystemBase.MacAddress,
+                    @firmware_version = CrestronEnvironment.OSVersion.Firmware,
                     @model = InitialParametersClass.ControllerPromptName,
                     @serial_number = CrestronEnvironment.SystemInfo.SerialNumber,
                     @app_number = InitialParametersClass.ApplicationNumber,
@@ -96,8 +97,15 @@ namespace UXAV.AVnetCore.Cloud
                 };
                 var json = JToken.FromObject(data);
                 var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
-                var result = HttpClient.PostAsync(CheckinUrl, content).Result;
-                Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckIn)}() result = {result.StatusCode}");
+                try
+                {
+                    var result = HttpClient.PostAsync(CheckinUrl, content).Result;
+                    Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckIn)}() result = {result.StatusCode}");
+                }
+                catch (Exception e)
+                {
+                    Logger.Warn($"Could not checkin to cloud, {e.Message}");
+                }
             }
             catch (Exception e)
             {

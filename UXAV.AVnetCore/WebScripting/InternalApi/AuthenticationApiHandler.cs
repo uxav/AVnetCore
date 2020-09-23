@@ -49,7 +49,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                             Response.SetCookie(new HttpCwsCookie("sessionId")
                             {
                                 Value = session.SessionId,
-                                Expires = session.ExpiryTime,
+                                Expires = session.ExpiryTime.ToUniversalTime(),
                                 Path = "/",
                                 HttpOnly = true,
                                 Secure = false,
