@@ -59,6 +59,7 @@ namespace UXAV.AVnetCore.DeviceSupport
         }
 
         public string Address => _portDevice.ToString();
+        public bool DebugEnabled { get; set; }
         public event ConnectedStatusChangeEventHandler ConnectedChange;
         public event ReceivedDataEventHandler ReceivedData;
 

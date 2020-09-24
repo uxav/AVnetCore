@@ -31,6 +31,8 @@ namespace UXAV.AVnetCore.DeviceSupport
         RoomBase AllocatedRoom { get; }
 
         bool DeviceCommunicating { get; }
+        
+        bool DebugEnabled { get; set; }
 
         /// <summary>
         /// Event called if the comms status changes on the device

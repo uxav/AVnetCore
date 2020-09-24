@@ -239,6 +239,7 @@
         <Compile Include="DeviceSupport\IPowerDevice.cs" />
         <Compile Include="DeviceSupport\ISigProvider.cs" />
         <Compile Include="DeviceSupport\SigProviderDevice.cs" />
+        <Compile Include="DeviceSupport\TcpConnectionBase.cs" />
         <Compile Include="Models\CipDevices.cs" />
         <Compile Include="Models\Collections\UXCollection.cs" />
         <Compile Include="Models\DeviceBase.cs" />

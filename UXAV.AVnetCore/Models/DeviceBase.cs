@@ -86,6 +86,8 @@ namespace UXAV.AVnetCore.Models
             }
         }
 
+        public virtual bool DebugEnabled { get; set; }
+
         /// <summary>
         /// Event called if the comms status changes on the device
         /// </summary>
