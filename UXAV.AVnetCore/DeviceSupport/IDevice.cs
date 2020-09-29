@@ -33,8 +33,6 @@ namespace UXAV.AVnetCore.DeviceSupport
         RoomBase AllocatedRoom { get; }
 
         bool DeviceCommunicating { get; }
-        
-        bool DebugEnabled { get; set; }
 
         bool DebugEnabled { get; set; }
 
