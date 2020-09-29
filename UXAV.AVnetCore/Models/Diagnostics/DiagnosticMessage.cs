@@ -30,6 +30,7 @@ namespace UXAV.AVnetCore.Models.Diagnostics
             _message = message;
             _detailsMessage = detailsMessage;
             _typeName = device.GetType().Name;
+            _description = device.Identity;
         }
 
         [JsonConverter(typeof(StringEnumConverter))]

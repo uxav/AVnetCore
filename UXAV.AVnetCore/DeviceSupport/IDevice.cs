@@ -28,10 +28,12 @@ namespace UXAV.AVnetCore.DeviceSupport
         /// </summary>
         string VersionInfo { get; }
 
+        string Identity { get; }
+
         RoomBase AllocatedRoom { get; }
 
         bool DeviceCommunicating { get; }
-        
+
         bool DebugEnabled { get; set; }
 
         /// <summary>

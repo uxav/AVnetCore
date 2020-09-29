@@ -12,7 +12,7 @@ namespace UXAV.AVnetCore.Models
     {
         private readonly uint _roomIdAllocated;
         private static uint _idCount;
-        private readonly string _name;
+        private string _name;
         private bool _deviceCommunicating;
 
         protected DeviceBase(SystemBase system, string name, uint roomIdAllocated = 0)
@@ -49,6 +49,7 @@ namespace UXAV.AVnetCore.Models
         public abstract string ModelName { get; }
         public abstract string SerialNumber { get; }
         public abstract string VersionInfo { get; }
+        public abstract string Identity { get; }
         public RoomBase AllocatedRoom { get; private set; }
 
         public bool DeviceCommunicating
@@ -105,6 +106,11 @@ namespace UXAV.AVnetCore.Models
 
                 AllocatedRoom = UxEnvironment.GetRoom(_roomIdAllocated);
             }
+        }
+
+        protected void SetName(string name)
+        {
+            _name = name;
         }
 
         public abstract void Initialize();
