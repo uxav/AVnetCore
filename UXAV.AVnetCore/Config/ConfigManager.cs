@@ -357,6 +357,16 @@ namespace UXAV.AVnetCore.Config
             return !PropertyList.ContainsKey(key) ? null : PropertyList[key].ToObject<object>();
         }
 
+        public static T GetOrCreatePropertyListItem<T>(string key, T defaultValue)
+        {
+            if (PropertyList.ContainsKey(key))
+            {
+                return PropertyList[key].ToObject<T>();
+            }
+            PropertyList[key] = new JValue(defaultValue);
+            return defaultValue;
+        }
+
         /// <summary>
         /// Get a PList item object from the current config defined by a string key name
         /// </summary>
