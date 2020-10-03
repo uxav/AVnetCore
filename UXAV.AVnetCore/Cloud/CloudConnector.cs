@@ -88,6 +88,7 @@ namespace UXAV.AVnetCore.Cloud
                     @domain_name = SystemBase.DomainName,
                     @dhcp = SystemBase.DhcpStatus,
                     @mac_address = SystemBase.MacAddress,
+                    @up_time = SystemBase.UpTime,
                     @firmware_version = CrestronEnvironment.OSVersion.Firmware,
                     @model = InitialParametersClass.ControllerPromptName,
                     @serial_number = CrestronEnvironment.SystemInfo.SerialNumber,

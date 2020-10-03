@@ -31,7 +31,6 @@ namespace UXAV.AVnetCore.Models
         private string _bootStatusDescription;
         private uint _bootProgress;
         private EUnits _localUnits = EUnits.Metric;
-        private readonly DateTime _bootTime;
         private readonly string _initialConfig;
         internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
@@ -55,7 +54,6 @@ namespace UXAV.AVnetCore.Models
             CrestronEnvironment.ProgramStatusEventHandler += OnProgramStatusEventHandler;
 
             RoomClock.Start();
-            _bootTime = DateTime.Now;
             UpdateBootStatus(EBootStatus.Booting, "System is booting", 0);
 
             CrestronDataStoreStatic.InitCrestronDataStore();
@@ -228,9 +226,9 @@ namespace UXAV.AVnetCore.Models
             set => _systemName = value;
         }
 
-        public DateTime BootTime => _bootTime;
+        public static DateTime BootTime { get; } = DateTime.Now;
 
-        public TimeSpan UpTime => DateTime.Now - _bootTime;
+        public static TimeSpan UpTime => DateTime.Now - BootTime;
 
         public static string HostName =>
             CrestronEthernetHelper.GetEthernetParameter(
