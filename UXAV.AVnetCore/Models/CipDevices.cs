@@ -84,24 +84,42 @@ namespace UXAV.AVnetCore.Models
             });
         }
 
-        private static Type GetType(string name)
+        private static Type GetType(string typeName)
         {
-            Logger.Log($"Looking for assembly for {name}");
-            var match = Regex.Match(name, @"^(?:([\w\.]+)\.)([\w\.]+)$");
-            var assemblyName = match.Groups[1].Value;
-            var directory = new DirectoryInfo(InitialParametersClass.ProgramDirectory.ToString());
-            var fileName = directory.GetFiles($"{assemblyName}*.dll").First();
-            Logger.Log($"Will try load assembly file: {fileName}");
-            var assembly = Assembly.LoadFile(fileName.FullName);
-            Logger.Log($"Assembly found: {assembly}");
-            if (assembly == null)
+            Logger.Debug($"Looking for assembly for {typeName}");
+            var search = Regex.Match(typeName, @"^(?:([\w\.]+)\.)([\w\.]+)$").Groups[1].Value;
+            var directory = new DirectoryInfo(SystemBase.ProgramApplicationDirectory);
+            while (true)
             {
-                throw new Exception($"Could not load assembly for {name}");
+                Logger.Debug($"Looking at files matching pattern: {search}*.dll");
+                foreach (var file in directory.GetFiles($"{search}*.dll"))
+                {
+                    Logger.Debug($"Will try load assembly file: {file.Name}");
+                    var pattern = Regex.Match(file.Name, @"^([\w\.]+).dll").Groups[1].Value;
+                    if (Regex.IsMatch(typeName, pattern))
+                    {
+                        Logger.Debug($"Potential match: {file.Name}");
+                        var assembly = Assembly.LoadFile(file.FullName);
+                        var type = assembly.GetType(typeName);
+                        if (type != null)
+                        {
+                            Logger.Debug($"Found type: {type.Name}");
+                            return type;
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(search)) break;
+                Logger.Debug($"Could not find using search: {search}*.dll");
+                if (search != "Crestron")
+                {
+                    search = "Crestron";
+                    continue;
+                }
+                search = string.Empty;
             }
 
-            var type = assembly.GetType(name);
-            Logger.Log($"Found type: {type.Name}");
-            return type;
+            throw new Exception($"Could not load assembly for {typeName}");
         }
 
         public static bool ContainsDevice(uint ipId)
