@@ -20,7 +20,7 @@ namespace UXAV.AVnetCore.Models
             OnEventOccured(new EventMessage(eventMessageType, messageObject));
         }
 
-        internal static event EventPostedEventHandler EventOccured;
+        public static event EventPostedEventHandler EventOccured;
 
         private static void OnEventOccured(EventMessage message)
         {
@@ -28,7 +28,7 @@ namespace UXAV.AVnetCore.Models
         }
     }
 
-    internal delegate void EventPostedEventHandler(EventMessage message);
+    public delegate void EventPostedEventHandler(EventMessage message);
 
     public enum EventMessageType
     {
