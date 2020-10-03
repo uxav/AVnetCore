@@ -104,7 +104,7 @@
           <Private>True</Private>
         </Reference>
         <Reference Include="Figgle, Version=0.4.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\..\CapGemX\packages\Figgle.0.4.0\lib\net45\Figgle.dll</HintPath>
+          <HintPath>..\packages\Figgle.0.4.0\lib\net45\Figgle.dll</HintPath>
           <Private>True</Private>
         </Reference>
         <Reference Include="Microsoft.CSharp" />
