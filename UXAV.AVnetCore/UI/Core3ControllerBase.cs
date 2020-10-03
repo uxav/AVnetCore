@@ -234,7 +234,7 @@ namespace UXAV.AVnetCore.UI
                 IpAddress = args.DeviceIpAddress;
                 if (ExtenderSystem != null)
                 {
-                    Logger.Log($"{Device} Turning Backlight On");
+                    Logger.Debug($"{Device} Turning Backlight On");
                     ExtenderSystem.InvokeMethod("BacklightOn");
                 }
             }
@@ -263,8 +263,7 @@ namespace UXAV.AVnetCore.UI
                 : extender.GetType().Name;
             var sigName = extender.GetSigPropertyName(args.Sig);
             if (string.IsNullOrEmpty(sigName)) return;
-            Logger.Log(Logger.LoggerLevel.Debug,
-                $"{Device} {extenderName}.{sigName} = {args.Sig}");
+            Logger.Debug($"{Device} {extenderName}.{sigName} = {args.Sig}");
 
             switch (sigName)
             {
