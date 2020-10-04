@@ -16,6 +16,7 @@ using Newtonsoft.Json.Schema.Generation;
 using UXAV.AVnetCore.Models;
 using UXAV.Logging;
 using UXAV.Logging.Console;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace UXAV.AVnetCore.Config
 {
@@ -364,10 +365,12 @@ namespace UXAV.AVnetCore.Config
         {
             if (PropertyList.ContainsKey(key))
             {
+                // ReSharper disable once PossibleNullReferenceException
                 return PropertyList[key].ToObject<T>();
             }
 
             PropertyList[key] = new JValue(defaultValue);
+            SaveAuto(2);
             return defaultValue;
         }
 
@@ -396,7 +399,7 @@ namespace UXAV.AVnetCore.Config
             var request = WebRequest.CreateHttp(url);
             var response = (HttpWebResponse) request.GetResponse();
             Logger.Debug($"Cloud template data response: {response.StatusCode}");
-            var reader = new StreamReader(response.GetResponseStream());
+            var reader = new StreamReader(response.GetResponseStream() ?? throw new NullReferenceException());
             var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
             var ti = CultureInfo.CurrentCulture.TextInfo;
             csv.Configuration.HasHeaderRecord = true;
