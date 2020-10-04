@@ -4,9 +4,11 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using CsvHelper;
 using Newtonsoft.Json;
@@ -27,6 +29,7 @@ namespace UXAV.AVnetCore.Config
         private static readonly object LockWrite = new object();
         private static JSchema _schema;
         private static string _filePath;
+        private static HttpClient _client;
 
         static ConfigManager()
         {
@@ -400,6 +403,23 @@ namespace UXAV.AVnetCore.Config
             var response = (HttpWebResponse) request.GetResponse();
             Logger.Debug($"Cloud template data response: {response.StatusCode}");
             var reader = new StreamReader(response.GetResponseStream() ?? throw new NullReferenceException());
+            var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+            var ti = CultureInfo.CurrentCulture.TextInfo;
+            csv.Configuration.HasHeaderRecord = true;
+            csv.Configuration.PrepareHeaderForMatch = (header, i) =>
+                ti.ToTitleCase(Regex.Replace(header, @"[\W_]", " ").ToLower()).Replace(" ", string.Empty);
+            return csv.GetRecords<dynamic>();
+        }
+
+        public static async Task<IEnumerable<dynamic>> GetCloudCsvDataAsync(string url)
+        {
+            Logger.Debug($"Getting cloud template data from: {url}");
+            if (_client == null)
+            {
+                _client = new HttpClient();
+            }
+            var stream = await _client.GetStreamAsync(url);
+            var reader = new StreamReader(stream);
             var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
             var ti = CultureInfo.CurrentCulture.TextInfo;
             csv.Configuration.HasHeaderRecord = true;
