@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Crestron.SimplSharp;
+using CsvHelper;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
@@ -323,7 +325,8 @@ namespace UXAV.AVnetCore.Config
             var name = Regex.Replace(configName, " ", "_");
             if (name.ToLower() == "default")
                 throw new InvalidOperationException("Cannot have a file with the name " + configName);
-            name = configName.ToLower() + (string.IsNullOrEmpty(ConfigNameSpace) ? "" : "." + ConfigNameSpace) + ".config.json";
+            name = configName.ToLower() + (string.IsNullOrEmpty(ConfigNameSpace) ? "" : "." + ConfigNameSpace) +
+                   ".config.json";
             var path = ConfigDirectory + "/" + name;
             if (File.Exists(path)) throw new InvalidOperationException("File already exists called: " + path);
             ConfigPath = path;
@@ -363,6 +366,7 @@ namespace UXAV.AVnetCore.Config
             {
                 return PropertyList[key].ToObject<T>();
             }
+
             PropertyList[key] = new JValue(defaultValue);
             return defaultValue;
         }
@@ -384,6 +388,21 @@ namespace UXAV.AVnetCore.Config
             if (item != null) return item;
             SetPropertyListItemWithKey(key, string.Empty);
             return string.Empty;
+        }
+
+        public static IEnumerable<dynamic> GetCloudCsvData(string url)
+        {
+            Logger.Debug($"Getting cloud template data from: {url}");
+            var request = WebRequest.CreateHttp(url);
+            var response = (HttpWebResponse) request.GetResponse();
+            Logger.Debug($"Cloud template data response: {response.StatusCode}");
+            var reader = new StreamReader(response.GetResponseStream());
+            var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+            var ti = CultureInfo.CurrentCulture.TextInfo;
+            csv.Configuration.HasHeaderRecord = true;
+            csv.Configuration.PrepareHeaderForMatch = (header, i) =>
+                ti.ToTitleCase(Regex.Replace(header, @"[\W_]", " ").ToLower()).Replace(" ", string.Empty);
+            return csv.GetRecords<dynamic>();
         }
 
         /// <summary>
