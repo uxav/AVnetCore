@@ -107,12 +107,12 @@ namespace UXAV.AVnetCore.UI
 
             HardButtons.ButtonEvent += OnHardButtonEvent;
 
-            var files = Directory.GetFiles(Crestron.SimplSharp.CrestronIO.Directory.GetApplicationDirectory(),
-                $"*.sgd");
+            var files = Directory.GetFiles(SystemBase.ProgramApplicationDirectory,
+                "*.sgd", SearchOption.AllDirectories);
             // Look for SGD files with priority given to file names containing the device type name... ie 'CrestronApp'
             foreach (var file in files.OrderByDescending(f => f.Contains(Device.GetType().Name)))
             {
-                Logger.Log("Found SGD File: {0}, Loading...", file);
+                Logger.Success("Found SGD File: {0}, Loading...", file);
                 try
                 {
                     using (var fileStream = File.OpenRead(file))
@@ -120,11 +120,16 @@ namespace UXAV.AVnetCore.UI
                         Device.LoadSmartObjects(fileStream.GetCrestronStream());
                     }
 
+                    foreach (var smartObject in Device.SmartObjects)
+                    {
+                        Logger.Debug($"{this} has SmartObject ID {smartObject.Key}");
+                    }
+
                     break;
                 }
                 catch (Exception e)
                 {
-                    Logger.Error("Error loading SGD file, {0}", e.Message);
+                    Logger.Error($"Error loading SGD file, {e.Message}");
                 }
             }
         }
