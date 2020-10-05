@@ -95,18 +95,22 @@ namespace UXAV.AVnetCore.DeviceSupport
         /// </summary>
         public event DeviceCommunicatingChangeHandler DeviceCommunicatingChange;
 
-        internal void AllocateRoom()
+        internal void AllocateRoomOnStart()
         {
-            if (_roomIdAllocated > 0)
+            if (_roomIdAllocated <= 0) return;
+            if (!UxEnvironment.RoomWithIdExists(_roomIdAllocated))
             {
-                if (!UxEnvironment.RoomWithIdExists(_roomIdAllocated))
-                {
-                    Logger.Warn($"Cannot allocated {Name} to room with ID {_roomIdAllocated}, no room with that ID");
-                    return;
-                }
-
-                AllocatedRoom = UxEnvironment.GetRoom(_roomIdAllocated);
+                Logger.Warn($"Cannot allocated {Name} to room with ID {_roomIdAllocated}, no room with that ID");
+                return;
             }
+
+            AllocatedRoom = UxEnvironment.GetRoom(_roomIdAllocated);
+        }
+
+        internal void AllocateRoom(RoomBase room)
+        {
+            if(AllocatedRoom == room) return;
+            AllocatedRoom = room;
         }
 
         protected void SetName(string name)

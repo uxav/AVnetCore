@@ -12,6 +12,10 @@ namespace UXAV.AVnetCore.Models
         private readonly DisplayDeviceBase _device;
         private SourceBase _source;
         private bool _enabled;
+        /// <summary>
+        /// Only used if device is null
+        /// </summary>
+        private RoomBase _allocatedRoom;
 
         protected DisplayControllerBase(DisplayDeviceBase displayDevice)
         {
@@ -84,7 +88,23 @@ namespace UXAV.AVnetCore.Models
         }
 
 
-        public RoomBase Room => _device.AllocatedRoom;
+        public RoomBase Room
+        {
+            get
+            {
+                if (_device == null) return _allocatedRoom;
+                return _device.AllocatedRoom;
+            }
+            set
+            {
+                if (_device != null)
+                {
+                    _device.AllocateRoom(value);
+                    return;
+                }
+                _allocatedRoom = value;
+            }
+        }
 
         protected abstract void OnSourceChange(SourceBase source);
     }

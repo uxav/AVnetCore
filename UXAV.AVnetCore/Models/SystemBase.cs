@@ -459,7 +459,7 @@ namespace UXAV.AVnetCore.Models
 
             foreach (var device in DevicesDict.Values.OfType<DeviceBase>())
             {
-                device.AllocateRoom();
+                device.AllocateRoomOnStart();
             }
 
             SystemShouldAddItemsToInitialize(AddItemToInitialize);
