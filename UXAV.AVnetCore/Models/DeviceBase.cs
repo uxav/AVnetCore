@@ -84,6 +84,7 @@ namespace UXAV.AVnetCore.Models
                     @ConnectionInfo = ConnectionInfo,
                     @Online = value
                 });
+                DiagnosticService.GetMessages();
             }
         }
 

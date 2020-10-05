@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace UXAV.AVnetCore.Models.Diagnostics
@@ -32,9 +33,43 @@ namespace UXAV.AVnetCore.Models.Diagnostics
             Task.WhenAll(systemMessagesTask, deviceMessagesTask);
             messages.AddRange(systemMessagesTask.Result);
             messages.AddRange(deviceMessagesTask.Result);
+            var dangerCount = messages.Count(m => m.Level == MessageLevel.Danger);
+            var warningCount = messages.Count(m => m.Level == MessageLevel.Warning);
+            var infoCount = messages.Count(m => m.Level == MessageLevel.Info);
+            var successCount = messages.Count(m => m.Level == MessageLevel.Success);
+            var level = "success";
+            var levelCount = successCount;
+            if (infoCount > 0)
+            {
+                level = "info";
+                levelCount = infoCount;
+            }
+
+            if (warningCount > 0)
+            {
+                level = "warning";
+                levelCount = warningCount;
+            }
+
+            if (dangerCount > 0)
+            {
+                level = "danger";
+                levelCount = dangerCount;
+            }
+
+            var stats = new
+            {
+                @Danger = dangerCount,
+                @Warning = messages.Count(m => m.Level == MessageLevel.Warning),
+                @Info = messages.Count(m => m.Level == MessageLevel.Info),
+                @Success = messages.Count(m => m.Level == MessageLevel.Success),
+                @Level = level,
+                @LevelCount = levelCount
+            };
+            EventService.Notify(EventMessageType.DiagnosticsMessagesUpdated, stats);
             return messages;
         }
-     }
+    }
 
     internal delegate IEnumerable<DiagnosticMessage> GetSystemMessagesHandler();
 }

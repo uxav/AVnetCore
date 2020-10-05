@@ -41,6 +41,7 @@ namespace UXAV.AVnetCore.Models
         LogEntry,
         ProgramStopping,
         SessionExpired,
-        DeviceConnectionChange
+        DeviceConnectionChange,
+        DiagnosticsMessagesUpdated,
     }
 }
