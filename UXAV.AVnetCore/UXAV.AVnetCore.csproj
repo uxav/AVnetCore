@@ -237,9 +237,12 @@
         <Compile Include="Config\ConfigBase.cs" />
         <Compile Include="Config\ConfigManager.cs" />
         <Compile Include="Config\IConfigItem.cs" />
+        <Compile Include="DeviceSupport\CipDevices.cs" />
         <Compile Include="DeviceSupport\ComPortHandler.cs" />
+        <Compile Include="DeviceSupport\DeviceBase.cs" />
         <Compile Include="DeviceSupport\DisplayDeviceBase.cs" />
         <Compile Include="DeviceSupport\IDeviceWithStandbyMode.cs" />
+        <Compile Include="DeviceSupport\IGenericDeviceWrapper.cs" />
         <Compile Include="DeviceSupport\IVolumeControl.cs" />
         <Compile Include="DeviceSupport\IVolumeLevelDevice.cs" />
         <Compile Include="DeviceSupport\IDevice.cs" />
@@ -249,9 +252,7 @@
         <Compile Include="DeviceSupport\ISigProvider.cs" />
         <Compile Include="DeviceSupport\SigProviderDevice.cs" />
         <Compile Include="DeviceSupport\TcpConnectionBase.cs" />
-        <Compile Include="Models\CipDevices.cs" />
         <Compile Include="Models\Collections\UXCollection.cs" />
-        <Compile Include="Models\DeviceBase.cs" />
         <Compile Include="Models\Diagnostics\DeviceMessageExtenders.cs" />
         <Compile Include="Models\Diagnostics\DiagnosticMessage.cs" />
         <Compile Include="Models\Diagnostics\DiagnosticService.cs" />
@@ -261,6 +262,7 @@
         <Compile Include="Models\EventService.cs" />
         <Compile Include="Models\IGenericItem.cs" />
         <Compile Include="Models\IInitializable.cs" />
+        <Compile Include="Models\ISourceTarget.cs" />
         <Compile Include="Models\RoomClock.cs" />
         <Compile Include="Models\Rooms\RoomBase.cs" />
         <Compile Include="Models\Rooms\RoomCollection.cs" />

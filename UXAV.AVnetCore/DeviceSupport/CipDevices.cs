@@ -5,12 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
+using UXAV.AVnetCore.Models;
 using UXAV.AVnetCore.Models.Diagnostics;
 using UXAV.Logging;
 
-namespace UXAV.AVnetCore.Models
+namespace UXAV.AVnetCore.DeviceSupport
 {
     public static class CipDevices
     {

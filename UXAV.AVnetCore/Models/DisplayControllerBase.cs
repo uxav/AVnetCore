@@ -7,7 +7,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnetCore.Models
 {
-    public abstract class DisplayControllerBase
+    public abstract class DisplayControllerBase : ISourceTarget
     {
         private readonly DisplayDeviceBase _device;
         private SourceBase _source;

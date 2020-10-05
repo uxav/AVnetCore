@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Crestron.SimplSharp;
-using UXAV.AVnetCore.DeviceSupport;
+using UXAV.AVnetCore.Models;
 using UXAV.AVnetCore.Models.Diagnostics;
 using UXAV.AVnetCore.Models.Rooms;
 using UXAV.Logging;
 
-namespace UXAV.AVnetCore.Models
+namespace UXAV.AVnetCore.DeviceSupport
 {
     public abstract class DeviceBase : IDevice
     {

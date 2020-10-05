@@ -19,7 +19,7 @@ using IButton = UXAV.AVnetCore.UI.Components.IButton;
 
 namespace UXAV.AVnetCore.UI
 {
-    public abstract class Core3ControllerBase : ISigProvider
+    public abstract class Core3ControllerBase : ISigProvider, IGenericDeviceWrapper
     {
         private readonly uint _roomId;
         private RoomBase _room;
@@ -161,6 +161,8 @@ namespace UXAV.AVnetCore.UI
         }
 
         public BasicTriListWithSmartObject Device { get; }
+
+        public GenericDevice GenericDevice => Device;
 
         public uint Id => Device.ID;
 
