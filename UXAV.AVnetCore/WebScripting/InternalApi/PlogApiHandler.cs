@@ -15,7 +15,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
         {
         }
 
-        //[SecureRequest]
+        [SecureRequest]
         public void Get()
         {
             try
@@ -48,10 +48,10 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                         while (!reader.EndOfStream)
                         {
                             var line = reader.ReadLine();
-                            if(string.IsNullOrEmpty(line)) continue;
+                            if (string.IsNullOrEmpty(line)) continue;
                             var entry = Regex.Match(line,
                                 @"^(\w+): ([\w\.]+)(?: +\[App +(\d+)\])? +# +(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) +# +(.+)");
-                            if(!entry.Success) continue;
+                            if (!entry.Success) continue;
                             logs.Add(new
                             {
                                 @Level = entry.Groups[1].Value,
