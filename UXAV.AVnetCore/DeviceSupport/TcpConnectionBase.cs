@@ -13,6 +13,7 @@ namespace UXAV.AVnetCore.DeviceSupport
             Address = address;
             _port = port;
         }
+
         private bool _remainConnected;
         private TcpClient _client;
         private NetworkStream _stream;
@@ -24,7 +25,7 @@ namespace UXAV.AVnetCore.DeviceSupport
         public bool DebugEnabled { get; set; }
 
         public DeviceConnectionType ConnectionType => DeviceConnectionType.TcpSocket;
-        
+
         public event ConnectedStatusChangeEventHandler ConnectedChange;
         public event ReceivedDataEventHandler ReceivedData;
 
@@ -34,6 +35,7 @@ namespace UXAV.AVnetCore.DeviceSupport
             {
                 Logger.Debug($"{GetType().Name}.Connect()");
             }
+
             _remainConnected = true;
             Logger.Log("Connect()");
             if (_client != null)
@@ -43,7 +45,7 @@ namespace UXAV.AVnetCore.DeviceSupport
 
             _client = new TcpClient();
 
-            _connectTask = Task.Run((Func<Task>) ConnectionProcess);
+            _connectTask = Task.Run(ConnectionProcess);
         }
 
         public void Disconnect()
@@ -52,7 +54,9 @@ namespace UXAV.AVnetCore.DeviceSupport
             {
                 Logger.Debug($"{GetType().Name}.Disconnect()");
             }
+
             _remainConnected = false;
+            if (_client == null) return;
             try
             {
                 if (_client.Connected)
@@ -76,10 +80,10 @@ namespace UXAV.AVnetCore.DeviceSupport
             if (_stream == null) return;
             if (DebugEnabled)
             {
-                Logger.Debug($"{GetType().Name} {Address} Tx: {Tools.GetBytesAsReadableString(bytes, index, count, true)}");
+                Logger.Debug(
+                    $"{GetType().Name} {Address} Tx: {Tools.GetBytesAsReadableString(bytes, index, count, true)}");
             }
-
-            _stream.Write(bytes, index, count);
+            _stream.WriteAsync(bytes, index, count);
         }
 
         private async Task ConnectionProcess()
@@ -88,6 +92,7 @@ namespace UXAV.AVnetCore.DeviceSupport
             {
                 Logger.Debug($"{GetType().Name} Started {nameof(ConnectionProcess)}()");
             }
+
             while (_client != null && _remainConnected)
             {
                 try
@@ -102,6 +107,7 @@ namespace UXAV.AVnetCore.DeviceSupport
                     {
                         Connect();
                     }
+
                     return;
                 }
                 catch (Exception e)
@@ -116,19 +122,21 @@ namespace UXAV.AVnetCore.DeviceSupport
                     Thread.Sleep(1000);
                     continue;
                 }
+
                 if (DebugEnabled)
                 {
                     Logger.Debug($"{GetType().Name} Connected to {Address}, Getting stream..");
                 }
 
                 _failConnectCount = 0;
-                
+
                 _stream = _client.GetStream();
-                
+
                 if (DebugEnabled)
                 {
                     Logger.Debug($"{GetType().Name} Stream ok. Notifying online!");
                 }
+
                 OnConnectedChange(this, true);
 
                 var buffer = new byte[8192];
@@ -157,6 +165,7 @@ namespace UXAV.AVnetCore.DeviceSupport
                             {
                                 Logger.Debug($"{GetType().Name} Stream read count is 0 or less. Disconnecting...");
                             }
+
                             Logger.Warn("{0} disconnecting!", GetType().Name);
                             _stream = null;
                             OnConnectedChange(this, false);
@@ -167,7 +176,8 @@ namespace UXAV.AVnetCore.DeviceSupport
                         Array.Copy(buffer, bytes, count);
                         if (DebugEnabled)
                         {
-                            Logger.Debug($"{GetType().Name} {Address} Rx: {Tools.GetBytesAsReadableString(bytes, 0, bytes.Length, true)}");
+                            Logger.Debug(
+                                $"{GetType().Name} {Address} Rx: {Tools.GetBytesAsReadableString(bytes, 0, bytes.Length, true)}");
                         }
 
                         OnReceivedData(this, bytes);
@@ -185,10 +195,11 @@ namespace UXAV.AVnetCore.DeviceSupport
                     {
                         Logger.Debug($"{GetType().Name} Closing connection");
                     }
+
                     _client.Close();
                 }
             }
-            
+
             if (DebugEnabled)
             {
                 Logger.Debug($"{GetType().Name} exited connection process loop");
@@ -202,6 +213,7 @@ namespace UXAV.AVnetCore.DeviceSupport
                 {
                     Logger.Debug($"{GetType().Name} reconnecting..");
                 }
+
                 Connect();
             }
         }
