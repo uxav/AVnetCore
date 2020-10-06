@@ -126,22 +126,31 @@ namespace UXAV.AVnetCore
             return (SystemBase) ctor.Invoke(new object[] {controlSystem});
         }
 
-        public static string DevicePortAddressCreate(string device, uint ipId, uint port)
+        public static string DevicePortAddressCreate(string device, uint ipId, uint port = 0)
         {
             return $"{device}:{ipId:X2}:{port:D2}";
         }
 
         public static DevicePortAddress DevicePortAddressParse(string addressString)
         {
-            var match = Regex.Match(addressString, @"^(?:([\w\.]+)\.)?([\w\.]+):(\w{2}):(\d{1,2})$");
+            var match = Regex.Match(addressString, @"^(?:([\w\.]+)\.)?([\w\.]+):(\w{2})(?::(?:(\d{1,2})|([\w\.]+)))?$");
             if (!match.Success) throw new ArgumentException("Incorrect format for address", nameof(addressString));
-            return new DevicePortAddress
+            var result = new DevicePortAddress
             {
                 NameSpace = match.Groups[1].Value,
                 Device = match.Groups[2].Value,
-                IpId = uint.Parse(match.Groups[3].Value, NumberStyles.HexNumber),
-                Port = uint.Parse(match.Groups[4].Value)
+                IpId = uint.Parse(match.Groups[3].Value, NumberStyles.HexNumber)
             };
+            if (match.Groups[4].Success)
+            {
+                result.Port = uint.Parse(match.Groups[4].Value);
+            }
+            if (match.Groups[5].Success)
+            {
+                result.Address = match.Groups[5].Value;
+            }
+
+            return result;
         }
 
         public struct DevicePortAddress
@@ -150,6 +159,7 @@ namespace UXAV.AVnetCore
             public string Device;
             public uint IpId;
             public uint Port;
+            public string Address;
         }
 
         #region DeviceExtenderExtensionMethods
