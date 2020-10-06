@@ -84,7 +84,6 @@ namespace UXAV.AVnetCore.DeviceSupport
                     @ConnectionInfo = ConnectionInfo,
                     @Online = value
                 });
-                DiagnosticService.GetMessages();
             }
         }
 

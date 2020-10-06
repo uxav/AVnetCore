@@ -82,7 +82,6 @@ namespace UXAV.AVnetCore.DeviceSupport
                 @ConnectionInfo = $"IP ID: {currentdevice.ID:X2}",
                 @Online = args.DeviceOnLine
             });
-            DiagnosticService.GetMessages();
         }
 
         private static Type GetType(string typeName)
