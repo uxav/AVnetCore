@@ -481,7 +481,7 @@ namespace UXAV.AVnetCore.Models
                         (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                     Logger.Highlight("Initializing {0}", item.ToString());
                     item.Initialize();
-                    Thread.Sleep(500);
+                    Thread.Sleep(100);
                 }
                 catch (Exception e)
                 {
