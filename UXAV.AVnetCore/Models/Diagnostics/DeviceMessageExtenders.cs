@@ -1,5 +1,6 @@
 using System.Linq;
 using Crestron.SimplSharpPro;
+using Crestron.SimplSharpPro.UI;
 using UXAV.AVnetCore.DeviceSupport;
 
 namespace UXAV.AVnetCore.Models.Diagnostics
@@ -8,6 +9,9 @@ namespace UXAV.AVnetCore.Models.Diagnostics
     {
         public static DiagnosticMessage CreateStatusMessage(this GenericDevice device)
         {
+            if (device is CrestronGo && !device.IsOnline)
+                return new DiagnosticMessage(MessageLevel.Warning, $"{device.Name} is offline!",
+                    $"IP ID: {device.ID:X2}", device.GetType().Name, device.Description);
             if (!device.IsOnline)
                 return new DiagnosticMessage(MessageLevel.Danger, $"{device.Name} is offline!",
                     $"IP ID: {device.ID:X2}", device.GetType().Name, device.Description);
