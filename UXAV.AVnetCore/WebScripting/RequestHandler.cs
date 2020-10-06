@@ -13,9 +13,16 @@ namespace UXAV.AVnetCore.WebScripting
         {
             Server = server;
             Request = request;
-            if (!SuppressLogging)
+            try
             {
-                Logger.Debug(ToString());
+                if (!SuppressLogging)
+                {
+                    Logger.Debug(ToString());
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
             }
         }
         protected RequestHandler(WebScriptingServer server, WebScriptingRequest request, bool suppressLogging)
@@ -23,9 +30,16 @@ namespace UXAV.AVnetCore.WebScripting
             Server = server;
             Request = request;
             SuppressLogging = suppressLogging;
-            if (!SuppressLogging)
+            try
             {
-                Logger.Debug(ToString());
+                if (!SuppressLogging)
+                {
+                    Logger.Debug(ToString());
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
             }
         }
 
@@ -157,7 +171,14 @@ namespace UXAV.AVnetCore.WebScripting
 
         public sealed override string ToString()
         {
-            return $"{Request.Method} {Request.PathAndQueryString} ({GetType().Name})";
+            try
+            {
+                return $"{Request.Method} {Request.PathAndQueryString} ({GetType().Name})";
+            }
+            catch
+            {
+                return $"{Request.Method} {Request.Path} ({GetType().Name})";
+            }
         }
     }
 }
