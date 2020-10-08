@@ -91,32 +91,32 @@ namespace UXAV.AVnetCore.DeviceSupport
             var directory = new DirectoryInfo(SystemBase.ProgramApplicationDirectory);
             while (true)
             {
-                Logger.Debug($"Looking at files matching pattern: {search}*.dll");
-                foreach (var file in directory.GetFiles($"{search}*.dll"))
+                Logger.Debug($"Looking at files matching pattern: {search}.dll");
+                foreach (var file in directory.GetFiles($"{search}.dll"))
                 {
                     Logger.Debug($"Will try load assembly file: {file.Name}");
-                    var pattern = Regex.Match(file.Name, @"^([\w\.]+).dll").Groups[1].Value;
-                    if (Regex.IsMatch(typeName, pattern))
+                    var assembly = Assembly.LoadFile(file.FullName);
+                    var type = assembly.GetType(typeName);
+                    if (type != null)
                     {
-                        Logger.Debug($"Potential match: {file.Name}");
-                        var assembly = Assembly.LoadFile(file.FullName);
-                        var type = assembly.GetType(typeName);
-                        if (type != null)
-                        {
-                            Logger.Debug($"Found type: {type.Name}");
-                            return type;
-                        }
+                        Logger.Debug($"Found type: {type.Name}");
+                        return type;
                     }
                 }
 
-                if (string.IsNullOrEmpty(search)) break;
-                Logger.Debug($"Could not find using search: {search}*.dll");
-                if (search != "Crestron")
+                if (search == "*") break;
+                if (!search.EndsWith("*"))
                 {
-                    search = "Crestron";
+                    search = search + "*";
                     continue;
                 }
-                search = string.Empty;
+                Logger.Debug($"Could not find using search: {search}.dll");
+                if (search != "Crestron*")
+                {
+                    search = "Crestron*";
+                    continue;
+                }
+                search = "*";
             }
 
             throw new Exception($"Could not load assembly for {typeName}");
