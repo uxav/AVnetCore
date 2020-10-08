@@ -63,8 +63,8 @@ namespace UXAV.AVnetCore.UI.Components
         }
 
         public uint DigitalJoinNumber { get; }
-        public uint EnableJoinNumber { get; }
-        public uint VisibleJoinNumber { get; }
+        public uint EnableJoinNumber { get; private set; }
+        public uint VisibleJoinNumber { get; private set; }
 
         public virtual uint Id
         {
@@ -248,6 +248,16 @@ namespace UXAV.AVnetCore.UI.Components
         public void SetId(uint id)
         {
             _id = id;
+        }
+
+        public void SetEnableJoin(uint join)
+        {
+            EnableJoinNumber = join;
+        }
+
+        public void SetVisibleJoin(uint join)
+        {
+            VisibleJoinNumber = join;
         }
 
         private void OnSigChange(SigProviderDevice sigProviderDevice, SigEventArgs args)

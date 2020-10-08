@@ -305,6 +305,7 @@
         <Compile Include="UI\Core3Controllers.cs" />
         <Compile Include="UI\ReservedJoins\Serial.cs" />
         <Compile Include="UI\UIMediaIcons.cs" />
+        <Compile Include="UI\UIMultiModeButton.cs" />
         <Compile Include="WebScripting\ApiRequestHandler.cs" />
         <Compile Include="WebScripting\ApiWebScriptingServer.cs" />
         <Compile Include="WebScripting\AppAuthentication.cs" />
