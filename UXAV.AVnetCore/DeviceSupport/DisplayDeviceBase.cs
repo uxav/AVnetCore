@@ -113,10 +113,12 @@ namespace UXAV.AVnetCore.DeviceSupport
                     switch (args.NewPowerStatus)
                     {
                         case DevicePowerStatus.PowerOff:
+                            Logger.Debug($"{Name} device hoist Up()");
                             _deviceHoist.Up();
                             break;
                         case DevicePowerStatus.PowerOn:
                         case DevicePowerStatus.PowerWarming:
+                            Logger.Debug($"{Name} device hoist Down()");
                             _deviceHoist.Down();
                             break;
                     }
@@ -135,10 +137,12 @@ namespace UXAV.AVnetCore.DeviceSupport
                     {
                         case DevicePowerStatus.PowerCooling:
                         case DevicePowerStatus.PowerOff:
+                            Logger.Debug($"{Name} screen hoist Up()");
                             _screenHoist.Up();
                             break;
                         case DevicePowerStatus.PowerOn:
                         case DevicePowerStatus.PowerWarming:
+                            Logger.Debug($"{Name} screen hoist Down()");
                             _screenHoist.Down();
                             break;
                     }
