@@ -8,13 +8,13 @@ namespace UXAV.AVnetCore.DeviceSupport
     {
         private readonly BasicTriList _basicTriList;
 
-        internal SigProviderDevice(BasicTriList basicTriList)
+        public SigProviderDevice(BasicTriList basicTriList)
         {
             _basicTriList = basicTriList;
             _basicTriList.SigChange += BasicTriListOnSigChange;
         }
 
-        internal SigProviderDevice(SmartObject smartObject)
+        public SigProviderDevice(SmartObject smartObject)
         {
             SmartObject = smartObject;
             SmartObject.SigChange += SmartObjectOnSigChange;
