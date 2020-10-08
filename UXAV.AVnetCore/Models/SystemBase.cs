@@ -67,6 +67,7 @@ namespace UXAV.AVnetCore.Models
             Logger.Log("ProgramIDTag: {0}", InitialParametersClass.ProgramIDTag);
             Logger.Log("ApplicationNumber: {0}", InitialParametersClass.ApplicationNumber);
             Logger.Log("FirmwareVersion: {0}", InitialParametersClass.FirmwareVersion);
+            Logger.Log("SerialNumber: {0}", CrestronEnvironment.SystemInfo.SerialNumber);
             Logger.Log("App Info: {0}", callingAssembly.GetName().FullName);
             var avnetInfo = Assembly.GetExecutingAssembly().GetName();
             Logger.Log("{0} Version: {1}", avnetInfo.Name, avnetInfo.Version);
