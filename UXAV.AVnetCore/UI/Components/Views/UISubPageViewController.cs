@@ -1,8 +1,10 @@
+using UXAV.AVnetCore.DeviceSupport;
+
 namespace UXAV.AVnetCore.UI.Components.Views
 {
     public abstract class UISubPageViewController : UIViewControllerBase
     {
-        protected UISubPageViewController(UIViewControllerBase sigProvider, uint visibleJoinNumber)
+        protected UISubPageViewController(ISigProvider sigProvider, uint visibleJoinNumber)
             : base(sigProvider, visibleJoinNumber)
         {
         }

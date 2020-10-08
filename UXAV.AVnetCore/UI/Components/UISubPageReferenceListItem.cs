@@ -92,17 +92,17 @@ namespace UXAV.AVnetCore.UI.Components
 
         public UISubPageReferenceList List { get; }
 
-        protected ReadOnlyDictionary<uint, BoolInputSig> BoolInputSigs { get; }
+        public ReadOnlyDictionary<uint, BoolInputSig> BoolInputSigs { get; }
 
-        protected ReadOnlyDictionary<uint, BoolOutputSig> BoolOutputSigs { get; }
+        public ReadOnlyDictionary<uint, BoolOutputSig> BoolOutputSigs { get; }
 
-        protected ReadOnlyDictionary<uint, StringInputSig> StringInputSigs { get; }
+        public ReadOnlyDictionary<uint, StringInputSig> StringInputSigs { get; }
 
-        protected ReadOnlyDictionary<uint, StringOutputSig> StringOutputSigs { get; }
+        public ReadOnlyDictionary<uint, StringOutputSig> StringOutputSigs { get; }
 
-        protected ReadOnlyDictionary<uint, UShortInputSig> UShortInputSigs { get; }
+        public ReadOnlyDictionary<uint, UShortInputSig> UShortInputSigs { get; }
 
-        protected ReadOnlyDictionary<uint, UShortOutputSig> UShortOutputSigs { get; }
+        public ReadOnlyDictionary<uint, UShortOutputSig> UShortOutputSigs { get; }
 
         public uint Id { get; }
 
