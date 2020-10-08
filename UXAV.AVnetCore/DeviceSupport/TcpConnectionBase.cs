@@ -168,6 +168,7 @@ namespace UXAV.AVnetCore.DeviceSupport
 
                             Logger.Warn("{0} disconnecting!", GetType().Name);
                             _stream = null;
+                            _client = null;
                             OnConnectedChange(this, false);
                             break;
                         }
