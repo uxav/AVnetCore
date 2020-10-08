@@ -77,7 +77,7 @@ namespace UXAV.AVnetCore.DeviceSupport
 
         public virtual void Send(byte[] bytes, int index, int count)
         {
-            if (_stream == null) return;
+            if (_stream == null || !Connected) return;
             if (DebugEnabled)
             {
                 Logger.Debug(
