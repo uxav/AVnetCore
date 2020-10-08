@@ -10,6 +10,7 @@ namespace UXAV.AVnetCore.Models
     public abstract class DisplayControllerBase : ISourceTarget
     {
         private readonly DisplayDeviceBase _device;
+        private readonly string _name;
         private SourceBase _source;
         private bool _enabled;
         /// <summary>
@@ -17,9 +18,10 @@ namespace UXAV.AVnetCore.Models
         /// </summary>
         private RoomBase _allocatedRoom;
 
-        protected DisplayControllerBase(DisplayDeviceBase displayDevice)
+        protected DisplayControllerBase(DisplayDeviceBase displayDevice, string name)
         {
             _device = displayDevice;
+            _name = name;
         }
 
         public SourceBase Source
@@ -48,6 +50,10 @@ namespace UXAV.AVnetCore.Models
                 });
             }
         }
+
+        public DisplayDeviceBase Device => _device;
+
+        public string Name => _name;
 
         public bool Enabled
         {
