@@ -156,7 +156,7 @@ namespace UXAV.AVnetCore.DeviceSupport
                         catch (Exception e)
                         {
                             Logger.Warn(
-                                $"Reading stream failed, disconnecting / aborted?, {e.GetType().Name}: {e.Message}");
+                                $"{GetType().Name}: Reading stream failed, disconnecting / aborted?, {e.GetType().Name}: {e.Message}");
                         }
 
                         if (count <= 0)
