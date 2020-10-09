@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UXAV.AVnetCore.Models.Rooms;
 using UXAV.Logging;
 
@@ -12,6 +13,7 @@ namespace UXAV.AVnetCore.Models.Sources
         private readonly string _groupName;
         private readonly string _iconName;
         private readonly string _name;
+        private DisplayControllerBase _assignedDisplay;
 
         protected SourceBase(uint id, SourceType type, string name, string groupName, string iconName)
         {
@@ -82,6 +84,17 @@ namespace UXAV.AVnetCore.Models.Sources
                 AssignedRooms.Remove(room);
             }
         }
+
+        public bool IsAssignedToRoom => AssignedRooms.Any();
+
+        public void AssignToDisplay(DisplayControllerBase display)
+        {
+            _assignedDisplay = display ?? throw new ArgumentException("display cannot be null");
+        }
+
+        public DisplayControllerBase AssignedDisplay => _assignedDisplay;
+
+        public bool IsLocalToDisplay => _assignedDisplay != null;
 
         internal void InternalInitialize()
         {

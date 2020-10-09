@@ -53,6 +53,8 @@ namespace UXAV.AVnetCore.Models
 
         public DisplayDeviceBase Device => _device;
 
+        public SourceCollection<SourceBase> Sources => UxEnvironment.GetSources().SourcesForDisplay(this);
+
         public string Name => _name;
 
         public bool Enabled
@@ -94,7 +96,7 @@ namespace UXAV.AVnetCore.Models
         }
 
 
-        public RoomBase Room
+        public virtual RoomBase Room
         {
             get
             {

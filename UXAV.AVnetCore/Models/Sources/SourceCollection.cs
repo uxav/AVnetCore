@@ -46,7 +46,7 @@ namespace UXAV.AVnetCore.Models.Sources
         public SourceCollection<T> SourcesForRoom(RoomBase room)
         {
             if(room == null) throw new ArgumentException("room cannot be null");
-            return new SourceCollection<T>(this.Where(s => s.AssignedRooms.Keys.Contains(room.Id)));
+            return new SourceCollection<T>(this.Where(s => !s.IsLocalToDisplay && s.AssignedRooms.Keys.Contains(room.Id)));
         }
 
         /// <summary>
@@ -59,7 +59,12 @@ namespace UXAV.AVnetCore.Models.Sources
         {
             if(room == null) throw new ArgumentException("room cannot be null");
             return new SourceCollection<T>(this.Where(s =>
-                s.AssignedRooms.Keys.Contains(room.Id) || s.AssignedRooms.Count == 0));
+                !s.IsLocalToDisplay && (s.AssignedRooms.Keys.Contains(room.Id) || s.AssignedRooms.Count == 0)));
+        }
+
+        public SourceCollection<T> SourcesForDisplay(DisplayControllerBase display)
+        {
+            return new SourceCollection<T>(this.Where(s => s.AssignedDisplay == display));
         }
 
         public SourceCollection<T> SourcesOfGroupName(string groupName)
