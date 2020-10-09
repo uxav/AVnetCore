@@ -13,8 +13,9 @@ namespace UXAV.AVnetCore.DeviceSupport
 
         DeviceConnectionType ConnectionType { get; }
     }
-    
-    public enum DeviceConnectionType {
+
+    public enum DeviceConnectionType
+    {
         TcpSocket,
         UdpSocket,
         Serial,
