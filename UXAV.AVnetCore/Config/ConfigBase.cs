@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using Newtonsoft.Json.Linq;
 
@@ -8,7 +8,7 @@ namespace UXAV.AVnetCore.Config
     {
         [DisplayName("PList Dictionary")]
         [Description("PList for custom values as strings")]
-        public Dictionary<string, object> PropertyList { get; set; }
+        public ConcurrentDictionary<string, object> PropertyList { get; set; }
 
         public abstract void CreateDefault();
 
