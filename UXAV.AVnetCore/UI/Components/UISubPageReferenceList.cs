@@ -121,6 +121,7 @@ namespace UXAV.AVnetCore.UI.Components
                 foreach (var item in this)
                 {
                     item.LinkedObject = null;
+                    item.SetFeedbackInternal(false);
                 }
 
                 SetNumberOfItems(_count);
