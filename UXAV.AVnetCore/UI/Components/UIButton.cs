@@ -22,7 +22,7 @@ namespace UXAV.AVnetCore.UI.Components
         private string _name;
         private uint? _id;
 
-        public UIButton(ISigProvider sigProvider, uint digitalJoinNumber)
+        public UIButton(ISigProvider sigProvider, uint digitalJoinNumber, uint enableJoinNumber = 0, uint visibleJoinNumber = 0)
             : base(sigProvider)
         {
             DigitalJoinNumber = digitalJoinNumber;
@@ -32,11 +32,6 @@ namespace UXAV.AVnetCore.UI.Components
             _holdRepeatTimer = new Timer();
             _holdRepeatTimer.Elapsed += HoldTimerOnElapsed;
             _holdRepeatTimer.AutoReset = true;
-        }
-
-        public UIButton(ISigProvider sigProvider, uint digitalJoinNumber, uint enableJoinNumber, uint visibleJoinNumber)
-            : this(sigProvider, digitalJoinNumber)
-        {
             EnableJoinNumber = enableJoinNumber;
             VisibleJoinNumber = visibleJoinNumber;
         }
@@ -318,7 +313,7 @@ namespace UXAV.AVnetCore.UI.Components
         protected virtual void OnButtonEvent(UIButton button, ButtonEventArgs args)
         {
 #if DEBUG
-            Logger.Log("{0}, {1} {2}", this, args.EventType, args.HoldTime);
+            Logger.Debug("{0}, {1} {2}", this, args.EventType, args.HoldTime);
 #endif
             var handler = _buttonEvent;
             try

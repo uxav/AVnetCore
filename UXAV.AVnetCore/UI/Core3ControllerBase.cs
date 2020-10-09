@@ -164,6 +164,8 @@ namespace UXAV.AVnetCore.UI
 
         public GenericDevice GenericDevice => Device;
 
+        public event RoomChangeEventHandler RoomChanged;
+
         public uint Id => Device.ID;
 
         public SigProviderDevice SigProvider { get; }
@@ -304,6 +306,7 @@ namespace UXAV.AVnetCore.UI
             try
             {
                 OnRoomChange(value);
+                RoomChanged?.Invoke(this, value);
             }
             catch (Exception e)
             {
@@ -362,4 +365,6 @@ namespace UXAV.AVnetCore.UI
             return $"{Device}";
         }
     }
+
+    public delegate void RoomChangeEventHandler(Core3ControllerBase controller, RoomBase newRoom);
 }
