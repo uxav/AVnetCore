@@ -12,7 +12,7 @@ namespace UXAV.AVnetCore.Models
         private readonly DisplayDeviceBase _device;
         private readonly string _name;
         private SourceBase _source;
-        private bool _enabled;
+        private bool _enabled = true;
         /// <summary>
         /// Only used if device is null
         /// </summary>
@@ -31,6 +31,8 @@ namespace UXAV.AVnetCore.Models
             {
                 if (_source == value) return;
                 _source = value;
+                var name = _source != null ? _source.ToString() : "none";
+                Logger.Debug($"Display {Name} set source to {name}");
 
                 if (!Enabled) return;
                 Task.Run(() =>
