@@ -95,12 +95,17 @@ namespace UXAV.AVnetCore.DeviceSupport
                 foreach (var file in directory.GetFiles($"{search}.dll"))
                 {
                     Logger.Debug($"Will try load assembly file: {file.Name}");
-                    var assembly = Assembly.LoadFile(file.FullName);
-                    var type = assembly.GetType(typeName);
-                    if (type != null)
+                    try
                     {
+                        var assembly = Assembly.LoadFile(file.FullName);
+                        var type = assembly.GetType(typeName);
+                        if (type == null) continue;
                         Logger.Debug($"Found type: {type.Name}");
                         return type;
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Warn($"Error trying to load assembly file: {file.Name}, {e.Message}");
                     }
                 }
 
@@ -111,9 +116,9 @@ namespace UXAV.AVnetCore.DeviceSupport
                     continue;
                 }
                 Logger.Debug($"Could not find using search: {search}.dll");
-                if (search != "Crestron*")
+                if (search != "Crestron.*")
                 {
-                    search = "Crestron*";
+                    search = "Crestron.*";
                     continue;
                 }
                 search = "*";
