@@ -5,13 +5,13 @@ using UXAV.AVnetCore.DeviceSupport;
 
 namespace UXAV.AVnetCore.UI.Components.Views
 {
-    public abstract class UITabViewBase : UIViewControllerBase
+    public abstract class UITabControllerBase : UIViewControllerBase
     {
         private readonly UITabBar _tabBar;
         private readonly UIViewCollection<UISubPageViewController> _views;
         private readonly Dictionary<uint, uint> _viewsForTabButtons = new Dictionary<uint, uint>();
 
-        protected UITabViewBase(ISigProvider sigProvider, uint visibleJoinNumber, SmartObject tabBarSmartObject)
+        protected UITabControllerBase(ISigProvider sigProvider, uint visibleJoinNumber, SmartObject tabBarSmartObject)
             : base(sigProvider, visibleJoinNumber)
         {
             _tabBar = new UITabBar(tabBarSmartObject);

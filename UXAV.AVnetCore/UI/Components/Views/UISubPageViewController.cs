@@ -9,10 +9,10 @@ namespace UXAV.AVnetCore.UI.Components.Views
         {
         }
 
-        protected UISubPageViewController(UITabViewBase tabView, uint tabButtonNumber, uint visibleJoinNumber)
-            : base(tabView, visibleJoinNumber)
+        protected UISubPageViewController(UITabControllerBase tabController, uint tabButtonNumber, uint visibleJoinNumber)
+            : base(tabController, visibleJoinNumber)
         {
-            tabView.AddView(tabButtonNumber, this);
+            tabController.AddView(tabButtonNumber, this);
         }
     }
 }

@@ -298,7 +298,7 @@
         <Compile Include="UI\Components\Views\UIPageCollection.cs" />
         <Compile Include="UI\Components\Views\UIPageViewController.cs" />
         <Compile Include="UI\Components\Views\UISubPageViewController.cs" />
-        <Compile Include="UI\Components\Views\UITabViewBase.cs" />
+        <Compile Include="UI\Components\Views\UITabControllerBase.cs" />
         <Compile Include="UI\Components\Views\UIViewCollection.cs" />
         <Compile Include="UI\Components\Views\UIViewControllerBase.cs" />
         <Compile Include="UI\Core3ControllerBase.cs" />
