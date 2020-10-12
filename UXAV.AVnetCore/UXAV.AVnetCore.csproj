@@ -243,6 +243,7 @@
         <Compile Include="DeviceSupport\DisplayDeviceBase.cs" />
         <Compile Include="DeviceSupport\IDeviceWithStandbyMode.cs" />
         <Compile Include="DeviceSupport\IGenericDeviceWrapper.cs" />
+        <Compile Include="DeviceSupport\IpIdHelper.cs" />
         <Compile Include="DeviceSupport\IVolumeControl.cs" />
         <Compile Include="DeviceSupport\IVolumeLevelDevice.cs" />
         <Compile Include="DeviceSupport\IDevice.cs" />
