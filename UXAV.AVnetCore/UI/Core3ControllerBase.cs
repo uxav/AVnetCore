@@ -16,6 +16,8 @@ using UXAV.AVnetCore.UI.Components.Views;
 using UXAV.AVnetCore.UI.ReservedJoins;
 using UXAV.Logging;
 using IButton = UXAV.AVnetCore.UI.Components.IButton;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace UXAV.AVnetCore.UI
 {
@@ -241,11 +243,9 @@ namespace UXAV.AVnetCore.UI
             {
                 Logger.Log($"{currentdevice} has connected with IP: " + args.DeviceIpAddress);
                 IpAddress = args.DeviceIpAddress;
-                if (ExtenderSystem != null)
-                {
-                    Logger.Debug($"{Device} Turning Backlight On");
-                    ExtenderSystem.InvokeMethod("BacklightOn");
-                }
+                if (ExtenderSystem == null) return;
+                Logger.Debug($"{Device} Turning Backlight On");
+                ExtenderSystem.InvokeMethod("BacklightOn");
             }
             else
             {
@@ -272,7 +272,10 @@ namespace UXAV.AVnetCore.UI
                 : extender.GetType().Name;
             var sigName = extender.GetSigPropertyName(args.Sig);
             if (string.IsNullOrEmpty(sigName)) return;
-            Logger.Debug($"{Device} {extenderName}.{sigName} = {args.Sig}");
+            if (sigName != "LightSensorValueFeedback")
+            {
+                Logger.Debug($"{Device} {extenderName}.{sigName} = {args.Sig}");
+            }
 
             switch (sigName)
             {
@@ -283,6 +286,9 @@ namespace UXAV.AVnetCore.UI
                 case "MacAddressFeedback":
                     Logger.Log($"{this} MAC Address changed: {args.Sig.StringValue}");
                     MacAddress = args.Sig.StringValue;
+                    break;
+                case "LightSensorValueFeedback":
+                    OnLightSensorValueChanged(args.Sig.UShortValue);
                     break;
             }
         }
@@ -315,6 +321,10 @@ namespace UXAV.AVnetCore.UI
         }
 
         protected abstract void OnRoomChange(RoomBase value);
+
+        protected void OnLightSensorValueChanged(ushort lightSensorValue)
+        {
+        }
 
         protected virtual void ShowDefaultPage()
         {
