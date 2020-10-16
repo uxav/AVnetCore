@@ -106,10 +106,15 @@ namespace UXAV.AVnetCore.Models.Rooms
             Logger.Debug("Creating source selection thread handler");
             _sourceSelectionThread = new Thread(SelectSourceInternalThread);
             var previousSource = CurrentSource;
+            if (previousSource != null)
+            {
+                previousSource.RoomCount--;
+            }
             CurrentSource = source;
             if (CurrentSource != null)
             {
                 LastSource = CurrentSource;
+                CurrentSource.RoomCount++;
             }
 
             Logger.Highlight($"Room {Id} Source changed to \"{source?.ToString() ?? "null"}\", loading..");

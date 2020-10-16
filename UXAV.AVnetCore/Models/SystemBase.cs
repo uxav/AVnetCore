@@ -45,6 +45,7 @@ namespace UXAV.AVnetCore.Models
 
             UxEnvironment.System = this;
             UxEnvironment.ControlSystem = controlSystem;
+            UxEnvironment.InitConsoleCommands();
             CipDevices.Init(controlSystem);
 
             _initialConfig = ConfigManager.JConfig?.ToString();

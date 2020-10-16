@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Crestron.SimplSharpPro;
 using UXAV.AVnetCore.Models.Rooms;
@@ -13,6 +14,37 @@ namespace UXAV.AVnetCore.Models
     {
         private static readonly SourceCollection<SourceBase> SourceCollection = new SourceCollection<SourceBase>();
         private static readonly RoomCollection<RoomBase> RoomsCollection = new RoomCollection<RoomBase>();
+
+        internal static void InitConsoleCommands()
+        {
+            Logger.AddCommand((argString, args, connection, respond) =>
+            {
+                foreach (var room in GetRooms())
+                {
+                    respond(room + "\r\n");
+                }
+            }, "ListRooms", "List all rooms");
+            Logger.AddCommand((argString, args, connection, respond) =>
+            {
+                foreach (var source in GetSources())
+                {
+                    respond(source + "\r\n");
+                }
+            }, "ListSources", "List all sources");
+            Logger.AddCommand((argString, args, connection, respond) =>
+            {
+                try
+                {
+                    var roomId = uint.Parse(args["room"]);
+                    var sourceId = uint.Parse(args["source"]);
+                    GetRoom(roomId).SelectSource(GetSource(sourceId));
+                }
+                catch (Exception e)
+                {
+                    respond(e.ToString());
+                }
+            }, "SelectSource", "Select source in room", "room", "source");
+        }
 
         internal static void AddRoom(RoomBase room)
         {
@@ -52,6 +84,11 @@ namespace UXAV.AVnetCore.Models
         public static RoomCollection<T> GetRooms<T>() where T : RoomBase
         {
             return new RoomCollection<T>(RoomsCollection.Cast<T>());
+        }
+
+        public static SourceBase GetSource(uint sourceId)
+        {
+            return !SourceCollection.HasItemWithId(sourceId) ? null : SourceCollection[sourceId];
         }
 
         public static SourceCollection<SourceBase> GetSources()

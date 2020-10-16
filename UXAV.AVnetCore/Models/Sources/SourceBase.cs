@@ -14,6 +14,7 @@ namespace UXAV.AVnetCore.Models.Sources
         private readonly string _iconName;
         private readonly string _name;
         private DisplayControllerBase _assignedDisplay;
+        private uint _roomCount;
 
         protected SourceBase(uint id, SourceType type, string name, string groupName, string iconName)
         {
@@ -91,6 +92,27 @@ namespace UXAV.AVnetCore.Models.Sources
         {
             _assignedDisplay = display ?? throw new ArgumentException("display cannot be null");
         }
+
+        public uint RoomCount
+        {
+            get => _roomCount;
+            internal set
+            {
+                if(_roomCount == value) return;
+                _roomCount = value;
+                Logger.Debug($"Source: {this}, RoomCount = {value}");
+                try
+                {
+                    OnRoomCountChange(_roomCount);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+            }
+        }
+
+        protected abstract void OnRoomCountChange(uint roomCount);
 
         public DisplayControllerBase AssignedDisplay => _assignedDisplay;
 

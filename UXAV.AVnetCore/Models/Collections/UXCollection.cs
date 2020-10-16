@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using UXAV.Logging;
 
 namespace UXAV.AVnetCore.Models.Collections
 {
@@ -11,7 +12,6 @@ namespace UXAV.AVnetCore.Models.Collections
 
         internal UXCollection()
         {
-
         }
 
         internal UXCollection(IEnumerable<T> fromCollection)
@@ -37,6 +37,11 @@ namespace UXAV.AVnetCore.Models.Collections
         public ICollection<uint> Keys => InternalDictionary.Keys;
 
         public int Count => InternalDictionary.Count;
+
+        public bool HasItemWithId(uint id)
+        {
+            return InternalDictionary.ContainsKey(id);
+        }
 
         internal void Add(T item)
         {
