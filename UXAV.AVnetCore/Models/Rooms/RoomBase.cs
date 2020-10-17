@@ -156,7 +156,7 @@ namespace UXAV.AVnetCore.Models.Rooms
                 _power = value;
                 Logger.Highlight($"Room {Id} Power set to {_power}");
                 if (_power) Task.Run(RoomPowerOnProcess);
-                else Task.Run(RoomPowerOffProcess);
+                else Task.Run(RoomPowerOffProcessInternal);
                 EventService.Notify(EventMessageType.OnPowerChange, new
                 {
                     Room = Id,
@@ -190,6 +190,22 @@ namespace UXAV.AVnetCore.Models.Rooms
         }
 
         protected abstract void RoomPowerOnProcess();
+
+        private void RoomPowerOffProcessInternal()
+        {
+            while (SourceSelectionBusy)
+            {
+                Logger.Debug("RoomPowerOffProcessInternal(), Busy, Waiting");
+                Thread.Sleep(1000);
+            }
+
+            foreach (var controller in this.GetCore3Controllers())
+            {
+                controller.RoomPoweringOff();
+            }
+
+            RoomPowerOffProcess();
+        }
 
         protected abstract void RoomPowerOffProcess();
 

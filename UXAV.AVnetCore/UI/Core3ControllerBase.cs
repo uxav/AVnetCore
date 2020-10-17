@@ -17,6 +17,7 @@ using UXAV.AVnetCore.UI.Components.Views;
 using UXAV.AVnetCore.UI.ReservedJoins;
 using UXAV.Logging;
 using IButton = UXAV.AVnetCore.UI.Components.IButton;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -306,6 +307,7 @@ namespace UXAV.AVnetCore.UI
                 {
                     _room.SourceChanged -= RoomOnSourceChangedInternal;
                 }
+
                 _room = value;
                 OnRoomChangeInternal(value);
                 if (_room != null)
@@ -347,6 +349,8 @@ namespace UXAV.AVnetCore.UI
         protected abstract void UIShouldShowSource(SourceBase source);
 
         protected abstract void RoomOnSourceChanged(RoomBase room, SourceChangedEventArgs args);
+
+        public abstract void RoomPoweringOff();
 
         protected void OnLightSensorValueChanged(ushort lightSensorValue)
         {
