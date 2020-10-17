@@ -44,6 +44,18 @@ namespace UXAV.AVnetCore.Models
                     respond(e.ToString());
                 }
             }, "SelectSource", "Select source in room", "room", "source");
+            Logger.AddCommand((argString, args, connection, respond) =>
+            {
+                try
+                {
+                    var roomId = uint.Parse(args["room"]);
+                    GetRoom(roomId).PowerOff();
+                }
+                catch (Exception e)
+                {
+                    respond(e.ToString());
+                }
+            }, "PowerOffRoom", "Shutdown room", "room");
         }
 
         internal static void AddRoom(RoomBase room)
