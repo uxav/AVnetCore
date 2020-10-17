@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models.Sources;
+using UXAV.AVnetCore.UI;
 using UXAV.Logging;
 
 namespace UXAV.AVnetCore.Models.Rooms
@@ -12,10 +13,9 @@ namespace UXAV.AVnetCore.Models.Rooms
     /// <summary>
     /// The base class of all room models in the program
     /// </summary>
-    public abstract class RoomBase : IGenericItem
+    public abstract class RoomBase : IGenericItem, ISourceTarget
     {
         private RoomBase _parentRoom;
-        private Thread _sourceSelectionThread;
         private bool _power;
 
         protected RoomBase(uint id, string name, string screenName)
@@ -85,9 +85,9 @@ namespace UXAV.AVnetCore.Models.Rooms
             get { return UxEnvironment.GetSources().SourcesForRoomOrGlobal(this); }
         }
 
-        public bool SourceSelectionBusy => _sourceSelectionThread != null && _sourceSelectionThread.IsAlive;
+        public bool SourceSelectionBusy { get; private set; }
 
-        public bool SelectSource(SourceBase source)
+        public async Task<bool> SelectSourceAsync(SourceBase source)
         {
             Logger.Log(
                 $"Room {Id} SelectSource(SourceBase source), Source = \"{source?.ToString() ?? "null"}\" requested");
@@ -97,6 +97,8 @@ namespace UXAV.AVnetCore.Models.Rooms
                 return false;
             }
 
+            SourceSelectionBusy = true;
+
             if (source == CurrentSource)
             {
                 Logger.Warn($"Source already {CurrentSource?.ToString() ?? "null"}");
@@ -104,12 +106,12 @@ namespace UXAV.AVnetCore.Models.Rooms
             }
 
             Logger.Debug("Creating source selection thread handler");
-            _sourceSelectionThread = new Thread(SelectSourceInternalThread);
             var previousSource = CurrentSource;
             if (previousSource != null)
             {
                 previousSource.RoomCount--;
             }
+
             CurrentSource = source;
             if (CurrentSource != null)
             {
@@ -124,8 +126,18 @@ namespace UXAV.AVnetCore.Models.Rooms
                 Source = source
             });
 
-            Logger.Debug("Starting source load thread process");
-            _sourceSelectionThread.Start((previousSource, source));
+            Logger.Debug("Starting source load task");
+            await Task.Run(() =>
+            {
+                try
+                {
+                    SelectSourceInternal(previousSource, CurrentSource);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+            });
 
             Logger.Debug("Returning SelectSource true");
             return true;
@@ -144,7 +156,7 @@ namespace UXAV.AVnetCore.Models.Rooms
                 _power = value;
                 Logger.Highlight($"Room {Id} Power set to {_power}");
                 if (_power) Task.Run(RoomPowerOnProcess);
-                else Task.Run(RoomPowerOffProcess);
+                else Task.Run(RoomPowerOffProcessInternal);
                 EventService.Notify(EventMessageType.OnPowerChange, new
                 {
                     Room = Id,
@@ -167,11 +179,6 @@ namespace UXAV.AVnetCore.Models.Rooms
         public void PowerOff()
         {
             if (!Power) return;
-            if (SourceSelectionBusy)
-            {
-                throw new InvalidOperationException("Source selection is busy");
-            }
-
             Power = false;
         }
 
@@ -184,13 +191,26 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         protected abstract void RoomPowerOnProcess();
 
+        private void RoomPowerOffProcessInternal()
+        {
+            while (SourceSelectionBusy)
+            {
+                Logger.Debug("RoomPowerOffProcessInternal(), Busy, Waiting");
+                Thread.Sleep(1000);
+            }
+
+            foreach (var controller in this.GetCore3Controllers())
+            {
+                controller.RoomPoweringOff();
+            }
+
+            RoomPowerOffProcess();
+        }
+
         protected abstract void RoomPowerOffProcess();
 
-        private void SelectSourceInternalThread(object sourcesObject)
+        private void SelectSourceInternal(SourceBase previousSource, SourceBase newSource)
         {
-            var previousSource = ((ValueTuple<SourceBase, SourceBase>) sourcesObject).Item1;
-            var newSource = ((ValueTuple<SourceBase, SourceBase>) sourcesObject).Item2;
-
             if (newSource != null && !Power)
             {
                 Logger.Log($"Room {Id}, Source request, powering on first!");

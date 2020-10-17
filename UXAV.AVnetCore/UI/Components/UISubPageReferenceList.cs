@@ -98,6 +98,7 @@ namespace UXAV.AVnetCore.UI.Components
         protected virtual void SetNumberOfItems(ushort items)
         {
             SigProvider.UShortInput["Set Number of Items"].UShortValue = items;
+            Logger.Debug($"{GetType().Name} NumberOfItems: {NumberOfItems}");
         }
 
         public IEnumerator<UISubPageReferenceListItem> GetEnumerator()

@@ -11,11 +11,13 @@ using Crestron.SimplSharpPro.UI;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models;
 using UXAV.AVnetCore.Models.Rooms;
+using UXAV.AVnetCore.Models.Sources;
 using UXAV.AVnetCore.UI.Components;
 using UXAV.AVnetCore.UI.Components.Views;
 using UXAV.AVnetCore.UI.ReservedJoins;
 using UXAV.Logging;
 using IButton = UXAV.AVnetCore.UI.Components.IButton;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -301,8 +303,17 @@ namespace UXAV.AVnetCore.UI
             set
             {
                 if (_room == value) return;
+                if (_room != null)
+                {
+                    _room.SourceChanged -= RoomOnSourceChangedInternal;
+                }
+
                 _room = value;
                 OnRoomChangeInternal(value);
+                if (_room != null)
+                {
+                    _room.SourceChanged += RoomOnSourceChangedInternal;
+                }
             }
         }
 
@@ -313,6 +324,10 @@ namespace UXAV.AVnetCore.UI
             {
                 OnRoomChange(value);
                 RoomChanged?.Invoke(this, value);
+                if (value.CurrentSource != null)
+                {
+                    UIShouldShowSource(value.CurrentSource);
+                }
             }
             catch (Exception e)
             {
@@ -321,6 +336,21 @@ namespace UXAV.AVnetCore.UI
         }
 
         protected abstract void OnRoomChange(RoomBase value);
+
+        private void RoomOnSourceChangedInternal(RoomBase room, SourceChangedEventArgs args)
+        {
+            RoomOnSourceChanged(room, args);
+            if (args.Source != null)
+            {
+                UIShouldShowSource(args.Source);
+            }
+        }
+
+        protected abstract void UIShouldShowSource(SourceBase source);
+
+        protected abstract void RoomOnSourceChanged(RoomBase room, SourceChangedEventArgs args);
+
+        public abstract void RoomPoweringOff();
 
         protected void OnLightSensorValueChanged(ushort lightSensorValue)
         {

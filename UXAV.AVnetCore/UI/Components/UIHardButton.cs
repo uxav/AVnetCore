@@ -6,11 +6,13 @@ namespace UXAV.AVnetCore.UI.Components
     public class UIHardButton : UIButton
     {
         private readonly DeviceExtender _hardButtonExtender;
+        private bool _lastSetEnabled;
 
         internal UIHardButton(ISigProvider uiController, uint digitalJoinNumber, DeviceExtender hardButtonExtender)
             : base(uiController, digitalJoinNumber)
         {
             _hardButtonExtender = hardButtonExtender;
+            uiController.SigProvider.Device.OnlineStatusChange += DeviceOnOnlineStatusChange;
         }
 
         public override bool Enabled
@@ -25,6 +27,7 @@ namespace UXAV.AVnetCore.UI.Components
             set
             {
                 if (_hardButtonExtender == null) return;
+                _lastSetEnabled = value;
                 var methodName = $"TurnButton{DigitalJoinNumber}BackLight" + (value ? "On" : "Off");
                 _hardButtonExtender.InvokeMethod(methodName);
             }
@@ -36,6 +39,12 @@ namespace UXAV.AVnetCore.UI.Components
         {
             get => Enabled;
             set => Enabled = value;
+        }
+
+        private void DeviceOnOnlineStatusChange(GenericBase currentdevice, OnlineOfflineEventArgs args)
+        {
+            if(!args.DeviceOnLine) return;
+            Enabled = _lastSetEnabled;
         }
     }
 }
