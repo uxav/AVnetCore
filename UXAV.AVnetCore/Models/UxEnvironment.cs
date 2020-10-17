@@ -37,7 +37,7 @@ namespace UXAV.AVnetCore.Models
                 {
                     var roomId = uint.Parse(args["room"]);
                     var sourceId = uint.Parse(args["source"]);
-                    GetRoom(roomId).SelectSource(GetSource(sourceId));
+                    GetRoom(roomId).SelectSourceAsync(GetSource(sourceId));
                 }
                 catch (Exception e)
                 {

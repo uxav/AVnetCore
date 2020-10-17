@@ -64,7 +64,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
             var sourceId = json["SourceId"].Value<uint>();
 
             var result = UxEnvironment.GetRooms()[roomId]
-                .SelectSource(sourceId > 0 ? UxEnvironment.GetSources()[sourceId] : null);
+                .SelectSourceAsync(sourceId > 0 ? UxEnvironment.GetSources()[sourceId] : null);
 
             WriteResponse(result);
         }

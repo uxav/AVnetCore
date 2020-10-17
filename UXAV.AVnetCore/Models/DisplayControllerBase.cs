@@ -24,33 +24,32 @@ namespace UXAV.AVnetCore.Models
             _name = name;
         }
 
-        public SourceBase Source
-        {
-            get => _source;
-            set
-            {
-                if (_source == value) return;
-                _source = value;
-                var name = _source != null ? _source.ToString() : "none";
-                Logger.Debug($"Display {Name} set source to {name}");
+        public SourceBase CurrentSource => _source;
 
-                if (!Enabled) return;
-                Task.Run(() =>
+        public async Task<bool> SelectSourceAsync(SourceBase source)
+        {
+            if (_source == source) return false;
+            _source = source;
+            var name = _source != null ? _source.ToString() : "none";
+            Logger.Debug($"Display {Name} set source to {name}");
+
+            if (!Enabled) return false;
+            await Task.Run(() =>
+            {
+                try
                 {
-                    try
+                    OnSourceChange(_source);
+                    if (_device != null && _source != null)
                     {
-                        OnSourceChange(_source);
-                        if (_device != null && _source != null)
-                        {
-                            _device.Power = true;
-                        }
+                        _device.Power = true;
                     }
-                    catch (Exception e)
-                    {
-                        Logger.Error(e);
-                    }
-                });
-            }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+            });
+            return true;
         }
 
         public DisplayDeviceBase Device => _device;
