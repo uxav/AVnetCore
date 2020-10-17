@@ -118,6 +118,90 @@ namespace UXAV.AVnetCore.Models.Sources
 
         public bool IsLocalToDisplay => _assignedDisplay != null;
 
+        public bool IsConferenceSource
+        {
+            get
+            {
+                switch (Type)
+                {
+                    case SourceType.VideoConference:
+                    case SourceType.LiveStream:
+                    case SourceType.PolycomTrio:
+                    case SourceType.Hangouts:
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        public bool IsPresentationSource
+        {
+            get
+            {
+                switch (Type)
+                {
+                    case SourceType.PC:
+                    case SourceType.Laptop:
+                    case SourceType.AirPlay:
+                    case SourceType.Chromecast:
+                    case SourceType.AirMedia:
+                    case SourceType.ClickShare:
+                    case SourceType.GenericWirelessPresentationDevice:
+                    case SourceType.Pano:
+                    case SourceType.SolsticePod:
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        public bool IsMediaSource
+        {
+            get
+            {
+                switch(Type)
+                {
+                    case SourceType.DVD:
+                    case SourceType.BluRay:
+                    case SourceType.TV:
+                    case SourceType.IPTV:
+                    case SourceType.Satellite:
+                    case SourceType.Tuner:
+                    case SourceType.DAB:
+                    case SourceType.InternetRadio:
+                    case SourceType.iPod:
+                    case SourceType.AirPlay:
+                    case SourceType.MovieServer:
+                    case SourceType.MusicServer:
+                    case SourceType.InternetService:
+                    case SourceType.AppleTV:
+                    case SourceType.Chromecast:
+                    case SourceType.AndroidTV:
+                    case SourceType.XBox:
+                    case SourceType.PlayStation:
+                    case SourceType.NintendoWii:
+                    case SourceType.AirMedia:
+                    case SourceType.LiveStream:
+                    case SourceType.SignagePlayer:
+                    case SourceType.Sky:
+                    case SourceType.SkyHD:
+                    case SourceType.SkyQ:
+                    case SourceType.FreeView:
+                    case SourceType.FreeSat:
+                    case SourceType.YouView:
+                    case SourceType.YouTube:
+                    case SourceType.FireBox:
+                    case SourceType.Skype:
+                    case SourceType.Sonos:
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        }
+
         internal void InternalInitialize()
         {
             try
