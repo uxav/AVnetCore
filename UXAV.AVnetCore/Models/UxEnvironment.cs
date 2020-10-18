@@ -31,13 +31,13 @@ namespace UXAV.AVnetCore.Models
                     respond(source + "\r\n");
                 }
             }, "ListSources", "List all sources");
-            Logger.AddCommand((argString, args, connection, respond) =>
+            Logger.AddCommand(async (argString, args, connection, respond) =>
             {
                 try
                 {
                     var roomId = uint.Parse(args["room"]);
                     var sourceId = uint.Parse(args["source"]);
-                    GetRoom(roomId).SelectSourceAsync(GetSource(sourceId));
+                    await GetRoom(roomId).SelectSourceAsync(GetSource(sourceId));
                 }
                 catch (Exception e)
                 {
