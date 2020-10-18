@@ -324,9 +324,9 @@ namespace UXAV.AVnetCore.UI
             {
                 OnRoomChange(value);
                 RoomChanged?.Invoke(this, value);
-                if (value.CurrentSource != null)
+                if (value.GetCurrentSource() != null)
                 {
-                    UIShouldShowSource(value.CurrentSource);
+                    UIShouldShowSource(value.GetCurrentSource());
                 }
             }
             catch (Exception e)
@@ -340,7 +340,7 @@ namespace UXAV.AVnetCore.UI
         private void RoomOnSourceChangedInternal(RoomBase room, SourceChangedEventArgs args)
         {
             RoomOnSourceChanged(room, args);
-            if (args.Source != null)
+            if (args.Source != null && args.RoomSourceIndex == 1)
             {
                 UIShouldShowSource(args.Source);
             }

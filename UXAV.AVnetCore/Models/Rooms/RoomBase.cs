@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -17,6 +18,14 @@ namespace UXAV.AVnetCore.Models.Rooms
     {
         private RoomBase _parentRoom;
         private bool _power;
+
+        private readonly ConcurrentDictionary<uint, SourceBase> _currentSource =
+            new ConcurrentDictionary<uint, SourceBase>();
+
+        private readonly ConcurrentDictionary<uint, bool> _sourceSelectBusy =
+            new ConcurrentDictionary<uint, bool>();
+
+        private SourceBase _lastMainSource;
 
         protected RoomBase(uint id, string name, string screenName)
         {
@@ -74,78 +83,85 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         public event SourceChangedEventHandler SourceChanged;
 
-        public SourceBase CurrentSource { get; private set; }
-
-        public SourceBase LastSource { get; private set; }
-
-        public virtual SourceBase DefaultSource => LastSource ?? Sources.FirstOrDefault();
-
-        public SourceCollection<SourceBase> Sources
+        public virtual SourceBase GetCurrentSource(uint forIndex = 1)
         {
-            get { return UxEnvironment.GetSources().SourcesForRoomOrGlobal(this); }
+            return !_currentSource.ContainsKey(forIndex) ? null : _currentSource[forIndex];
         }
 
-        public bool SourceSelectionBusy { get; private set; }
+        public virtual SourceBase DefaultSource => _lastMainSource ?? Sources.FirstOrDefault();
 
-        public async Task<bool> SelectSourceAsync(SourceBase source)
+        public SourceCollection<SourceBase> Sources => UxEnvironment.GetSources().SourcesForRoomOrGlobal(this);
+
+        public virtual async Task<bool> SelectSourceAsync(SourceBase newSource, uint forIndex = 1)
         {
-            Logger.Log(
-                $"Room {Id} SelectSource(SourceBase source), Source = \"{source?.ToString() ?? "null"}\" requested");
-            if (SourceSelectionBusy)
+            Logger.Log($"Room {Id} SelectSource(SourceBase source), " +
+                       $"Source = \"{newSource?.ToString() ?? "none"}\" requested for index: {forIndex}");
+
+            if (_sourceSelectBusy.ContainsKey(forIndex) && _sourceSelectBusy[forIndex])
             {
-                Logger.Warn($"Cannot select source in room {Id}, source selection is busy");
-                return false;
+                throw new InvalidOperationException(
+                    $"Source selection failed for index {forIndex}, as busy selecting other source");
             }
 
-            SourceSelectionBusy = true;
+            var currentSource = _currentSource.ContainsKey(forIndex) ? _currentSource[forIndex] : null;
 
-            if (source == CurrentSource)
+            try
             {
-                Logger.Warn($"Source already {CurrentSource?.ToString() ?? "null"}");
-                return false;
-            }
-
-            Logger.Debug("Creating source selection thread handler");
-            var previousSource = CurrentSource;
-            if (previousSource != null)
-            {
-                previousSource.RoomCount--;
-            }
-
-            CurrentSource = source;
-            if (CurrentSource != null)
-            {
-                LastSource = CurrentSource;
-                CurrentSource.RoomCount++;
-            }
-
-            Logger.Highlight($"Room {Id} Source changed to \"{source?.ToString() ?? "null"}\", loading..");
-            OnSourceChanged(this, new SourceChangedEventArgs()
-            {
-                Type = SourceChangedEventArgs.EventType.Pending,
-                Source = source
-            });
-
-            Logger.Debug("Starting source load task");
-            await Task.Run(() =>
-            {
-                try
+                if (newSource == currentSource)
                 {
-                    SelectSourceInternal(previousSource, CurrentSource);
+                    Logger.Debug($"Source already {currentSource?.ToString() ?? "null"}");
+                    return false;
                 }
-                catch (Exception e)
-                {
-                    Logger.Error(e);
-                }
-            });
 
+                _sourceSelectBusy[forIndex] = true;
+
+                Logger.Debug("Creating source selection task..");
+                var previousSource = currentSource;
+                if (previousSource != null)
+                {
+                    previousSource.ActiveUseCount--;
+                }
+
+                _currentSource[forIndex] = newSource;
+                if (newSource != null)
+                {
+                    if (forIndex == 1)
+                    {
+                        _lastMainSource = newSource;
+                    }
+
+                    newSource.ActiveUseCount++;
+                }
+
+                Logger.Highlight($"Room {Id} Source changed to \"{newSource?.ToString() ?? "null"}\", loading..");
+                OnSourceChanged(this, new SourceChangedEventArgs()
+                {
+                    Type = SourceChangedEventArgs.EventType.Pending,
+                    Source = newSource,
+                    RoomSourceIndex = forIndex
+                });
+
+                Logger.Debug("Starting source load task");
+                await Task.Run(() =>
+                {
+                    SelectSourceInternal(previousSource, newSource, forIndex);
+                });
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            _sourceSelectBusy[forIndex] = false;
             Logger.Debug("Returning SelectSource true");
             return true;
         }
 
+        public abstract IVolumeControl VolumeControl { get; }
+
         public virtual bool Power
         {
-            get { return _power; }
+            get => _power;
             private set
             {
                 if (_power == value)
@@ -168,7 +184,7 @@ namespace UXAV.AVnetCore.Models.Rooms
         public void PowerOn()
         {
             if (Power) return;
-            if (SourceSelectionBusy)
+            if (_sourceSelectBusy.Values.Any(busy => busy))
             {
                 throw new InvalidOperationException("Source selection is busy");
             }
@@ -184,7 +200,7 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         internal bool SetPower(bool roomPower)
         {
-            if (SourceSelectionBusy || _power == roomPower) return false;
+            if (_sourceSelectBusy.Values.Any(busy => busy) || _power == roomPower) return false;
             Power = roomPower;
             return true;
         }
@@ -193,10 +209,16 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         private void RoomPowerOffProcessInternal()
         {
-            while (SourceSelectionBusy)
+            var count = 0;
+            while (_sourceSelectBusy.Values.Any(busy => busy))
             {
                 Logger.Debug("RoomPowerOffProcessInternal(), Busy, Waiting");
                 Thread.Sleep(1000);
+                count++;
+                if (count <= 10) continue;
+                Logger.Error("Giving up waiting for source selection not to be busy, powering off anyway");
+                _sourceSelectBusy.Clear();
+                break;
             }
 
             foreach (var controller in this.GetCore3Controllers())
@@ -209,7 +231,7 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         protected abstract void RoomPowerOffProcess();
 
-        private void SelectSourceInternal(SourceBase previousSource, SourceBase newSource)
+        private void SelectSourceInternal(SourceBase previousSource, SourceBase newSource, uint forIndex)
         {
             if (newSource != null && !Power)
             {
@@ -227,15 +249,17 @@ namespace UXAV.AVnetCore.Models.Rooms
 
             try
             {
-                SourceShouldLoad(previousSource, newSource);
+                SourceShouldLoad(previousSource, newSource, forIndex);
                 Thread.Sleep(500);
-                Logger.Success($"Source selection complete, Room {Id} source = {CurrentSource?.ToString() ?? "None"}");
+                Logger.Success(
+                    $"Source selection complete, Room {Id} source (forIndex = {forIndex}) = {GetCurrentSource(forIndex)?.ToString() ?? "None"}");
                 if (previousSource != newSource)
                 {
                     OnSourceChanged(this, new SourceChangedEventArgs()
                     {
                         Type = SourceChangedEventArgs.EventType.Complete,
-                        Source = newSource
+                        Source = newSource,
+                        RoomSourceIndex = forIndex
                     });
                 }
             }
@@ -246,7 +270,8 @@ namespace UXAV.AVnetCore.Models.Rooms
                     OnSourceChanged(this, new SourceChangedEventArgs()
                     {
                         Type = SourceChangedEventArgs.EventType.Failed,
-                        Source = newSource
+                        Source = newSource,
+                        RoomSourceIndex = forIndex
                     });
                 }
 
@@ -256,7 +281,7 @@ namespace UXAV.AVnetCore.Models.Rooms
             Logger.Log($"Room {Id} Source loading complete");
         }
 
-        protected abstract void SourceShouldLoad(SourceBase previousSource, SourceBase newSource);
+        protected abstract void SourceShouldLoad(SourceBase previousSource, SourceBase newSource, uint forIndex);
 
         private void OnSourceChanged(RoomBase room, SourceChangedEventArgs args)
         {
@@ -324,6 +349,11 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         public EventType Type { get; internal set; }
         public SourceBase Source { get; internal set; }
+
+        /// <summary>
+        /// Index of the source in the room. 1 is usually main source, others are aux sources;
+        /// </summary>
+        public uint RoomSourceIndex { get; internal set; }
     }
 
     public delegate void SourceChangedEventHandler(RoomBase room, SourceChangedEventArgs args);

@@ -24,9 +24,12 @@ namespace UXAV.AVnetCore.Models
             _name = name;
         }
 
-        public SourceBase CurrentSource => _source;
+        public SourceBase GetCurrentSource(uint forIndex = 1)
+        {
+            return _source;
+        }
 
-        public async Task<bool> SelectSourceAsync(SourceBase source)
+        public async Task<bool> SelectSourceAsync(SourceBase source, uint forIndex = 1)
         {
             if (_source == source) return false;
             _source = source;

@@ -5,7 +5,7 @@ namespace UXAV.AVnetCore.Models
 {
     public interface ISourceTarget
     {
-        SourceBase CurrentSource { get; }
-        Task<bool> SelectSourceAsync(SourceBase source);
+        SourceBase GetCurrentSource(uint forIndex = 1);
+        Task<bool> SelectSourceAsync(SourceBase source, uint forIndex = 1);
     }
 }

@@ -47,7 +47,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                     source.Priority,
                     @AssignedRooms = source.AssignedRooms.Keys,
                     @ActiveRooms = UxEnvironment.GetRooms()
-                        .Where(r => r.CurrentSource != null && r.CurrentSource.Id == source.Id)
+                        .Where(r => r.GetCurrentSource() != null && r.GetCurrentSource().Id == source.Id)
                         .Select(r => r.Id)
                 });
             }
