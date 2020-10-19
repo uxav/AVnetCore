@@ -302,6 +302,7 @@
         <Compile Include="UI\Components\Views\UITabControllerBase.cs" />
         <Compile Include="UI\Components\Views\UIViewCollection.cs" />
         <Compile Include="UI\Components\Views\UIViewControllerBase.cs" />
+        <Compile Include="UI\Components\VolumeSlider.cs" />
         <Compile Include="UI\Core3ControllerBase.cs" />
         <Compile Include="UI\Core3Controllers.cs" />
         <Compile Include="UI\ReservedJoins\Serial.cs" />
