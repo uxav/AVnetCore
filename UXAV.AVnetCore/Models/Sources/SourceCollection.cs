@@ -72,6 +72,21 @@ namespace UXAV.AVnetCore.Models.Sources
             return new SourceCollection<T>(this.Where(s => s.GroupName == groupName));
         }
 
+        public bool ContainsSourceOfType(SourceType type)
+        {
+            return InternalDictionary.Values.Any(s => s.Type == type);
+        }
+
+        public SourceCollection<T> GetPresentationSources()
+        {
+            return new SourceCollection<T>(this.Where(s => s.IsPresentationSource));
+        }
+
+        public SourceCollection<T> GetMediaSources()
+        {
+            return new SourceCollection<T>(this.Where(s => s.IsMediaSource));
+        }
+
         public override IEnumerator<T> GetEnumerator()
         {
             return InternalDictionary.Values

@@ -82,7 +82,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                 Parent = room.ParentRoom?.Id ?? 0,
                 SlaveRooms = room.ChildRooms.Keys,
                 room.Power,
-                @Source = room.CurrentSource?.Id ?? 0,
+                @Source = room.GetCurrentSource()?.Id ?? 0,
                 @Volume = 50,
                 @VolumeMute = false,
                 @MicMute = false
