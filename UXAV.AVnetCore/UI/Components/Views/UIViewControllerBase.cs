@@ -53,6 +53,8 @@ namespace UXAV.AVnetCore.UI.Components.Views
 
         public uint Id => VisibleJoinNumber;
 
+        public TimeSpan TimeOutTime => TimeSpan.FromMilliseconds(_timeOut.Interval);
+
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
