@@ -12,14 +12,16 @@ namespace UXAV.AVnetCore.UI.Components
         private UISliderValueChangedEventHandler _valueChanged;
         private readonly UShortInputSig _feedbackJoin;
 
-        public UISlider(ISigProvider sigProvider, uint analogJoinNumber)
-            : base(sigProvider, analogJoinNumber)
+        public UISlider(ISigProvider sigProvider, uint analogJoinNumber, ushort minValue = ushort.MinValue,
+            ushort maxValue = ushort.MaxValue)
+            : base(sigProvider, analogJoinNumber, minValue, maxValue)
         {
             _feedbackJoin = sigProvider.SigProvider.UShortInput[analogJoinNumber];
         }
 
-        public UISlider(ISigProvider sigProvider, string analogJoinName, string analogFeedbackJoinName)
-            : base(sigProvider, analogJoinName)
+        public UISlider(ISigProvider sigProvider, string analogJoinName, string analogFeedbackJoinName,
+            ushort minValue = ushort.MinValue, ushort maxValue = ushort.MaxValue)
+            : base(sigProvider, analogJoinName, minValue, maxValue)
         {
             _feedbackJoin = sigProvider.SigProvider.UShortInput[analogFeedbackJoinName];
         }
@@ -62,7 +64,8 @@ namespace UXAV.AVnetCore.UI.Components
 
         private void OnSigChange(SigProviderDevice sigProviderDevice, SigEventArgs args)
         {
-            if(args.Event != eSigEvent.UShortChange || args.Sig != sigProviderDevice.UShortOutput[AnalogJoinNumber]) return;
+            if (args.Event != eSigEvent.UShortChange ||
+                args.Sig != sigProviderDevice.UShortOutput[AnalogJoinNumber]) return;
             OnValueChanged(this, args.Sig.UShortValue);
         }
 
@@ -92,7 +95,7 @@ namespace UXAV.AVnetCore.UI.Components
         {
             get
             {
-                var value = Tools.ScaleRange(Value, ushort.MinValue, ushort.MaxValue, 0, 1);
+                var value = Tools.ScaleRange(Value, MinValue, MaxValue, 0, 1);
                 if (value < 0.005)
                 {
                     value = 0;
