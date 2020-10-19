@@ -141,7 +141,7 @@ namespace UXAV.AVnetCore.Models.Rooms
                     RoomSourceIndex = forIndex
                 });
 
-                Logger.Debug("Starting source load task");
+                Logger.Debug($"Starting source load task forIndex = {forIndex}");
                 await Task.Run(() =>
                 {
                     SelectSourceInternal(previousSource, newSource, forIndex);
@@ -252,7 +252,7 @@ namespace UXAV.AVnetCore.Models.Rooms
                 SourceShouldLoad(previousSource, newSource, forIndex);
                 Thread.Sleep(500);
                 Logger.Success(
-                    $"Source selection complete, Room {Id} source (forIndex = {forIndex}) = {GetCurrentSource(forIndex)?.ToString() ?? "None"}");
+                    $"Source selection complete, Room {Id} source (forIndex = {forIndex}) = {newSource?.ToString() ?? "None"}");
                 if (previousSource != newSource)
                 {
                     OnSourceChanged(this, new SourceChangedEventArgs()
