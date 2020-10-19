@@ -107,6 +107,7 @@ namespace UXAV.AVnetCore.UI.Components
                 if (string.IsNullOrEmpty(_feedbackJoinName))
                 {
                     SigProvider.BooleanInput[DigitalJoinNumber].BoolValue = value;
+                    return;
                 }
 
                 SigProvider.BooleanInput[_feedbackJoinName].BoolValue = value;
@@ -201,6 +202,7 @@ namespace UXAV.AVnetCore.UI.Components
             if (string.IsNullOrEmpty(_feedbackJoinName))
             {
                 SigProvider.BooleanInput[DigitalJoinNumber].BoolValue = value;
+                return;
             }
 
             SigProvider.BooleanInput[_feedbackJoinName].BoolValue = value;
