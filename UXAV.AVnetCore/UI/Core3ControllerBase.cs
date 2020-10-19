@@ -335,7 +335,7 @@ namespace UXAV.AVnetCore.UI
             }
         }
 
-        protected abstract void OnRoomChange(RoomBase value);
+        protected abstract void OnRoomChange(RoomBase room);
 
         private void RoomOnSourceChangedInternal(RoomBase room, SourceChangedEventArgs args)
         {
