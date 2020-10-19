@@ -18,6 +18,7 @@ namespace UXAV.AVnetCore.UI.Components
 
         public void SetText(string text)
         {
+            if (text == null) return;
             SigProvider.StringInput[SerialJoinNumber].StringValue = text;
         }
 

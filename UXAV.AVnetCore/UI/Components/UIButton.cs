@@ -22,7 +22,7 @@ namespace UXAV.AVnetCore.UI.Components
         private string _name;
         private uint? _id;
 
-        public UIButton(ISigProvider sigProvider, uint digitalJoinNumber, uint enableJoinNumber = 0, uint visibleJoinNumber = 0)
+        public UIButton(ISigProvider sigProvider, uint digitalJoinNumber, uint enableJoinNumber = 0, uint visibleJoinNumber = 0, uint id = 0)
             : base(sigProvider)
         {
             DigitalJoinNumber = digitalJoinNumber;
@@ -34,9 +34,13 @@ namespace UXAV.AVnetCore.UI.Components
             _holdRepeatTimer.AutoReset = true;
             EnableJoinNumber = enableJoinNumber;
             VisibleJoinNumber = visibleJoinNumber;
+            if (id > 0)
+            {
+                _id = id;
+            }
         }
 
-        public UIButton(ISigProvider sigProvider, string pressJoinName, string feedbackJoinName)
+        public UIButton(ISigProvider sigProvider, string pressJoinName, string feedbackJoinName, uint id = 0)
             : base(sigProvider)
         {
             DigitalJoinNumber = SigProvider.BooleanOutput[pressJoinName].Number;
@@ -47,14 +51,22 @@ namespace UXAV.AVnetCore.UI.Components
             _holdRepeatTimer = new Timer();
             _holdRepeatTimer.Elapsed += HoldTimerOnElapsed;
             _holdRepeatTimer.AutoReset = true;
+            if (id > 0)
+            {
+                _id = id;
+            }
         }
 
         public UIButton(ISigProvider sigProvider, string pressJoinName, string feedbackJoinName, string enableJoinName,
-            string visibleJoinName)
+            string visibleJoinName, uint id = 0)
             : this(sigProvider, pressJoinName, feedbackJoinName)
         {
             EnableJoinNumber = SigProvider.BooleanInput[enableJoinName].Number;
             VisibleJoinNumber = SigProvider.BooleanInput[visibleJoinName].Number;
+            if (id > 0)
+            {
+                _id = id;
+            }
         }
 
         public uint DigitalJoinNumber { get; }
@@ -107,6 +119,7 @@ namespace UXAV.AVnetCore.UI.Components
                 if (string.IsNullOrEmpty(_feedbackJoinName))
                 {
                     SigProvider.BooleanInput[DigitalJoinNumber].BoolValue = value;
+                    return;
                 }
 
                 SigProvider.BooleanInput[_feedbackJoinName].BoolValue = value;
@@ -201,6 +214,7 @@ namespace UXAV.AVnetCore.UI.Components
             if (string.IsNullOrEmpty(_feedbackJoinName))
             {
                 SigProvider.BooleanInput[DigitalJoinNumber].BoolValue = value;
+                return;
             }
 
             SigProvider.BooleanInput[_feedbackJoinName].BoolValue = value;

@@ -5,15 +5,19 @@ namespace UXAV.AVnetCore.UI.Components
 {
     public class UIGuage : UIObject, IAnalogItem
     {
-        public UIGuage(ISigProvider sigProvider, uint analogJoinNumber)
+        public UIGuage(ISigProvider sigProvider, uint analogJoinNumber, ushort minValue = ushort.MinValue, ushort maxValue = ushort.MaxValue)
             : base(sigProvider)
         {
+            MinValue = minValue;
+            MaxValue = maxValue;
             AnalogJoinNumber = analogJoinNumber;
         }
 
-        public UIGuage(ISigProvider sigProvider, string analogJoinName)
+        public UIGuage(ISigProvider sigProvider, string analogJoinName, ushort minValue = ushort.MinValue, ushort maxValue = ushort.MaxValue)
             : base(sigProvider)
         {
+            MinValue = minValue;
+            MaxValue = maxValue;
             AnalogJoinNumber = sigProvider.SigProvider.UShortInput[analogJoinName].Number;
         }
 
@@ -36,14 +40,18 @@ namespace UXAV.AVnetCore.UI.Components
                 throw new ArgumentOutOfRangeException(nameof(position), "value must be between 0 and 1");
             }
             SigProvider.UShortInput[AnalogJoinNumber].UShortValue =
-                (ushort) Tools.ScaleRange(position, 0, 1, ushort.MinValue, ushort.MinValue);
+                (ushort) Tools.ScaleRange(position, 0, 1, MinValue, MaxValue);
         }
 
         public void SetPositionScaled(double fromValue, double fromMinValue, double fromMaxValue)
         {
             SigProvider.UShortInput[AnalogJoinNumber].UShortValue =
-                (ushort) Tools.ScaleRange(fromValue, fromMinValue, fromMaxValue, ushort.MinValue, ushort.MaxValue);
+                (ushort) Tools.ScaleRange(fromValue, fromMinValue, fromMaxValue, MinValue, MaxValue);
         }
+
+        public ushort MinValue { get; }
+
+        public ushort MaxValue { get; }
 
         public ushort Value
         {
@@ -59,7 +67,7 @@ namespace UXAV.AVnetCore.UI.Components
 
         public double Position
         {
-            get => Tools.ScaleRange(Value, ushort.MinValue, ushort.MaxValue, 0, 1);
+            get => Tools.ScaleRange(Value, MinValue, MaxValue, 0, 1);
             set => SetPosition(value);
         }
     }

@@ -251,8 +251,8 @@ namespace UXAV.AVnetCore.Models.Rooms
             {
                 SourceShouldLoad(previousSource, newSource, forIndex);
                 Thread.Sleep(500);
-                Logger.Success(
-                    $"Source selection complete, Room {Id} source (forIndex = {forIndex}) = {newSource?.ToString() ?? "None"}");
+                Logger.Success($"Source selection complete, Room {Id} source (forIndex = {forIndex})" +
+                               $" from \"{previousSource?.ToString() ?? "None"}\" to \"{newSource?.ToString() ?? "None"}\"");
                 if (previousSource != newSource)
                 {
                     OnSourceChanged(this, new SourceChangedEventArgs()
@@ -265,15 +265,12 @@ namespace UXAV.AVnetCore.Models.Rooms
             }
             catch (Exception e)
             {
-                if (previousSource != newSource)
+                OnSourceChanged(this, new SourceChangedEventArgs()
                 {
-                    OnSourceChanged(this, new SourceChangedEventArgs()
-                    {
-                        Type = SourceChangedEventArgs.EventType.Failed,
-                        Source = newSource,
-                        RoomSourceIndex = forIndex
-                    });
-                }
+                    Type = SourceChangedEventArgs.EventType.Failed,
+                    Source = newSource,
+                    RoomSourceIndex = forIndex,
+                });
 
                 Logger.Error(e);
             }
@@ -285,11 +282,13 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         private void OnSourceChanged(RoomBase room, SourceChangedEventArgs args)
         {
+            Logger.Debug($"OnSourceChanged(room, args) {args.Type}");
             EventService.Notify(EventMessageType.OnSourceChange, new
             {
                 Room = room.Id,
                 Source = args.Source?.Id ?? 0,
-                Status = args.Type.ToString()
+                Status = args.Type.ToString(),
+                args.RoomSourceIndex
             });
 
             try
