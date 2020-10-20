@@ -31,6 +31,7 @@ namespace UXAV.AVnetCore.DeviceSupport
             for (var id = ipId; id <= MaxId; id++)
             {
                 if(_usedValues.Contains(id)) continue;
+                _usedValues.Add(id);
                 return id;
             }
             throw new InvalidOperationException("No more ID's available");

@@ -131,6 +131,11 @@ namespace UXAV.AVnetCore
             return $"{device}:{ipId:X2}:{port:D2}";
         }
 
+        public static string DevicePortAddressCreate(string device, uint ipId, string ipAddress)
+        {
+            return $"{device}:{ipId:X2}:{ipAddress}";
+        }
+
         public static DevicePortAddress DevicePortAddressParse(string addressString)
         {
             var match = Regex.Match(addressString, @"^(?:([\w\.]+)\.)?([\w\.]+):(\w{2})(?::(?:(\d{1,2})|([\w\.]+)))?$");

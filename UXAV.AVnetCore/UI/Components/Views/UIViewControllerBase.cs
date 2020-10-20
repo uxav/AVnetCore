@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Timers;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models;
@@ -13,6 +14,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
     public abstract class UIViewControllerBase : UIObject, IVisibleItem, IGenericItem
     {
         private readonly Timer _timeOut;
+        private readonly Mutex _mutex = new Mutex();
 
         /// <summary>
         /// 
@@ -65,6 +67,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
             get => VisibleJoinNumber == 0 || SigProvider.BooleanInput[VisibleJoinNumber].BoolValue;
             protected set
             {
+                _mutex.WaitOne();
                 if (VisibleJoinNumber == 0 || SigProvider.BooleanInput[VisibleJoinNumber].BoolValue == value) return;
 
                 RequestedVisibleState = value;
@@ -80,6 +83,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
                     new VisibilityChangeEventArgs(value, value
                         ? VisibilityChangeEventType.DidShow
                         : VisibilityChangeEventType.DidHide));
+                _mutex.ReleaseMutex();
             }
         }
 
@@ -102,6 +106,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
         {
             if (time.TotalMilliseconds > 0)
             {
+                Logger.Debug($"{this} {nameof(Show)} with Timeout: {time}");
                 _timeOut.Interval = time.TotalMilliseconds;
                 _timeOut.Start();
             }
@@ -115,6 +120,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
         /// <param name="time">TimeSpan duration to timeout</param>
         protected void SetTimeOut(TimeSpan time)
         {
+            Logger.Debug($"{this} {nameof(SetTimeOut)}(time = {time})");
             _timeOut.Stop();
             _timeOut.Interval = time.TotalMilliseconds;
             _timeOut.Enabled = true;
@@ -187,6 +193,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
 
         private void TimeOutOnElapsed(object sender, ElapsedEventArgs e)
         {
+            Logger.Debug($"{this} Timeout elapsed");
             Hide();
         }
 
@@ -213,6 +220,11 @@ namespace UXAV.AVnetCore.UI.Components.Views
             }
 
             base.Dispose(disposing);
+        }
+
+        public override string ToString()
+        {
+            return $"{GetType().Name}, view with join {VisibleJoinNumber}";
         }
     }
 }
