@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Crestron.SimplSharpPro;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.Logging;
@@ -10,6 +11,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
     public abstract class UIPageViewController : UIViewControllerBase
     {
         private readonly Core3ControllerBase _core3Controller;
+        private readonly Mutex _mutex = new Mutex();
 
         /// <summary>
         /// Constructor for a Page based view controller
@@ -49,8 +51,8 @@ namespace UXAV.AVnetCore.UI.Components.Views
             get => SigProvider.BooleanInput[VisibleJoinNumber].BoolValue;
             protected set
             {
+                _mutex.WaitOne();
                 if (SigProvider.BooleanInput[VisibleJoinNumber].BoolValue == value) return;
-
                 Logger.Debug($"Page {VisibleJoinNumber} Visible set to {value}");
 
                 RequestedVisibleState = value;
@@ -85,6 +87,8 @@ namespace UXAV.AVnetCore.UI.Components.Views
                     new VisibilityChangeEventArgs(value, value
                         ? VisibilityChangeEventType.DidShow
                         : VisibilityChangeEventType.DidHide));
+
+                _mutex.ReleaseMutex();
             }
         }
 
