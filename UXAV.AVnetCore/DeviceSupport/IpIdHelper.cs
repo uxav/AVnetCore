@@ -28,11 +28,14 @@ namespace UXAV.AVnetCore.DeviceSupport
         public uint GetNextValueStartingAt(uint ipId)
         {
             if(ipId < 0x03) throw new IndexOutOfRangeException("id must be greater than 0x03");
-            for (var id = ipId; id <= MaxId; id++)
+            var id = ipId;
+            for (; id <= MaxId; id++)
             {
                 if(_usedValues.Contains(id)) continue;
-                return id;
+                break;
             }
+            _usedValues.Add(id);
+            return id;
             throw new InvalidOperationException("No more ID's available");
         }
     }
