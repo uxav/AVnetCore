@@ -416,9 +416,22 @@ namespace UXAV.AVnetCore.Config
             Logger.Debug($"Getting cloud template data from: {url}");
             if (_client == null)
             {
-                _client = new HttpClient();
+                _client = new HttpClient {Timeout = TimeSpan.FromSeconds(10)};
             }
             var stream = await _client.GetStreamAsync(url);
+            var reader = new StreamReader(stream);
+            var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+            var ti = CultureInfo.CurrentCulture.TextInfo;
+            csv.Configuration.HasHeaderRecord = true;
+            csv.Configuration.PrepareHeaderForMatch = (header, i) =>
+                ti.ToTitleCase(Regex.Replace(header, @"[\W_]", " ").ToLower()).Replace(" ", string.Empty);
+            return csv.GetRecords<dynamic>();
+        }
+
+        public static IEnumerable<dynamic> GetCsvData(string filePath)
+        {
+            Logger.Debug($"Getting template data from: {filePath}");
+            var stream = File.OpenRead(filePath);
             var reader = new StreamReader(stream);
             var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
             var ti = CultureInfo.CurrentCulture.TextInfo;
