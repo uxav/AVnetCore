@@ -5,19 +5,22 @@ namespace UXAV.AVnetCore.UI
 {
     public class UIMultiModeButton : UIButton, IAnalogItem
     {
-        public UIMultiModeButton(ISigProvider sigProvider, uint digitalJoinNumber, uint analogJoinNumber)
-            : base(sigProvider, digitalJoinNumber)
+        public UIMultiModeButton(ISigProvider sigProvider, uint digitalJoinNumber, uint analogJoinNumber,
+            uint enableJoinNumber = 0, uint visibleJoinNumber = 0, uint id = 0)
+            : base(sigProvider, digitalJoinNumber, enableJoinNumber, visibleJoinNumber, id)
         {
             AnalogJoinNumber = analogJoinNumber;
         }
 
-        public UIMultiModeButton(ISigProvider sigProvider, string pressJoinName, string feedbackJoinName, string analogJoinName)
+        public UIMultiModeButton(ISigProvider sigProvider, string pressJoinName, string feedbackJoinName,
+            string analogJoinName)
             : base(sigProvider, pressJoinName, feedbackJoinName)
         {
             AnalogJoinNumber = SigProvider.UShortInput[analogJoinName].Number;
         }
 
         public uint AnalogJoinNumber { get; }
+
         public void SetValue(ushort value)
         {
             SigProvider.UShortInput[AnalogJoinNumber].UShortValue = value;

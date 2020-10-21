@@ -68,7 +68,11 @@ namespace UXAV.AVnetCore.UI.Components.Views
             protected set
             {
                 _mutex.WaitOne();
-                if (VisibleJoinNumber == 0 || SigProvider.BooleanInput[VisibleJoinNumber].BoolValue == value) return;
+                if (VisibleJoinNumber == 0 || SigProvider.BooleanInput[VisibleJoinNumber].BoolValue == value)
+                {
+                    _mutex.ReleaseMutex();
+                    return;
+                }
 
                 RequestedVisibleState = value;
 
