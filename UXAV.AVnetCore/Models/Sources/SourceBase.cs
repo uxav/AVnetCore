@@ -159,6 +159,26 @@ namespace UXAV.AVnetCore.Models.Sources
             }
         }
 
+        public bool IsWirelessPresentationSource
+        {
+            get
+            {
+                switch (Type)
+                {
+                    case SourceType.AirPlay:
+                    case SourceType.Chromecast:
+                    case SourceType.AirMedia:
+                    case SourceType.ClickShare:
+                    case SourceType.GenericWirelessPresentationDevice:
+                    case SourceType.Pano:
+                    case SourceType.SolsticePod:
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        }
+
         public bool IsMediaSource
         {
             get

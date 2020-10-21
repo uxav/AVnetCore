@@ -79,7 +79,8 @@ namespace UXAV.AVnetCore.Models.Sources
 
         public SourceCollection<T> GetPresentationSources()
         {
-            return new SourceCollection<T>(this.Where(s => s.IsPresentationSource));
+            return new SourceCollection<T>(this.Where(s => s.IsPresentationSource)
+                .OrderByDescending(s => s.IsWirelessPresentationSource));
         }
 
         public SourceCollection<T> GetMediaSources()
