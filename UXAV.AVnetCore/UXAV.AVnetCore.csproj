@@ -297,6 +297,7 @@
         <Compile Include="UI\Components\UISubPageReferenceListItem.cs" />
         <Compile Include="UI\Components\UITabBar.cs" />
         <Compile Include="UI\Components\UITextButton.cs" />
+        <Compile Include="UI\Components\Views\UIDialog.cs" />
         <Compile Include="UI\Components\Views\UIPageCollection.cs" />
         <Compile Include="UI\Components\Views\UIPageViewController.cs" />
         <Compile Include="UI\Components\Views\UISubPageViewController.cs" />
