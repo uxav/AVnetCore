@@ -69,7 +69,7 @@ namespace UXAV.AVnetCore.UI
             Device.StringInput[Serial.TimeZone].StringValue = $"Time Zone: {CrestronEnvironment.GetTimeZone()}";
             Device.StringInput[Serial.PanelMacAddress].StringValue = "Unknown";
             SigProvider.StringInput[Serial.ProcessorHostName].StringValue = SystemBase.HostName;
-            SigProvider.StringInput[Serial.ProcessorIpAddress].StringValue = SystemBase.IpAddress;
+            SigProvider.StringInput[Serial.Description].StringValue = description;
 
             if (SystemBase.DevicePlatform == eDevicePlatform.Server)
             {
