@@ -241,6 +241,7 @@
         <Compile Include="DeviceSupport\ComPortHandler.cs" />
         <Compile Include="DeviceSupport\DeviceBase.cs" />
         <Compile Include="DeviceSupport\DisplayDeviceBase.cs" />
+        <Compile Include="DeviceSupport\ICamera.cs" />
         <Compile Include="DeviceSupport\IDeviceWithStandbyMode.cs" />
         <Compile Include="DeviceSupport\IGenericDeviceWrapper.cs" />
         <Compile Include="DeviceSupport\IpIdHelper.cs" />
