@@ -114,7 +114,12 @@ namespace UXAV.AVnetCore.UI
             var files = Directory.GetFiles(SystemBase.ProgramApplicationDirectory,
                 "*.sgd", SearchOption.AllDirectories);
             // Look for SGD files with priority given to file names containing the device type name... ie 'CrestronApp'
-            foreach (var file in files.OrderByDescending(f => f.Contains(Device.GetType().Name)))
+            var posibleFiles = files.OrderByDescending(f => f.Contains(Device.Name)).ToArray();
+            foreach (var file in posibleFiles)
+            {
+                Logger.Debug($"Possible sgd file: {file}");
+            }
+            foreach (var file in posibleFiles)
             {
                 Logger.Success("Found SGD File: {0}, Loading...", file);
                 try
