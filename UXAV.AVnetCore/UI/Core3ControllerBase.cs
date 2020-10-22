@@ -397,9 +397,14 @@ namespace UXAV.AVnetCore.UI
 
         internal void InitializeInternal()
         {
-            _defaultRoom = UxEnvironment.GetRoom(_roomId);
+            if (UxEnvironment.RoomWithIdExists(_roomId))
+            {
+                _defaultRoom = UxEnvironment.GetRoom(_roomId);
+            }
+
             OnInitialize(_defaultRoom);
             Room = _defaultRoom;
+
             Task.Run(ShowDefaultPage);
         }
 
