@@ -15,5 +15,6 @@ namespace UXAV.AVnetCore.UI.ReservedJoins
         public const uint PanelMacAddress = 11;
         public const uint ProcessorHostName = 12;
         public const uint ProcessorIpAddress = 13;
+        public const uint Description = 14;
     }
 }
