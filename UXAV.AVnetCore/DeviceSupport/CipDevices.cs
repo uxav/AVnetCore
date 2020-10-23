@@ -147,6 +147,11 @@ namespace UXAV.AVnetCore.DeviceSupport
             return Devices.Values;
         }
 
+        public static IEnumerable<T> GetDevices<T>() where T : GenericDevice
+        {
+            return Devices.Values.Where(d => d is T).Cast<T>();
+        }
+
         public static IEnumerable<DiagnosticMessage> GetDiagnosticMessages()
         {
             return Devices.Values.Select(device => device.CreateStatusMessage());
