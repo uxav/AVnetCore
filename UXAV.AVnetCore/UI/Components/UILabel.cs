@@ -9,6 +9,11 @@ namespace UXAV.AVnetCore.UI.Components
             SerialJoinNumber = serialJoinNumber;
         }
 
+        public UILabel(ISigProvider sigProvider, string serialJoinName) : base(sigProvider)
+        {
+            SerialJoinNumber = sigProvider.SigProvider.StringInput[serialJoinName].Number;
+        }
+
         public uint SerialJoinNumber { get; }
 
         public void Clear()
