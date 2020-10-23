@@ -69,7 +69,7 @@ namespace UXAV.AVnetCore.UI
             Device.StringInput[Serial.TimeZone].StringValue = $"Time Zone: {CrestronEnvironment.GetTimeZone()}";
             Device.StringInput[Serial.PanelMacAddress].StringValue = "Unknown";
             SigProvider.StringInput[Serial.ProcessorHostName].StringValue = SystemBase.HostName;
-            SigProvider.StringInput[Serial.ProcessorIpAddress].StringValue = SystemBase.IpAddress;
+            SigProvider.StringInput[Serial.Description].StringValue = description;
 
             if (SystemBase.DevicePlatform == eDevicePlatform.Server)
             {
@@ -114,7 +114,12 @@ namespace UXAV.AVnetCore.UI
             var files = Directory.GetFiles(SystemBase.ProgramApplicationDirectory,
                 "*.sgd", SearchOption.AllDirectories);
             // Look for SGD files with priority given to file names containing the device type name... ie 'CrestronApp'
-            foreach (var file in files.OrderByDescending(f => f.Contains(Device.GetType().Name)))
+            var posibleFiles = files.OrderByDescending(f => f.Contains(Device.Name)).ToArray();
+            foreach (var file in posibleFiles)
+            {
+                Logger.Debug($"Possible sgd file: {file}");
+            }
+            foreach (var file in posibleFiles)
             {
                 Logger.Success("Found SGD File: {0}, Loading...", file);
                 try
@@ -392,9 +397,14 @@ namespace UXAV.AVnetCore.UI
 
         internal void InitializeInternal()
         {
-            _defaultRoom = UxEnvironment.GetRoom(_roomId);
+            if (UxEnvironment.RoomWithIdExists(_roomId))
+            {
+                _defaultRoom = UxEnvironment.GetRoom(_roomId);
+            }
+
             OnInitialize(_defaultRoom);
             Room = _defaultRoom;
+
             Task.Run(ShowDefaultPage);
         }
 

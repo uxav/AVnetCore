@@ -137,6 +137,13 @@ namespace UXAV.AVnetCore.UI.Components
             OnSelectedItemChange(this);
         }
 
+        public virtual uint AddItem(string name, object linkedObject, bool holdOffSettingListSize)
+        {
+            var index = this.AddItem(linkedObject, holdOffSettingListSize);
+            this[index].Name = name;
+            return index;
+        }
+
         public virtual uint AddItem(object linkedObject, bool holdOffSettingListSize)
         {
             if (_count == MaxNumberOfItems)
