@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
+using Crestron.SimplSharpPro.Diagnostics;
 using UXAV.AVnetCore.Cloud;
 using UXAV.AVnetCore.Config;
 using UXAV.AVnetCore.DeviceSupport;
@@ -57,6 +58,27 @@ namespace UXAV.AVnetCore.Models
             RoomClock.Start();
             UpdateBootStatus(EBootStatus.Booting, "System is booting", 0);
 
+            SystemMonitor.CPUStatisticChange += args =>
+            {
+                if (args.StatisticWhichChanged != eCPUStatisticChange.MaximumUtilization) return;
+                EventService.Notify(EventMessageType.SystemMonitorCpuStatsChange, new
+                {
+                    Cpu = SystemMonitor.CPUUtilization,
+                    CpuMax = SystemMonitor.MaximumCPUUtilization,
+                });
+            };
+
+            SystemMonitor.ProcessStatisticChange += args =>
+            {
+                if (args.StatisticWhichChanged != eProcessStatisticChange.RAMFreeMinimum) return;
+                EventService.Notify(EventMessageType.SystemMonitorMemoryStatsChange, new
+                {
+                    Memory = (int) Tools.ScaleRange(args.TotalRAMSize - args.RAMFree, 0, args.TotalRAMSize, 0, 100),
+                    MemoryMax = (int) Tools.ScaleRange(args.TotalRAMSize - args.RAMFreeMinimum, 0, args.TotalRAMSize, 0,
+                        100),
+                });
+            };
+            SystemMonitor.SetUpdateInterval(10);
             CrestronDataStoreStatic.InitCrestronDataStore();
 
             ControlSystem = controlSystem;
@@ -155,6 +177,7 @@ namespace UXAV.AVnetCore.Models
                 ApiServer.AddRoute(@"/api/autodiscovery", typeof(AutoDiscoveryApiHandler));
                 ApiServer.AddRoute(@"/api/console", typeof(ConsoleApiHandler));
                 ApiServer.AddRoute(@"/api/diagnostics", typeof(DiagnosticsApiHandler));
+                ApiServer.AddRoute(@"/api/sysmon", typeof(SystemMonitorHandler));
                 ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
             }
             catch (Exception e)

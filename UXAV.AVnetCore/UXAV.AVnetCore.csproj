@@ -335,6 +335,7 @@
         <Compile Include="WebScripting\SecureRequestAttribute.cs" />
         <Compile Include="WebScripting\StaticFiles\InternalFileHandler.cs" />
         <Compile Include="WebScripting\StaticFiles\WebAppFileHandler.cs" />
+        <Compile Include="WebScripting\SystemMonitorHandler.cs" />
         <Compile Include="WebScripting\UserFileRequestHandler.cs" />
         <Compile Include="WebScripting\WebScriptingRequest.cs" />
         <Compile Include="WebScripting\WebScriptingServer.cs" />
