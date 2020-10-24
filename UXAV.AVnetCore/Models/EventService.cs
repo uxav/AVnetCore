@@ -43,5 +43,7 @@ namespace UXAV.AVnetCore.Models
         SessionExpired,
         DeviceConnectionChange,
         DiagnosticsMessagesUpdated,
+        SystemMonitorCpuStatsChange,
+        SystemMonitorMemoryStatsChange
     }
 }
