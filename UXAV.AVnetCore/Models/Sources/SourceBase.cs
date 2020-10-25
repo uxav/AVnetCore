@@ -15,6 +15,7 @@ namespace UXAV.AVnetCore.Models.Sources
         private readonly string _name;
         private DisplayControllerBase _assignedDisplay;
         private int _activeUseCount;
+        private bool _hasActiveVideo;
 
         protected SourceBase(uint id, SourceType type, string name, string groupName, string iconName)
         {
@@ -69,16 +70,16 @@ namespace UXAV.AVnetCore.Models.Sources
 
         public void AssignRoom(RoomBase room)
         {
-            if(room == null) throw new ArgumentException("room cannot be null");
+            if (room == null) throw new ArgumentException("room cannot be null");
 
-            if(AssignedRooms.Contains(room.Id)) return;
+            if (AssignedRooms.Contains(room.Id)) return;
 
             AssignedRooms.Add(room);
         }
 
         public void UnassignRoom(RoomBase room)
         {
-            if(room == null) throw new ArgumentException("room cannot be null");
+            if (room == null) throw new ArgumentException("room cannot be null");
 
             if (AssignedRooms.Contains(room.Id))
             {
@@ -100,7 +101,7 @@ namespace UXAV.AVnetCore.Models.Sources
             {
                 var newValue = value;
                 if (newValue < 0) newValue = 0;
-                if(_activeUseCount == newValue) return;
+                if (_activeUseCount == newValue) return;
                 _activeUseCount = newValue;
                 Logger.Debug($"Source: {this}, RoomCount = {newValue}");
                 try
@@ -183,7 +184,7 @@ namespace UXAV.AVnetCore.Models.Sources
         {
             get
             {
-                switch(Type)
+                switch (Type)
                 {
                     case SourceType.DVD:
                     case SourceType.BluRay:
@@ -224,6 +225,24 @@ namespace UXAV.AVnetCore.Models.Sources
             }
         }
 
+        public event SourceVideoStatusChanged HasActiveVideoChanged;
+
+        public virtual bool HasActiveVideo
+        {
+            get => _hasActiveVideo;
+            protected set
+            {
+                if (_hasActiveVideo == value) return;
+                _hasActiveVideo = value;
+                HasActiveVideoChanged?.Invoke(this, value);
+            }
+        }
+
+        public void SetVideoStatus(bool videoActiveStatus)
+        {
+            HasActiveVideo = videoActiveStatus;
+        }
+
         internal void InternalInitialize()
         {
             try
@@ -244,13 +263,17 @@ namespace UXAV.AVnetCore.Models.Sources
         }
     }
 
+    public delegate void SourceVideoStatusChanged(SourceBase source, bool videoActive);
+
     public enum SourceType
     {
         Unknown,
         VideoConference,
+
         // ReSharper disable once InconsistentNaming
         PC,
         Laptop,
+
         // ReSharper disable once InconsistentNaming
         DVD,
         BluRay,
@@ -260,6 +283,7 @@ namespace UXAV.AVnetCore.Models.Sources
         Tuner,
         DAB,
         InternetRadio,
+
         // ReSharper disable once InconsistentNaming
         iPod,
         AirPlay,
@@ -280,6 +304,7 @@ namespace UXAV.AVnetCore.Models.Sources
         SignagePlayer,
         GenericWirelessPresentationDevice,
         Sky,
+
         // ReSharper disable once InconsistentNaming
         SkyHD,
         SkyQ,
