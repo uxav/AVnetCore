@@ -104,7 +104,7 @@
           <Private>True</Private>
         </Reference>
         <Reference Include="CsvHelper, Version=15.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823">
-          <HintPath>..\..\PeelHunt\packages\CsvHelper.15.0.8\lib\net47\CsvHelper.dll</HintPath>
+          <HintPath>..\packages\CsvHelper.15.0.8\lib\net47\CsvHelper.dll</HintPath>
           <Private>True</Private>
         </Reference>
         <Reference Include="Figgle, Version=0.4.0.0, Culture=neutral, PublicKeyToken=null">
@@ -112,7 +112,7 @@
           <Private>True</Private>
         </Reference>
         <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
-          <HintPath>..\..\PeelHunt\packages\Microsoft.Bcl.AsyncInterfaces.1.1.1\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+          <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.1.1.1\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
           <Private>True</Private>
         </Reference>
         <Reference Include="Microsoft.CSharp" />
@@ -348,9 +348,9 @@
       <PropertyGroup>
         <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
       </PropertyGroup>
-      <Error Condition="!Exists('..\packages\Crestron.SimplSharp.SDK.Library.2.14.99\build\Crestron.SimplSharp.SDK.Library.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\PeelHunt\packages\Crestron.SimplSharp.SDK.Library.2.14.99\build\Crestron.SimplSharp.SDK.Library.targets'))" />
+      <Error Condition="!Exists('..\packages\Crestron.SimplSharp.SDK.Library.2.14.99\build\Crestron.SimplSharp.SDK.Library.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Crestron.SimplSharp.SDK.Library.2.14.99\build\Crestron.SimplSharp.SDK.Library.targets'))" />
       <Error Condition="!Exists('..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.14.99\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.14.99\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets'))" />
     </Target>
-    <Import Project="..\packages\Crestron.SimplSharp.SDK.Library.2.14.99\build\Crestron.SimplSharp.SDK.Library.targets" Condition="Exists('..\..\PeelHunt\packages\Crestron.SimplSharp.SDK.Library.2.14.99\build\Crestron.SimplSharp.SDK.Library.targets')" />
+    <Import Project="..\packages\Crestron.SimplSharp.SDK.Library.2.14.99\build\Crestron.SimplSharp.SDK.Library.targets" Condition="Exists('..\packages\Crestron.SimplSharp.SDK.Library.2.14.99\build\Crestron.SimplSharp.SDK.Library.targets')" />
     <Import Project="..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.14.99\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets" Condition="Exists('..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.14.99\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets')" />
 </Project>
