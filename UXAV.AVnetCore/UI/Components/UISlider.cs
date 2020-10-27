@@ -10,20 +10,20 @@ namespace UXAV.AVnetCore.UI.Components
         private int _subscribeCount;
         private bool _sigChangesRegistered;
         private UISliderValueChangedEventHandler _valueChanged;
-        private readonly UShortInputSig _feedbackJoin;
+        private readonly UShortOutputSig _sliderValueJoin;
 
         public UISlider(ISigProvider sigProvider, uint analogJoinNumber, ushort minValue = ushort.MinValue,
             ushort maxValue = ushort.MaxValue)
             : base(sigProvider, analogJoinNumber, minValue, maxValue)
         {
-            _feedbackJoin = sigProvider.SigProvider.UShortInput[analogJoinNumber];
+            _sliderValueJoin = sigProvider.SigProvider.UShortOutput[analogJoinNumber];
         }
 
         public UISlider(ISigProvider sigProvider, string analogJoinName, string analogFeedbackJoinName,
             ushort minValue = ushort.MinValue, ushort maxValue = ushort.MaxValue)
-            : base(sigProvider, analogJoinName, minValue, maxValue)
+            : base(sigProvider, analogFeedbackJoinName, minValue, maxValue)
         {
-            _feedbackJoin = sigProvider.SigProvider.UShortInput[analogFeedbackJoinName];
+            _sliderValueJoin = sigProvider.SigProvider.UShortOutput[analogJoinName];
         }
 
         public event UISliderValueChangedEventHandler ValueChanged
@@ -67,16 +67,6 @@ namespace UXAV.AVnetCore.UI.Components
             if (args.Event != eSigEvent.UShortChange ||
                 args.Sig != sigProviderDevice.UShortOutput[AnalogJoinNumber]) return;
             OnValueChanged(this, args.Sig.UShortValue);
-        }
-
-        public new void SetValue(ushort value)
-        {
-            _feedbackJoin.UShortValue = value;
-        }
-
-        public new void SetSignedValue(short value)
-        {
-            _feedbackJoin.ShortValue = value;
         }
 
         public new ushort Value

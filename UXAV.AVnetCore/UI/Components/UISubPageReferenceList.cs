@@ -56,6 +56,7 @@ namespace UXAV.AVnetCore.UI.Components
             catch (Exception e)
             {
                 Logger.Error("Error in {0}.ctor, {1}", GetType().Name, e.Message);
+                Logger.Error(e);
             }
         }
 
@@ -139,7 +140,7 @@ namespace UXAV.AVnetCore.UI.Components
 
         public virtual uint AddItem(string name, object linkedObject, bool holdOffSettingListSize)
         {
-            var index = this.AddItem(linkedObject, holdOffSettingListSize);
+            var index = AddItem(linkedObject, holdOffSettingListSize);
             this[index].Name = name;
             return index;
         }
