@@ -347,8 +347,14 @@ namespace UXAV.AVnetCore.UI
             RoomOnSourceChanged(room, args);
             if (args.Source != null && args.RoomSourceIndex == 1)
             {
-                UIShouldShowSource(args.Source);
+                ShowUIForSource(args.Source);
             }
+        }
+
+        public void ShowUIForSource(SourceBase source)
+        {
+            if(source == null) return;
+            UIShouldShowSource(source);
         }
 
         protected abstract void UIShouldShowSource(SourceBase source);

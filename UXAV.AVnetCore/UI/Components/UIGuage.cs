@@ -13,12 +13,12 @@ namespace UXAV.AVnetCore.UI.Components
             AnalogJoinNumber = analogJoinNumber;
         }
 
-        public UIGuage(ISigProvider sigProvider, string analogJoinName, ushort minValue = ushort.MinValue, ushort maxValue = ushort.MaxValue)
+        public UIGuage(ISigProvider sigProvider, string analogFeedbackJoinName, ushort minValue = ushort.MinValue, ushort maxValue = ushort.MaxValue)
             : base(sigProvider)
         {
             MinValue = minValue;
             MaxValue = maxValue;
-            AnalogJoinNumber = sigProvider.SigProvider.UShortInput[analogJoinName].Number;
+            AnalogJoinNumber = sigProvider.SigProvider.UShortInput[analogFeedbackJoinName].Number;
         }
 
         public uint AnalogJoinNumber { get; }
