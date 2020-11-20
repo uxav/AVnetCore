@@ -22,11 +22,19 @@ jobs:
       - name: Setup NuGet.exe
         uses: NuGet/setup-nuget@v1.0.5
 
+      - name: Set Version Number
+        shell: powershell
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        #run: Write-Output "::set-env name=VERSION::$($Env:TAG_NAME)"
+        run: echo "VERSION=$($env.TAG_NAME)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+
       - name: Update AssemblyInfo.cs
         shell: powershell
         run: |
-          Write-Output ${{ env.TAG_NAME }}
-          ./.github/scripts/UpdateAssemblyVersion.ps1 ${{ env.TAG_NAME }}
+          Write-Output ${{ env.VERSION }}
+          ./.github/scripts/UpdateAssemblyVersion.ps1 ${{ env.VERSION }}
 
       - name: Nuget Add Source
         run: nuget sources Add -Name "uxav" -Source https://nuget.pkg.github.com/uxav/index.json -username uxav -password ${{ secrets.GITHUB_TOKEN }} -StorePasswordInClearText
@@ -37,8 +45,16 @@ jobs:
       - name: Build
         run: msbuild AVnetCore.sln /p:Configuration=Release
 
+      # Get version number of the new dll file
+      - name: Set Version Number
+        shell: powershell
+        run: |
+          $version = ./.github/scripts/GenerateVersionNumber.ps1 -Path UXAV.AVnetCore/bin/Release/UXAV.AVnetCore.dll
+          Write-Output "PS returned version: $version"
+          Write-Output "::set-env name=VERSION::$version"
+
       - name: Pack Nuget
-        run: nuget pack UXAV.AVnetCore/UXAV.AVnetCore.csproj -Version ${{ env.TAG_NAME }}
+        run: nuget pack UXAV.AVnetCore/UXAV.AVnetCore.csproj -Version ${{ env.VERSION }}
 
       - name: Push generated package to GitHub registry
         run: nuget push *.nupkg -source "uxav"
