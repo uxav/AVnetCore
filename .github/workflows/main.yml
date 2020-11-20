@@ -28,7 +28,7 @@ jobs:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
           TAG_NAME: ${{ github.event.release.tag_name }}
         #run: Write-Output "::set-env name=VERSION::$($Env:TAG_NAME)"
-        run: Write-Output "VERSION=TAG_NAME" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+        run: Write-Output "VERSION=$($Env:TAG_NAME)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
 
       - name: Update AssemblyInfo.cs
         shell: powershell
