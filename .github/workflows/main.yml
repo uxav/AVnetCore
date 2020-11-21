@@ -22,7 +22,7 @@ jobs:
       - name: Setup NuGet.exe
         uses: NuGet/setup-nuget@v1.0.5
 
-      - name: Set Version Number
+      - name: Get Version Number
         shell: powershell
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
@@ -33,7 +33,7 @@ jobs:
         shell: powershell
         run: |
           Write-Output "Version is ${{ env.VERSION }}"
-          ./.github/scripts/UpdateAssemblyVersion.ps1 $env.VERSION
+          ./.github/scripts/UpdateAssemblyVersion.ps1 $env:VERSION
 
       - name: Nuget Add Source
         run: nuget sources Add -Name "uxav" -Source https://nuget.pkg.github.com/uxav/index.json -username uxav -password ${{ secrets.GITHUB_TOKEN }} -StorePasswordInClearText
