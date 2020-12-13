@@ -58,27 +58,32 @@ namespace UXAV.AVnetCore.Models
             RoomClock.Start();
             UpdateBootStatus(EBootStatus.Booting, "System is booting", 0);
 
-            SystemMonitor.CPUStatisticChange += args =>
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
             {
-                if (args.StatisticWhichChanged != eCPUStatisticChange.MaximumUtilization) return;
-                EventService.Notify(EventMessageType.SystemMonitorCpuStatsChange, new
+                SystemMonitor.CPUStatisticChange += args =>
                 {
-                    Cpu = SystemMonitor.CPUUtilization,
-                    CpuMax = SystemMonitor.MaximumCPUUtilization,
-                });
-            };
+                    if (args.StatisticWhichChanged != eCPUStatisticChange.MaximumUtilization) return;
+                    EventService.Notify(EventMessageType.SystemMonitorCpuStatsChange, new
+                    {
+                        Cpu = SystemMonitor.CPUUtilization,
+                        CpuMax = SystemMonitor.MaximumCPUUtilization,
+                    });
+                };
 
-            SystemMonitor.ProcessStatisticChange += args =>
-            {
-                if (args.StatisticWhichChanged != eProcessStatisticChange.RAMFreeMinimum) return;
-                EventService.Notify(EventMessageType.SystemMonitorMemoryStatsChange, new
+                SystemMonitor.ProcessStatisticChange += args =>
                 {
-                    Memory = (int) Tools.ScaleRange(args.TotalRAMSize - args.RAMFree, 0, args.TotalRAMSize, 0, 100),
-                    MemoryMax = (int) Tools.ScaleRange(args.TotalRAMSize - args.RAMFreeMinimum, 0, args.TotalRAMSize, 0,
-                        100),
-                });
-            };
-            SystemMonitor.SetUpdateInterval(10);
+                    if (args.StatisticWhichChanged != eProcessStatisticChange.RAMFreeMinimum) return;
+                    EventService.Notify(EventMessageType.SystemMonitorMemoryStatsChange, new
+                    {
+                        Memory = (int) Tools.ScaleRange(args.TotalRAMSize - args.RAMFree, 0, args.TotalRAMSize, 0, 100),
+                        MemoryMax = (int) Tools.ScaleRange(args.TotalRAMSize - args.RAMFreeMinimum, 0,
+                            args.TotalRAMSize, 0,
+                            100),
+                    });
+                };
+                SystemMonitor.SetUpdateInterval(10);
+            }
+
             CrestronDataStoreStatic.InitCrestronDataStore();
 
             ControlSystem = controlSystem;
