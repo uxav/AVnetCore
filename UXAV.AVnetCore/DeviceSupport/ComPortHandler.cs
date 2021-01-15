@@ -65,12 +65,7 @@ namespace UXAV.AVnetCore.DeviceSupport
 
         public void Send(byte[] bytes, int index, int count)
         {
-            var str = string.Empty;
-            for (var i = index; i < count; i++)
-            {
-                str += (char)bytes[i];
-            }
-            _portDevice.Send(str);
+            _portDevice.Send(bytes, index, count);
         }
 
         public DeviceConnectionType ConnectionType => DeviceConnectionType.Serial;

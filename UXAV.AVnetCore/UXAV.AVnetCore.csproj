@@ -243,6 +243,7 @@
         <Compile Include="Config\ConfigManager.cs" />
         <Compile Include="Config\IConfigItem.cs" />
         <Compile Include="DeviceSupport\CipDevices.cs" />
+        <Compile Include="DeviceSupport\ComPortExtensions.cs" />
         <Compile Include="DeviceSupport\ComPortHandler.cs" />
         <Compile Include="DeviceSupport\DeviceBase.cs" />
         <Compile Include="DeviceSupport\DisplayDeviceBase.cs" />
