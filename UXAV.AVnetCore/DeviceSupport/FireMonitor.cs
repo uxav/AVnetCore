@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
@@ -80,8 +81,13 @@ namespace UXAV.AVnetCore.DeviceSupport
                 {
                     var endpoint = new IPEndPoint(IPAddress.Any, _udpPort);
                     var bytes = _client.Receive(ref endpoint);
-                    Logger.Warn(
-                        $"Received message on fire monitor: {Tools.GetBytesAsReadableString(bytes, 0, bytes.Length, true)}");
+                    if (bytes[0] == 0x02 && bytes[4] == 0x03)
+                    {
+                        if (Encoding.ASCII.GetString(bytes, 1, 2) == "FM")
+                        {
+                            FireState = Convert.ToBoolean(bytes[3]);
+                        }
+                    }
                 }
             });
         }
@@ -96,6 +102,7 @@ namespace UXAV.AVnetCore.DeviceSupport
             {
                 if (value == _fireState) return;
                 _fireState = value;
+                Logger.Warn($"Fire state changed to: {_fireState}");
                 OnStateChange(_fireState);
             }
         }
@@ -118,7 +125,7 @@ namespace UXAV.AVnetCore.DeviceSupport
         protected virtual void OnStateChange(bool fireStateActive)
         {
             FireStateChanged?.Invoke(this, fireStateActive);
-            if (_client == null) return;
+            if (_client == null || _port == null) return; // don't need to send
             _sendCount = 0;
             _sendWaitTime = TimeSpan.FromSeconds(1);
             _sendWait.Set();
@@ -152,8 +159,6 @@ namespace UXAV.AVnetCore.DeviceSupport
                             {
                                 0x02, 0x46, 0x4D, Convert.ToByte(_fireState), 0x03
                             };
-                            Logger.Debug(
-                                $"Fire sending: {Tools.GetBytesAsReadableString(bytes, 0, bytes.Length, true)}");
                             _client.Send(bytes, bytes.Length, new IPEndPoint(IPAddress.Broadcast, _udpPort));
                         }
 
@@ -165,7 +170,7 @@ namespace UXAV.AVnetCore.DeviceSupport
                     }
                 }
 
-                Logger.Debug("Leaving fire udp broadcast loop");
+                Logger.Warn("Leaving fire udp broadcast loop");
             });
         }
 
