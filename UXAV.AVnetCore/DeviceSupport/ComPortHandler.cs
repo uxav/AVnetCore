@@ -53,7 +53,13 @@ namespace UXAV.AVnetCore.DeviceSupport
             _portDevice.SetComPortSpec(_portSpec);
             _portDevice.SerialDataReceived += (device, args) =>
             {
-                var data = Encoding.ASCII.GetBytes(args.SerialData);
+                var str = args.SerialData;
+                var data = new byte[str.Length];
+
+                for (var i = 0; i < str.Length; i++)
+                {
+                    data[i] = unchecked((byte)str[i]);
+                }
                 OnReceivedData(this, data);
             };
             Connected = true;
