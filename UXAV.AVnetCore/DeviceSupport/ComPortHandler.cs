@@ -21,7 +21,12 @@ namespace UXAV.AVnetCore.DeviceSupport
 
         public void Register()
         {
-            if (!(_portDevice is CrestronDevice port) || port.Registered) return;
+            Logger.Log($"Attempting to register port device: {_portDevice}");
+            if (!(_portDevice is CrestronDevice port) || port.Registered)
+            {
+                Logger.Log("Port does not need to register");
+                return;
+            }
             if (port.ParentDevice is CresnetDevice parent)
             {
                 if (!parent.Registered)
@@ -30,7 +35,6 @@ namespace UXAV.AVnetCore.DeviceSupport
                     return;
                 }
             }
-            Logger.Log($"Attempting to register port device: {_portDevice}");
             var result = port.Register();
             if (result == eDeviceRegistrationUnRegistrationResponse.Success)
             {
