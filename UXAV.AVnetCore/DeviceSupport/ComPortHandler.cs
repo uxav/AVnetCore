@@ -17,8 +17,19 @@ namespace UXAV.AVnetCore.DeviceSupport
         {
             _portDevice = portDevice;
             _portSpec = portSpec;
+        }
 
+        public void Register()
+        {
             if (!(_portDevice is CrestronDevice port) || port.Registered) return;
+            if (port.ParentDevice is CresnetDevice parent)
+            {
+                if (!parent.Registered)
+                {
+                    Logger.Log("Skipping device registration as parent is not registered yet");
+                    return;
+                }
+            }
             Logger.Log($"Attempting to register port device: {_portDevice}");
             var result = port.Register();
             if (result == eDeviceRegistrationUnRegistrationResponse.Success)
@@ -26,12 +37,14 @@ namespace UXAV.AVnetCore.DeviceSupport
                 Logger.Success($"Registered port device: {_portDevice} ok!");
                 return;
             }
+
             Logger.Error("Could not register comport {0}, {1}", _portDevice.ToString(), result);
         }
 
         public void Connect()
         {
-            if(_init) return;
+            Register();
+            if (_init) return;
             _init = true;
             _portDevice.SetComPortSpec(_portSpec);
             _portDevice.SerialDataReceived += (device, args) =>
@@ -52,7 +65,7 @@ namespace UXAV.AVnetCore.DeviceSupport
             get => _connected;
             private set
             {
-                if(_connected == value) return;
+                if (_connected == value) return;
                 _connected = value;
                 OnConnectedChange(this, _connected);
             }
