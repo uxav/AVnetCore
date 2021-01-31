@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using Crestron.SimplSharpPro;
 using UXAV.AVnetCore.Models.Rooms;
 using UXAV.AVnetCore.Models.Sources;
@@ -14,6 +15,11 @@ namespace UXAV.AVnetCore.Models
     {
         private static readonly SourceCollection<SourceBase> SourceCollection = new SourceCollection<SourceBase>();
         private static readonly RoomCollection<RoomBase> RoomsCollection = new RoomCollection<RoomBase>();
+
+        static UxEnvironment()
+        {
+            Version = Assembly.GetExecutingAssembly().GetName().Version;
+        }
 
         internal static void InitConsoleCommands()
         {
@@ -72,6 +78,8 @@ namespace UXAV.AVnetCore.Models
         public static SystemBase System { get; internal set; }
 
         public static CrestronControlSystem ControlSystem { get; internal set; }
+
+        public static Version Version { get; }
 
         public static bool RoomWithIdExists(uint id)
         {
