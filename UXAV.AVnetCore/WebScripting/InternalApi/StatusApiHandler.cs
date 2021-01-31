@@ -63,6 +63,8 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                     SystemBase.IpAddress,
                     SystemBase.MacAddress,
                     CrestronEnvironment.SystemInfo.SerialNumber,
+                    @Firmware = InitialParametersClass.FirmwareVersion,
+                    @AVNetVersion = UxEnvironment.Version,
                     @CloudInstanceId = CloudConnector.InstanceId,
                     @AppVersion = Server.System.AppVersion.ToString(),
                     @ProgramDirectory = InitialParametersClass.ProgramDirectory.ToString(),
