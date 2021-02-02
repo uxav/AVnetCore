@@ -1,6 +1,7 @@
 using System;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
+using Crestron.SimplSharpPro;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnetCore.Cloud;
 using UXAV.AVnetCore.Models;
@@ -104,6 +105,14 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                     {
                         RoomClock.Time,
                         RoomClock.Formatted
+                    },
+                    @BACnet = new
+                    {
+                        Supported = System.ControlSystem.SupportsBACNet,
+                        Registered = System.ControlSystem.ControllerBACnetDevice.Registered,
+                        System.ControlSystem.ControllerBACnetDevice.EndpointsLimit,
+                        System.ControlSystem.ControllerBACnetDevice.BACnetDiscoveryEnabled,
+                        BACnet.IsLicensed
                     }
                 }));
             }
