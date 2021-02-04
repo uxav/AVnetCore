@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
@@ -36,6 +37,8 @@ namespace UXAV.AVnetCore.Models
         private readonly string _initialConfig;
         internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
+        private readonly string _include4DatInfo;
+        private readonly DateTime _programBuildTime;
 
         protected SystemBase(CrestronControlSystem controlSystem)
         {
@@ -58,6 +61,44 @@ namespace UXAV.AVnetCore.Models
 
             RoomClock.Start();
             UpdateBootStatus(EBootStatus.Booting, "System is booting", 0);
+
+            try
+            {
+                var infoFile = ProgramApplicationDirectory + "/ProgramInfo.config";
+                using (var file = File.OpenRead(infoFile))
+                {
+                    var reader = new XmlTextReader(file);
+                    var elementName = string.Empty;
+                    while (reader.Read())
+                    {
+                        switch (reader.NodeType)
+                        {
+                            case XmlNodeType.Element:
+                                elementName = reader.Name;
+                                break;
+                            case XmlNodeType.EndElement:
+                                elementName = null;
+                                break;
+                            case XmlNodeType.Text:
+                                switch (elementName)
+                                {
+                                    case "Include4.dat":
+                                        _include4DatInfo = reader.Value;
+                                        break;
+                                    case "CompiledOn":
+                                        _programBuildTime = DateTime.Parse(reader.Value);
+                                        break;
+                                }
+                                break;
+                        }
+                    }
+                    reader.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Warn($"Could not load info from ProgramInfo.config, {e.Message}");
+            }
 
             SystemMonitor.CPUStatisticChange += args =>
             {
@@ -86,10 +127,11 @@ namespace UXAV.AVnetCore.Models
 
             var callingAssembly = Assembly.GetCallingAssembly();
 
-            Logger.Log("RuntimeInformation.FrameworkDescription: {0}", RuntimeInformation.FrameworkDescription);
-            Logger.Log("RuntimeInformation.ProcessArchitecture: {0}", RuntimeInformation.ProcessArchitecture);
-            Logger.Log("RuntimeInformation.OSArchitecture: {0}", RuntimeInformation.OSArchitecture);
-            Logger.Log("RuntimeInformation.OSDescription: {0}", RuntimeInformation.OSDescription);
+            Logger.Log("FrameworkDescription: {0}", RuntimeInformation.FrameworkDescription);
+            Logger.Log("ProcessArchitecture: {0}", RuntimeInformation.ProcessArchitecture);
+            Logger.Log("OSArchitecture: {0}", RuntimeInformation.OSArchitecture);
+            Logger.Log("OSDescription: {0}", RuntimeInformation.OSDescription);
+            Logger.Log("Include4.dat Version: {0}", _include4DatInfo);
             Logger.Log("Local Time is {0}", DateTime.Now);
             var tz = CrestronEnvironment.GetTimeZone();
             Logger.Log("ProgramIDTag: {0}", InitialParametersClass.ProgramIDTag);
@@ -100,6 +142,7 @@ namespace UXAV.AVnetCore.Models
             var avnetInfo = Assembly.GetExecutingAssembly().GetName();
             Logger.Log("{0} Version: {1}", avnetInfo.Name, avnetInfo.Version);
             Logger.Log("Starting app version {0}", callingAssembly.GetName().Version);
+            Logger.Log($"Program Info states build time as: {_programBuildTime:R}");
             Logger.Log("ProcessId: {0}", Process.GetCurrentProcess().Id);
             Logger.Log("Room Name: {0}", InitialParametersClass.RoomName);
             Logger.Log("TimeZone: 🌍 {0}{1}", tz.Formatted, tz.InDayLightSavings ? " (DST)" : string.Empty);
@@ -318,6 +361,10 @@ namespace UXAV.AVnetCore.Models
         public static string ProgramNvramDirectory => ProgramRootDirectory + "/nvram";
 
         public static string ProgramHtmlDirectory => ProgramRootDirectory + "/html";
+
+        public DateTime ProgramBuildTime => _programBuildTime;
+
+        public string Include4DatInfo => _include4DatInfo;
 
         public IDevice GetDevice(uint id)
         {

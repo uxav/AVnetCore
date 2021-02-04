@@ -68,6 +68,8 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                     @AVNetVersion = UxEnvironment.Version.ToString(),
                     @CloudInstanceId = CloudConnector.InstanceId,
                     @AppVersion = Server.System.AppVersion.ToString(),
+                    @AppBuildTime = System.ProgramBuildTime,
+                    @Include4Dat = System.Include4DatInfo,
                     @ProgramDirectory = InitialParametersClass.ProgramDirectory.ToString(),
                     @BootStatus = UxEnvironment.System.BootStatus.ToString(),
                     InitialParametersClass.ApplicationNumber,
