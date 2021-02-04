@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -85,6 +86,10 @@ namespace UXAV.AVnetCore.Models
 
             var callingAssembly = Assembly.GetCallingAssembly();
 
+            Logger.Log("RuntimeInformation.FrameworkDescription: {0}", RuntimeInformation.FrameworkDescription);
+            Logger.Log("RuntimeInformation.ProcessArchitecture: {0}", RuntimeInformation.ProcessArchitecture);
+            Logger.Log("RuntimeInformation.OSArchitecture: {0}", RuntimeInformation.OSArchitecture);
+            Logger.Log("RuntimeInformation.OSDescription: {0}", RuntimeInformation.OSDescription);
             Logger.Log("Local Time is {0}", DateTime.Now);
             var tz = CrestronEnvironment.GetTimeZone();
             Logger.Log("ProgramIDTag: {0}", InitialParametersClass.ProgramIDTag);
@@ -110,6 +115,9 @@ namespace UXAV.AVnetCore.Models
             Logger.Log("ControlSystem.NumberOfRelayPorts = {0}", ControlSystem.NumberOfRelayPorts);
             Logger.Log("ControlSystem.NumberOfIROutputPorts = {0}", ControlSystem.NumberOfIROutputPorts);
             Logger.Log("ControlSystem.SupportsBluetooth = {0}", ControlSystem.SupportsBluetooth);
+            Logger.Log("ControlSystem.SupportsBACNet = {0}", ControlSystem.SupportsBACNet);
+            Logger.Log("ControlSystem.SupportsInternalRFGateway = {0}", ControlSystem.SupportsInternalRFGateway);
+            Logger.Log("ControlSystem.SupportsInternalAirMedia = {0}", ControlSystem.SupportsInternalAirMedia);
 
             var resources = Assembly.GetExecutingAssembly().GetManifestResourceNames();
             foreach (var resource in resources)
