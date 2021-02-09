@@ -40,6 +40,24 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                         throw new ArgumentOutOfRangeException();
                 }
 
+                if ((Request.Query.GetValues("raw") ?? Array.Empty<string>()).Any())
+                {
+                    var contents = string.Empty;
+                    foreach (var fileInfo in files.OrderBy(f => f.Name))
+                    {
+                        Logger.Debug($"Reading log file: {fileInfo.FullName}");
+                        using (var reader = fileInfo.OpenText())
+                        {
+                            while (!reader.EndOfStream)
+                            {
+                                contents += reader.ReadToEnd();
+                            }
+                        }
+                    }
+                    WriteResponse(contents);
+                    return;
+                }
+
                 foreach (var fileInfo in files.OrderBy(f => f.Name))
                 {
                     Logger.Debug($"Reading log file: {fileInfo.FullName}");
@@ -50,14 +68,15 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                             var line = reader.ReadLine();
                             if (string.IsNullOrEmpty(line)) continue;
                             var entry = Regex.Match(line,
-                                @"^(\w+): ([\w\.]+)(?: +\[App +(\d+)\])? +# +(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) +# +(.+)");
+                                @"^(\w+): ([\w\.]+)(?: *\[App *(\d+)\])? +# +(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) +# +(.+)");
                             if (!entry.Success) continue;
                             logs.Add(new
                             {
                                 @Level = entry.Groups[1].Value,
                                 @SubSystem = entry.Groups[2].Value,
                                 @Time = entry.Groups[4].Value,
-                                @Message = entry.Groups[5].Value
+                                @Message = entry.Groups[5].Value,
+                                @AppIndex = entry.Groups[3].Value
                             });
                         }
                     }
