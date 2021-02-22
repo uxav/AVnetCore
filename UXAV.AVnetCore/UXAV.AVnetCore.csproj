@@ -149,6 +149,10 @@
           <HintPath>..\packages\Crestron.SimplSharp.SDK.Library.2.14.142\lib\net47\SimplSharpHelperInterface.dll</HintPath>
           <Private>True</Private>
         </Reference>
+        <Reference Include="SimplSharpNewtonsoft, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
+          <HintPath>..\packages\Crestron.SimplSharp.SDK.Library.2.14.142\lib\net47\SimplSharpNewtonsoft.dll</HintPath>
+          <Aliases>CrestronNewtonsoft</Aliases>
+        </Reference>
         <Reference Include="SimplSharpOnvifInterface, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
           <HintPath>..\packages\Crestron.SimplSharp.SDK.Library.2.14.142\lib\net47\SimplSharpOnvifInterface.dll</HintPath>
           <Private>True</Private>
