@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Crestron.SimplSharpPro.Fusion;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models.Rooms;
 
@@ -22,7 +23,7 @@ namespace UXAV.AVnetCore.Fusion
             return Rooms[room.Id];
         }
 
-        public static void CreateAsset(IDevice device)
+        public static void CreateFusionAsset(IFusionAsset device)
         {
             if (device.AllocatedRoom == null)
             {
@@ -30,6 +31,7 @@ namespace UXAV.AVnetCore.Fusion
             }
 
             var fusionInstance = device.AllocatedRoom.GetFusionRoom();
+            fusionInstance.AddAsset(device);
         }
     }
 }

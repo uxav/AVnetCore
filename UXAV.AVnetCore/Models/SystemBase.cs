@@ -13,6 +13,7 @@ using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.Diagnostics;
+using Crestron.SimplSharpPro.Fusion;
 using UXAV.AVnetCore.Cloud;
 using UXAV.AVnetCore.Config;
 using UXAV.AVnetCore.DeviceSupport;
@@ -89,9 +90,11 @@ namespace UXAV.AVnetCore.Models
                                         _programBuildTime = DateTime.Parse(reader.Value);
                                         break;
                                 }
+
                                 break;
                         }
                     }
+
                     reader.Close();
                 }
             }
@@ -606,7 +609,14 @@ namespace UXAV.AVnetCore.Models
             UpdateBootStatus(EBootStatus.Initializing, "Initializing sources done", targetPercentage);
 
             Thread.Sleep(200);
-            UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 90);
+            UpdateBootStatus(EBootStatus.Initializing, "Generating RVI file info for Fusion", 85);
+            FusionRVI.GenerateFileForAllFusionDevices();
+            Thread.Sleep(200);
+            UpdateBootStatus(EBootStatus.Initializing, "Registering Fusion", 90);
+            CipDevices.RegisterFusionRooms();
+
+            Thread.Sleep(200);
+            UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
             Thread.Sleep(200);
             Logger.Highlight("Initializing Core 3 UI Controllers");
             InitializeCore3Controllers();

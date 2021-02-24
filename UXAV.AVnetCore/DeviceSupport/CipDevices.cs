@@ -175,7 +175,33 @@ namespace UXAV.AVnetCore.DeviceSupport
 
         internal static void RegisterDevices()
         {
-            foreach (var device in Devices.Values.Where(d => !d.Registered))
+            foreach (var device in Devices.Values
+                .Where(d => !(d is FusionRoom))
+                .Where(d => !d.Registered))
+            {
+                try
+                {
+                    var result = device.Register();
+                    if (result == eDeviceRegistrationUnRegistrationResponse.Success)
+                    {
+                        Logger.Success($"Registered device: {device}");
+                        continue;
+                    }
+
+                    Logger.Error($"Could not register device: {device}, {result}");
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+            }
+        }
+
+        internal static void RegisterFusionRooms()
+        {
+            foreach (var device in Devices.Values
+                .Where(d => d is FusionRoom)
+                .Where(d => !d.Registered))
             {
                 try
                 {
