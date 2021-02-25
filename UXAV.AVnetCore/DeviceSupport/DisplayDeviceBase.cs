@@ -6,7 +6,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnetCore.DeviceSupport
 {
-    public abstract class DisplayDeviceBase : DeviceBase, IPowerDevice
+    public abstract class DisplayDeviceBase : DeviceBase, IPowerDevice, IFusionAsset
     {
         private DevicePowerStatus _powerStatus;
         private ushort _displayUsage;
@@ -202,6 +202,8 @@ namespace UXAV.AVnetCore.DeviceSupport
         {
             return $"{GetType().Name} \"{Name}\"";
         }
+
+        public FusionAssetType FusionAssetType => FusionAssetType.Display;
     }
 
     /// <summary>
