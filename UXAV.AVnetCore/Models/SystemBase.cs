@@ -13,6 +13,7 @@ using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.Diagnostics;
+using Crestron.SimplSharpPro.Fusion;
 using UXAV.AVnetCore.Cloud;
 using UXAV.AVnetCore.Config;
 using UXAV.AVnetCore.DeviceSupport;
@@ -89,9 +90,11 @@ namespace UXAV.AVnetCore.Models
                                         _programBuildTime = DateTime.Parse(reader.Value);
                                         break;
                                 }
+
                                 break;
                         }
                     }
+
                     reader.Close();
                 }
             }
@@ -121,7 +124,23 @@ namespace UXAV.AVnetCore.Models
                 });
             };
             SystemMonitor.SetUpdateInterval(10);
-            CrestronDataStoreStatic.InitCrestronDataStore();
+            try
+            {
+                Logger.Highlight("Calling CrestronDataStoreStatic.InitCrestronDataStore()");
+                var response = CrestronDataStoreStatic.InitCrestronDataStore();
+                if (response == CrestronDataStore.CDS_ERROR.CDS_SUCCESS)
+                {
+                    Logger.Success($"InitCrestronDataStore() = {response}");
+                }
+                else
+                {
+                    Logger.Error($"CrestronDataStore Init Error: {response}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
 
             ControlSystem = controlSystem;
 
@@ -561,7 +580,6 @@ namespace UXAV.AVnetCore.Models
                         (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                     Logger.Highlight("Initializing {0}", item.ToString());
                     item.Initialize();
-                    Thread.Sleep(100);
                 }
                 catch (Exception e)
                 {
@@ -581,7 +599,6 @@ namespace UXAV.AVnetCore.Models
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + room,
                     (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                 Logger.Highlight("Initializing room: {0}", room);
-                Thread.Sleep(500);
                 room.InternalInitialize();
             }
 
@@ -599,14 +616,30 @@ namespace UXAV.AVnetCore.Models
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + source,
                     (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                 Logger.Highlight("Initializing source: {0}", source);
-                Thread.Sleep(500);
                 source.InternalInitialize();
             }
 
             UpdateBootStatus(EBootStatus.Initializing, "Initializing sources done", targetPercentage);
 
             Thread.Sleep(200);
-            UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 90);
+            UpdateBootStatus(EBootStatus.Initializing, "Generating RVI file info for Fusion", 85);
+            Logger.Highlight("Generating Fusion RVI File");
+            try
+            {
+                FusionRVI.GenerateFileForAllFusionDevices();
+                Logger.Success("Generated Fusion RVI file");
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            Thread.Sleep(200);
+            UpdateBootStatus(EBootStatus.Initializing, "Registering Fusion", 90);
+            CipDevices.RegisterFusionRooms();
+
+            Thread.Sleep(200);
+            UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
             Thread.Sleep(200);
             Logger.Highlight("Initializing Core 3 UI Controllers");
             InitializeCore3Controllers();

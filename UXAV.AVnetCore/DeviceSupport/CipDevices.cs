@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Crestron.SimplSharpPro;
+using Crestron.SimplSharpPro.Fusion;
 using UXAV.AVnetCore.Models;
 using UXAV.AVnetCore.Models.Diagnostics;
 using UXAV.Logging;
@@ -71,6 +72,21 @@ namespace UXAV.AVnetCore.DeviceSupport
             device.Description = description;
             Devices[device.ID] = device;
             return device;
+        }
+
+        internal static FusionRoom CreateFusionRoom(uint ipId, string roomName, string description)
+        {
+            if (Devices.ContainsKey(ipId))
+            {
+                throw new ArgumentException($"Device with ID {ipId:X2} already exists", nameof(ipId));
+            }
+
+            var room = new FusionRoom(ipId, ControlSystem, roomName, Guid.NewGuid().ToString())
+            {
+                Description = description
+            };
+            Devices[room.ID] = room;
+            return room;
         }
 
         private static void DeviceOnOnlineStatusChange(GenericBase currentdevice, OnlineOfflineEventArgs args)
@@ -159,7 +175,34 @@ namespace UXAV.AVnetCore.DeviceSupport
 
         internal static void RegisterDevices()
         {
-            foreach (var device in Devices.Values.Where(d => !d.Registered))
+            foreach (var device in Devices.Values
+                .Where(d => !(d is FusionRoom))
+                .Where(d => !d.Registered))
+            {
+                try
+                {
+                    var result = device.Register();
+                    if (result == eDeviceRegistrationUnRegistrationResponse.Success)
+                    {
+                        Logger.Success($"Registered device: {device}");
+                        continue;
+                    }
+
+                    Logger.Error($"Could not register device: {device}, {result}");
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+            }
+        }
+
+        internal static void RegisterFusionRooms()
+        {
+            Logger.Highlight("Registering Fusion Room instances now");
+            foreach (var device in Devices.Values
+                .Where(d => d is FusionRoom)
+                .Where(d => !d.Registered))
             {
                 try
                 {
