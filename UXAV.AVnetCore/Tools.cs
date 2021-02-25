@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Crestron.SimplSharp.CrestronIO;
 using Crestron.SimplSharpPro;
+using Crestron.SimplSharpPro.DM;
 using UXAV.AVnetCore.Models;
 using UXAV.Logging;
 
@@ -312,6 +313,8 @@ namespace UXAV.AVnetCore
             }
         }
 
+        #endregion
+
         private static readonly string[] SizeSuffixes =
             {"bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
 
@@ -333,7 +336,18 @@ namespace UXAV.AVnetCore
             return string.Format("{0:n" + decimalPlaces + "} {1}", dValue, SizeSuffixes[i]);
         }
 
-        #endregion
+        public static string GetDmInputEventIdName(int eventIdValue)
+        {
+            var fields = typeof(DMInputEventIds).GetFields();
+            foreach (var field in fields)
+            {
+                if(field.FieldType != typeof(int)) continue;
+                var v = (int) field.GetValue(null);
+                if (v == eventIdValue) return field.Name;
+            }
+
+            return "Unknown ID " + eventIdValue;
+        }
     }
 
     public class DefaultDateFormatter : IFormatProvider, ICustomFormatter
