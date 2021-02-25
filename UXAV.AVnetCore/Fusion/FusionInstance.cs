@@ -54,9 +54,19 @@ namespace UXAV.AVnetCore.Fusion
             throw new KeyNotFoundException("No device exists in collection");
         }
 
-        internal void AddAsset(IFusionAsset asset)
+        public void AddAsset(IFusionAsset asset)
         {
             var key = GetNextAvailableAssetKey();
+            AddAsset(asset, key);
+        }
+
+        public void AddAsset(IFusionAsset asset, uint key)
+        {
+            if (_fusionAssets.ContainsKey(key))
+            {
+                throw new ArgumentException($"Asset with key {key} already exists", nameof(key));
+            }
+
             FusionRoom.AddAsset(eAssetType.StaticAsset, key,
                 asset.Name, asset.FusionAssetType.ToString(), Guid.NewGuid().ToString());
 
@@ -113,7 +123,8 @@ namespace UXAV.AVnetCore.Fusion
 
                 if (asset is IConnectedItem connectedItem)
                 {
-                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[52].StringValue = connectedItem.ConnectionInfo;
+                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[52].StringValue =
+                        connectedItem.ConnectionInfo;
                 }
 
                 if (asset is IDevice device)

@@ -17,7 +17,7 @@ namespace UXAV.AVnetCore.Fusion
             return newInstance;
         }
 
-        public static FusionInstance GetFusionRoom(this RoomBase room)
+        public static FusionInstance GetFusionInstance(this RoomBase room)
         {
             return Rooms[room.Id];
         }
@@ -29,7 +29,7 @@ namespace UXAV.AVnetCore.Fusion
                 throw new ArgumentException("Device does not have allocated room", nameof(device));
             }
 
-            var fusionInstance = device.AllocatedRoom.GetFusionRoom();
+            var fusionInstance = device.AllocatedRoom.GetFusionInstance();
             fusionInstance.AddAsset(device);
         }
     }
