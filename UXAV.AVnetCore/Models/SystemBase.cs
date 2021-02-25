@@ -620,6 +620,16 @@ namespace UXAV.AVnetCore.Models
             }
 
             UpdateBootStatus(EBootStatus.Initializing, "Initializing sources done", targetPercentage);
+            Thread.Sleep(200);
+            UpdateBootStatus(EBootStatus.Initializing, "Setting up Fusion if required", 82);
+            try
+            {
+                CreateFusionRoomsAndAssets();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
 
             Thread.Sleep(200);
             UpdateBootStatus(EBootStatus.Initializing, "Generating RVI file info for Fusion", 85);
@@ -652,6 +662,8 @@ namespace UXAV.AVnetCore.Models
         /// <returns></returns>
         ///
         protected abstract void SystemShouldAddItemsToInitialize(Action<IInitializable> addItem);
+
+        protected abstract void CreateFusionRoomsAndAssets();
 
         private void AddItemToInitialize(IInitializable itemToInitialize)
         {
