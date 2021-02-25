@@ -248,7 +248,9 @@
         <Compile Include="DeviceSupport\DeviceBase.cs" />
         <Compile Include="DeviceSupport\DisplayDeviceBase.cs" />
         <Compile Include="DeviceSupport\FireMonitor.cs" />
+        <Compile Include="DeviceSupport\IAsset.cs" />
         <Compile Include="DeviceSupport\ICamera.cs" />
+        <Compile Include="DeviceSupport\IConnectedItem.cs" />
         <Compile Include="DeviceSupport\IDeviceWithStandbyMode.cs" />
         <Compile Include="DeviceSupport\IFusionAsset.cs" />
         <Compile Include="DeviceSupport\IGenericDeviceWrapper.cs" />

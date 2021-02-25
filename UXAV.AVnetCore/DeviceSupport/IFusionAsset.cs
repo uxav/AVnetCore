@@ -1,6 +1,6 @@
 ﻿namespace UXAV.AVnetCore.DeviceSupport
 {
-    public interface IFusionAsset : IDevice
+    public interface IFusionAsset : IAsset
     {
         FusionAssetType FusionAssetType { get; }
     }
