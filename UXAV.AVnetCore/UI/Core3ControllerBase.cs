@@ -23,7 +23,7 @@ using IButton = UXAV.AVnetCore.UI.Components.IButton;
 
 namespace UXAV.AVnetCore.UI
 {
-    public abstract class Core3ControllerBase : ISigProvider, IGenericDeviceWrapper
+    public abstract class Core3ControllerBase : ISigProvider, IGenericDeviceWrapper, IFusionAsset, IConnectedItem
     {
         private readonly uint _roomId;
         private RoomBase _room;
@@ -119,6 +119,7 @@ namespace UXAV.AVnetCore.UI
             {
                 Logger.Debug($"Possible sgd file: {file}");
             }
+
             foreach (var file in posibleFiles)
             {
                 Logger.Success("Found SGD File: {0}, Loading...", file);
@@ -176,6 +177,8 @@ namespace UXAV.AVnetCore.UI
         public event RoomChangeEventHandler RoomChanged;
 
         public uint Id => Device.ID;
+
+        public string Name => Device.Description;
 
         public SigProviderDevice SigProvider { get; }
 
@@ -270,6 +273,8 @@ namespace UXAV.AVnetCore.UI
             {
                 Logger.Warn($"{currentDevice} is now offline");
             }
+
+            DeviceCommunicatingChange?.Invoke(this, args.DeviceOnLine);
         }
 
         protected void OnDeviceExtenderSigChange(DeviceExtender extender, SigEventArgs args)
@@ -353,7 +358,7 @@ namespace UXAV.AVnetCore.UI
 
         public void ShowUIForSource(SourceBase source)
         {
-            if(source == null) return;
+            if (source == null) return;
             UIShouldShowSource(source);
         }
 
@@ -420,6 +425,26 @@ namespace UXAV.AVnetCore.UI
         {
             return $"{Device}";
         }
+
+        public string ManufacturerName => "Crestron";
+        public string ModelName => Device.Name;
+        public string SerialNumber => "Unknown";
+        public string Identity => Device.ToString();
+        public RoomBase AllocatedRoom => DefaultRoom;
+        public FusionAssetType FusionAssetType => FusionAssetType.TouchPanel;
+
+        public string ConnectionInfo
+        {
+            get
+            {
+                var ipAddresses = Device.ConnectedIpList.Select(information => information.DeviceIpAddress);
+                var ipAddressString = string.Join(", ", ipAddresses);
+                return $"IP ID: {Device.ID:X2} ({ipAddressString})";
+            }
+        }
+
+        public bool DeviceCommunicating => Device.IsOnline;
+        public event DeviceCommunicatingChangeHandler DeviceCommunicatingChange;
     }
 
     public delegate void RoomChangeEventHandler(Core3ControllerBase controller, RoomBase newRoom);

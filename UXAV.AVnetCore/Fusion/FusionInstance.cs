@@ -41,7 +41,7 @@ namespace UXAV.AVnetCore.Fusion
             throw new IndexOutOfRangeException("No more asset keys available");
         }
 
-        private uint GetKeyForAssetDevice(IDevice device)
+        private uint GetKeyForAssetDevice(IFusionAsset device)
         {
             foreach (var fusionAsset in _fusionAssets)
             {
@@ -65,16 +65,18 @@ namespace UXAV.AVnetCore.Fusion
             var fusionAsset = (FusionStaticAsset) FusionRoom.UserConfigurableAssetDetails[key].Asset;
             fusionAsset.ParamMake.Value = asset.ManufacturerName;
             fusionAsset.ParamModel.Value = asset.ModelName;
-            fusionAsset.Connected.InputSig.BoolValue = asset.DeviceCommunicating;
 
-            fusionAsset.AddSig(eSigType.String, 1, "Connection Info", eSigIoMask.InputSigOnly);
+            fusionAsset.AddSig(eSigType.String, 1, "Identity", eSigIoMask.InputSigOnly);
             fusionAsset.AddSig(eSigType.String, 2, "Serial Number", eSigIoMask.InputSigOnly);
-            fusionAsset.AddSig(eSigType.String, 3, "Version Info", eSigIoMask.InputSigOnly);
-            fusionAsset.AddSig(eSigType.String, 4, "Identity", eSigIoMask.InputSigOnly);
+            fusionAsset.AddSig(eSigType.String, 3, "Connection Info", eSigIoMask.InputSigOnly);
+            fusionAsset.AddSig(eSigType.String, 4, "Version Info", eSigIoMask.InputSigOnly);
 
-            asset.DeviceCommunicatingChange += AssetOnDeviceCommunicatingChange;
+            if (asset is IConnectedItem connectedItem)
+            {
+                fusionAsset.Connected.InputSig.BoolValue = connectedItem.DeviceCommunicating;
+                connectedItem.DeviceCommunicatingChange += AssetOnDeviceCommunicatingChange;
+            }
 
-            // ReSharper disable once SuspiciousTypeConversion.Global
             if (asset is IPowerDevice powerDevice)
             {
                 fusionAsset.PowerOn.InputSig.BoolValue = powerDevice.Power;
@@ -84,32 +86,40 @@ namespace UXAV.AVnetCore.Fusion
 
         private void PowerDeviceOnPowerStatusChange(IPowerDevice device, DevicePowerStatusEventArgs args)
         {
-            var key = GetKeyForAssetDevice(device);
+            var key = GetKeyForAssetDevice((IFusionAsset) device);
             var fusionAsset = (FusionStaticAsset) FusionRoom.UserConfigurableAssetDetails[key].Asset;
             fusionAsset.PowerOn.InputSig.BoolValue = device.Power;
         }
 
-        private void AssetOnDeviceCommunicatingChange(IDevice device, bool communicating)
+        private void AssetOnDeviceCommunicatingChange(IConnectedItem device, bool communicating)
         {
-            var key = GetKeyForAssetDevice(device);
+            var key = GetKeyForAssetDevice((IFusionAsset) device);
             var fusionAsset = (FusionStaticAsset) FusionRoom.UserConfigurableAssetDetails[key].Asset;
             fusionAsset.Connected.InputSig.BoolValue = device.DeviceCommunicating;
         }
 
         private void FusionRoomOnOnlineStatusChange(GenericBase currentdevice, OnlineOfflineEventArgs args)
         {
-            foreach (var asset in _fusionAssets)
+            foreach (var kvp in _fusionAssets)
             {
-                var staticAsset = _fusionRoom.UserConfigurableAssetDetails[asset.Key].Asset as FusionStaticAsset;
+                var staticAsset = _fusionRoom.UserConfigurableAssetDetails[kvp.Key].Asset as FusionStaticAsset;
 
                 if (staticAsset == null) continue;
 
-                var device = asset.Value;
+                var asset = kvp.Value;
 
-                staticAsset.FusionGenericAssetSerialsAsset3.StringInput[50].StringValue = device.ConnectionInfo;
-                staticAsset.FusionGenericAssetSerialsAsset3.StringInput[51].StringValue = device.SerialNumber;
-                staticAsset.FusionGenericAssetSerialsAsset3.StringInput[52].StringValue = device.VersionInfo;
-                staticAsset.FusionGenericAssetSerialsAsset3.StringInput[53].StringValue = device.Identity;
+                staticAsset.FusionGenericAssetSerialsAsset3.StringInput[50].StringValue = asset.Identity;
+                staticAsset.FusionGenericAssetSerialsAsset3.StringInput[51].StringValue = asset.SerialNumber;
+
+                if (asset is IConnectedItem connectedItem)
+                {
+                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[52].StringValue = connectedItem.ConnectionInfo;
+                }
+
+                if (asset is IDevice device)
+                {
+                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[53].StringValue = device.VersionInfo;
+                }
             }
         }
 
