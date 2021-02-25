@@ -564,7 +564,6 @@ namespace UXAV.AVnetCore.Models
                         (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                     Logger.Highlight("Initializing {0}", item.ToString());
                     item.Initialize();
-                    Thread.Sleep(100);
                 }
                 catch (Exception e)
                 {
@@ -584,7 +583,6 @@ namespace UXAV.AVnetCore.Models
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + room,
                     (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                 Logger.Highlight("Initializing room: {0}", room);
-                Thread.Sleep(500);
                 room.InternalInitialize();
             }
 
@@ -602,7 +600,6 @@ namespace UXAV.AVnetCore.Models
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + source,
                     (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                 Logger.Highlight("Initializing source: {0}", source);
-                Thread.Sleep(500);
                 source.InternalInitialize();
             }
 
