@@ -351,6 +351,10 @@
     <ItemGroup>
       <None Include="packages.config" />
     </ItemGroup>
+    <ItemGroup>
+      <Content Include="Upload Scripts\mac_upload_script.sh" />
+      <Content Include="Upload Scripts\WindowsUploadScript.ps1" />
+    </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <Import Project="..\packages\Crestron.SimplSharp.SDK.Library.2.14.142\build\Crestron.SimplSharp.SDK.Library.targets" Condition="Exists('..\packages\Crestron.SimplSharp.SDK.Library.2.14.142\build\Crestron.SimplSharp.SDK.Library.targets')" />
     <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

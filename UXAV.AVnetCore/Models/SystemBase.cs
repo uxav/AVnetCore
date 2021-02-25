@@ -121,7 +121,23 @@ namespace UXAV.AVnetCore.Models
                 });
             };
             SystemMonitor.SetUpdateInterval(10);
-            CrestronDataStoreStatic.InitCrestronDataStore();
+            try
+            {
+                Logger.Highlight("Calling CrestronDataStoreStatic.InitCrestronDataStore()");
+                var response = CrestronDataStoreStatic.InitCrestronDataStore();
+                if (response == CrestronDataStore.CDS_ERROR.CDS_SUCCESS)
+                {
+                    Logger.Success($"InitCrestronDataStore() = {response}");
+                }
+                else
+                {
+                    Logger.Error($"CrestronDataStore Init Error: {response}");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
 
             ControlSystem = controlSystem;
 
