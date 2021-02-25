@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Crestron.SimplSharpPro.Fusion;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models.Rooms;
 

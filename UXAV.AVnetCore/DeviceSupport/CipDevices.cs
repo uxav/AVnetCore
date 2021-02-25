@@ -199,6 +199,7 @@ namespace UXAV.AVnetCore.DeviceSupport
 
         internal static void RegisterFusionRooms()
         {
+            Logger.Highlight("Registering Fusion Room instances now");
             foreach (var device in Devices.Values
                 .Where(d => d is FusionRoom)
                 .Where(d => !d.Registered))

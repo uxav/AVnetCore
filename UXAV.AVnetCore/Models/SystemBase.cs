@@ -610,7 +610,17 @@ namespace UXAV.AVnetCore.Models
 
             Thread.Sleep(200);
             UpdateBootStatus(EBootStatus.Initializing, "Generating RVI file info for Fusion", 85);
-            FusionRVI.GenerateFileForAllFusionDevices();
+            Logger.Highlight("Generating Fusion RVI File");
+            try
+            {
+                FusionRVI.GenerateFileForAllFusionDevices();
+                Logger.Success("Generated Fusion RVI file");
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
             Thread.Sleep(200);
             UpdateBootStatus(EBootStatus.Initializing, "Registering Fusion", 90);
             CipDevices.RegisterFusionRooms();
