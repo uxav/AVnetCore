@@ -48,8 +48,7 @@ namespace UXAV.AVnetCore.Config
                 string path = string.Empty;
                 if (SystemBase.DevicePlatform == eDevicePlatform.Appliance)
                 {
-                    path = SystemBase.ProgramNvramDirectory + "/app_" +
-                           InitialParametersClass.ApplicationNumber.ToString("D2");
+                    path = SystemBase.ProgramNvramAppInstanceDirectory;
                 }
 
                 if (string.IsNullOrEmpty(path))
