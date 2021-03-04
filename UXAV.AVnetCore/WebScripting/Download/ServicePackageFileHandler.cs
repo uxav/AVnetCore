@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Crestron.SimplSharp;
 using UXAV.AVnetCore.Config;
 using UXAV.AVnetCore.Models;
@@ -20,8 +21,7 @@ namespace UXAV.AVnetCore.WebScripting.Download
         {
             try
             {
-                Logger.Highlight("Get()");
-                Logger.Log("Creating memory stream");
+                Logger.Log("Creating zip archive for service package");
                 var zipStream = new MemoryStream();
                 using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
                 {
@@ -58,14 +58,15 @@ namespace UXAV.AVnetCore.WebScripting.Download
 
                     try
                     {
-                        Logger.Log("Zipping files from " + SystemBase.ProgramNvramDirectory);
+                        Logger.Debug("Zipping files from " + SystemBase.ProgramNvramDirectory);
                         var nvramFolder = new DirectoryInfo(SystemBase.ProgramNvramDirectory);
                         files = nvramFolder.GetFiles("*", SearchOption.AllDirectories);
 
                         foreach (var fileInfo in files)
                         {
-                            Logger.Log("Creating zip entry for " + fileInfo.FullName);
-                            var entry = archive.CreateEntry(fileInfo.FullName);
+                            Logger.Debug("Creating zip entry for " + fileInfo.FullName);
+                            var zipPath = Regex.Replace(fileInfo.FullName, "^" + SystemBase.ProgramNvramDirectory + "/", "");
+                            var entry = archive.CreateEntry("NVRAM/" + zipPath);
                             using (var entryStream = entry.Open())
                             {
                                 fileInfo.OpenRead().CopyTo(entryStream);
@@ -112,7 +113,9 @@ namespace UXAV.AVnetCore.WebScripting.Download
 
                                 foreach (var fileInfo in logFiles)
                                 {
-                                    var logEntry = archive.CreateEntry("Logs/" + fileInfo.Name);
+                                    Logger.Debug("Creating zip entry for " + fileInfo.FullName);
+                                    var zipPath = Regex.Replace(fileInfo.FullName, "^/var/log/crestron/", "");
+                                    var logEntry = archive.CreateEntry("Logs/" + zipPath);
                                     using (var entryStream = logEntry.Open())
                                     {
                                         fileInfo.OpenRead().CopyTo(entryStream);
@@ -124,12 +127,14 @@ namespace UXAV.AVnetCore.WebScripting.Download
                             case eDevicePlatform.Appliance:
                             {
                                 var logFolder = new DirectoryInfo("/logs");
-                                var logFiles = logFolder.EnumerateFiles("*.*", SearchOption.AllDirectories);
+                                var logFiles = logFolder.EnumerateFiles("*", SearchOption.AllDirectories);
                                 foreach (var fileInfo in logFiles)
                                 {
                                     try
                                     {
-                                        var logEntry = archive.CreateEntry("Logs/" + fileInfo.FullName);
+                                        Logger.Debug("Creating zip entry for " + fileInfo.FullName);
+                                        var zipPath = Regex.Replace(fileInfo.FullName, "^/logs/", "");
+                                        var logEntry = archive.CreateEntry("Logs/" + zipPath);
                                         using (var entryStream = logEntry.Open())
                                         {
                                             fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read)
@@ -169,7 +174,7 @@ namespace UXAV.AVnetCore.WebScripting.Download
                 var headerContents = Response.Headers.Cast<string>().Aggregate(string.Empty,
                     (current, header) => current + $"{Environment.NewLine}{header}: {Response.Headers[header]}");
 
-                Logger.Log("Response Headers:" + headerContents);
+                Logger.Debug("Response Headers:" + headerContents);
 
                 Request.Response.Write(zipStream.GetCrestronStream(), true);
             }
