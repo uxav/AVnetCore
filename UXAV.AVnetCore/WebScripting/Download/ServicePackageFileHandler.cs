@@ -65,7 +65,8 @@ namespace UXAV.AVnetCore.WebScripting.Download
                         foreach (var fileInfo in files)
                         {
                             Logger.Debug("Creating zip entry for " + fileInfo.FullName);
-                            var zipPath = Regex.Replace(fileInfo.FullName, "^" + SystemBase.ProgramNvramDirectory + "/", "");
+                            var zipPath = Regex.Replace(fileInfo.FullName, "^" + SystemBase.ProgramNvramDirectory + "/",
+                                "");
                             var entry = archive.CreateEntry("NVRAM/" + zipPath);
                             using (var entryStream = entry.Open())
                             {
@@ -81,8 +82,79 @@ namespace UXAV.AVnetCore.WebScripting.Download
                     var infoEntry = archive.CreateEntry("systeminfo.txt");
                     using (var infoStream = new StreamWriter(infoEntry.Open()))
                     {
-                        infoStream.WriteLine($"Time {DateTime.Now}");
-                        infoStream.WriteLine($"TimeZone {CrestronEnvironment.GetTimeZone().Formatted}");
+                        var appNumber = InitialParametersClass.ApplicationNumber;
+                        var commands = new[]
+                        {
+                            "hostname",
+                            "mycrestron",
+                            "showlicense",
+                            "osd",
+                            "uptime",
+                            "ver -v",
+                            "ver all",
+                            "uptime",
+                            "time",
+                            "timezone",
+                            "sntp",
+                            "showhw",
+                            "ipconfig /all",
+                            "progregister",
+                            "progcomments:1",
+                            "progcomments:2",
+                            "progcomments:3",
+                            "progcomments:4",
+                            "progcomments:5",
+                            "progcomments:6",
+                            "progcomments:7",
+                            "progcomments:8",
+                            "progcomments:9",
+                            "progcomments:10",
+                            "proguptime:1",
+                            "proguptime:2",
+                            "proguptime:3",
+                            "proguptime:4",
+                            "proguptime:5",
+                            "proguptime:6",
+                            "proguptime:7",
+                            "proguptime:8",
+                            "proguptime:9",
+                            "proguptime:10",
+                            "ssptasks:1",
+                            "ssptasks:2",
+                            "ssptasks:3",
+                            "ssptasks:4",
+                            "ssptasks:5",
+                            "ssptasks:6",
+                            "ssptasks:7",
+                            "ssptasks:8",
+                            "ssptasks:9",
+                            "ssptasks:10",
+                            "appstat -p:" + appNumber,
+                            "taskstat",
+                            "ramfree",
+                            "cpuload",
+                            "cpuload",
+                            "cpuload",
+                            "showportmap -all",
+                            "ramfree",
+                            "showdiskinfo",
+                            "ethwdog",
+                            "iptable -p:all -t",
+                            "who",
+                            "netstat",
+                            "threadpoolinfo",
+                            "autodiscover query tableformat",
+                            "reportcresnet",
+                        };
+                        
+                        foreach (var command in commands)
+                        {
+                            infoStream.WriteLine("Ran Console Command: {0}", command);
+                            var response = string.Empty;
+                            CrestronConsole.SendControlSystemCommand(command, ref response);
+                            infoStream.WriteLine(response);
+                            infoStream.WriteLine(string.Empty);
+                        }
                     }
 
                     try
@@ -162,6 +234,7 @@ namespace UXAV.AVnetCore.WebScripting.Download
                         Logger.Error(e);
                     }
                 }
+
                 Response.Headers.Add("Access-Control-Expose-Headers", "Content-Disposition");
                 Response.Headers.Add("Content-Disposition",
                     $"attachment; filename=\"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip\"");
