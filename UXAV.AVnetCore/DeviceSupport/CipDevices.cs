@@ -25,6 +25,27 @@ namespace UXAV.AVnetCore.DeviceSupport
 
         public static CrestronControlSystem ControlSystem { get; private set; }
 
+        public static GenericDevice GetOrCreateDevice(string typeName, uint ipId, string description)
+        {
+            if (Devices.ContainsKey(ipId))
+            {
+                return GetDevice(ipId);
+            }
+
+            return CreateDevice(typeName, ipId, description);
+        }
+
+        public static GenericDevice GetOrCreateDevice(string typeName, uint ipId, string ipAddressOrHostname,
+            string description)
+        {
+            if (Devices.ContainsKey(ipId))
+            {
+                return GetDevice(ipId);
+            }
+
+            return CreateDevice(typeName, ipId, ipAddressOrHostname, description);
+        }
+
         public static GenericDevice CreateDevice(string typeName, uint ipId, string description)
         {
             if (Devices.ContainsKey(ipId))
@@ -131,12 +152,14 @@ namespace UXAV.AVnetCore.DeviceSupport
                     search = search + "*";
                     continue;
                 }
+
                 Logger.Debug($"Could not find using search: {search}.dll");
                 if (search != "Crestron.*")
                 {
                     search = "Crestron.*";
                     continue;
                 }
+
                 search = "*";
             }
 

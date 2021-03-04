@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Crestron.SimplSharp;
 using UXAV.AVnetCore.Config;
 using UXAV.AVnetCore.Models;
@@ -20,8 +21,7 @@ namespace UXAV.AVnetCore.WebScripting.Download
         {
             try
             {
-                Logger.Highlight("Get()");
-                Logger.Log("Creating memory stream");
+                Logger.Log("Creating zip archive for service package");
                 var zipStream = new MemoryStream();
                 using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
                 {
@@ -58,14 +58,16 @@ namespace UXAV.AVnetCore.WebScripting.Download
 
                     try
                     {
-                        Logger.Log("Zipping files from " + SystemBase.ProgramNvramDirectory);
+                        Logger.Debug("Zipping files from " + SystemBase.ProgramNvramDirectory);
                         var nvramFolder = new DirectoryInfo(SystemBase.ProgramNvramDirectory);
                         files = nvramFolder.GetFiles("*", SearchOption.AllDirectories);
 
                         foreach (var fileInfo in files)
                         {
-                            Logger.Log("Creating zip entry for " + fileInfo.FullName);
-                            var entry = archive.CreateEntry(fileInfo.FullName);
+                            Logger.Debug("Creating zip entry for " + fileInfo.FullName);
+                            var zipPath = Regex.Replace(fileInfo.FullName, "^" + SystemBase.ProgramNvramDirectory + "/",
+                                "");
+                            var entry = archive.CreateEntry("NVRAM/" + zipPath);
                             using (var entryStream = entry.Open())
                             {
                                 fileInfo.OpenRead().CopyTo(entryStream);
@@ -80,8 +82,79 @@ namespace UXAV.AVnetCore.WebScripting.Download
                     var infoEntry = archive.CreateEntry("systeminfo.txt");
                     using (var infoStream = new StreamWriter(infoEntry.Open()))
                     {
-                        infoStream.WriteLine($"Time {DateTime.Now}");
-                        infoStream.WriteLine($"TimeZone {CrestronEnvironment.GetTimeZone().Formatted}");
+                        var appNumber = InitialParametersClass.ApplicationNumber;
+                        var commands = new[]
+                        {
+                            "hostname",
+                            "mycrestron",
+                            "showlicense",
+                            "osd",
+                            "uptime",
+                            "ver -v",
+                            "ver all",
+                            "uptime",
+                            "time",
+                            "timezone",
+                            "sntp",
+                            "showhw",
+                            "ipconfig /all",
+                            "progregister",
+                            "progcomments:1",
+                            "progcomments:2",
+                            "progcomments:3",
+                            "progcomments:4",
+                            "progcomments:5",
+                            "progcomments:6",
+                            "progcomments:7",
+                            "progcomments:8",
+                            "progcomments:9",
+                            "progcomments:10",
+                            "proguptime:1",
+                            "proguptime:2",
+                            "proguptime:3",
+                            "proguptime:4",
+                            "proguptime:5",
+                            "proguptime:6",
+                            "proguptime:7",
+                            "proguptime:8",
+                            "proguptime:9",
+                            "proguptime:10",
+                            "ssptasks:1",
+                            "ssptasks:2",
+                            "ssptasks:3",
+                            "ssptasks:4",
+                            "ssptasks:5",
+                            "ssptasks:6",
+                            "ssptasks:7",
+                            "ssptasks:8",
+                            "ssptasks:9",
+                            "ssptasks:10",
+                            "appstat -p:" + appNumber,
+                            "taskstat",
+                            "ramfree",
+                            "cpuload",
+                            "cpuload",
+                            "cpuload",
+                            "showportmap -all",
+                            "ramfree",
+                            "showdiskinfo",
+                            "ethwdog",
+                            "iptable -p:all -t",
+                            "who",
+                            "netstat",
+                            "threadpoolinfo",
+                            "autodiscover query tableformat",
+                            "reportcresnet",
+                        };
+                        
+                        foreach (var command in commands)
+                        {
+                            infoStream.WriteLine("Ran Console Command: {0}", command);
+                            var response = string.Empty;
+                            CrestronConsole.SendControlSystemCommand(command, ref response);
+                            infoStream.WriteLine(response);
+                            infoStream.WriteLine(string.Empty);
+                        }
                     }
 
                     try
@@ -112,7 +185,9 @@ namespace UXAV.AVnetCore.WebScripting.Download
 
                                 foreach (var fileInfo in logFiles)
                                 {
-                                    var logEntry = archive.CreateEntry("Logs/" + fileInfo.Name);
+                                    Logger.Debug("Creating zip entry for " + fileInfo.FullName);
+                                    var zipPath = Regex.Replace(fileInfo.FullName, "^/var/log/crestron/", "");
+                                    var logEntry = archive.CreateEntry("Logs/" + zipPath);
                                     using (var entryStream = logEntry.Open())
                                     {
                                         fileInfo.OpenRead().CopyTo(entryStream);
@@ -124,12 +199,14 @@ namespace UXAV.AVnetCore.WebScripting.Download
                             case eDevicePlatform.Appliance:
                             {
                                 var logFolder = new DirectoryInfo("/logs");
-                                var logFiles = logFolder.EnumerateFiles("*.*", SearchOption.AllDirectories);
+                                var logFiles = logFolder.EnumerateFiles("*", SearchOption.AllDirectories);
                                 foreach (var fileInfo in logFiles)
                                 {
                                     try
                                     {
-                                        var logEntry = archive.CreateEntry("Logs/" + fileInfo.FullName);
+                                        Logger.Debug("Creating zip entry for " + fileInfo.FullName);
+                                        var zipPath = Regex.Replace(fileInfo.FullName, "^/logs/", "");
+                                        var logEntry = archive.CreateEntry("Logs/" + zipPath);
                                         using (var entryStream = logEntry.Open())
                                         {
                                             fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read)
@@ -157,6 +234,7 @@ namespace UXAV.AVnetCore.WebScripting.Download
                         Logger.Error(e);
                     }
                 }
+
                 Response.Headers.Add("Access-Control-Expose-Headers", "Content-Disposition");
                 Response.Headers.Add("Content-Disposition",
                     $"attachment; filename=\"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip\"");
@@ -169,7 +247,7 @@ namespace UXAV.AVnetCore.WebScripting.Download
                 var headerContents = Response.Headers.Cast<string>().Aggregate(string.Empty,
                     (current, header) => current + $"{Environment.NewLine}{header}: {Response.Headers[header]}");
 
-                Logger.Log("Response Headers:" + headerContents);
+                Logger.Debug("Response Headers:" + headerContents);
 
                 Request.Response.Write(zipStream.GetCrestronStream(), true);
             }

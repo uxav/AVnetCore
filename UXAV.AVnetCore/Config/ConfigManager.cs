@@ -18,6 +18,7 @@ using Newtonsoft.Json.Schema.Generation;
 using UXAV.AVnetCore.Models;
 using UXAV.Logging;
 using UXAV.Logging.Console;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace UXAV.AVnetCore.Config
@@ -47,8 +48,7 @@ namespace UXAV.AVnetCore.Config
                 string path = string.Empty;
                 if (SystemBase.DevicePlatform == eDevicePlatform.Appliance)
                 {
-                    path = SystemBase.ProgramNvramDirectory + "/app_" +
-                           InitialParametersClass.ApplicationNumber.ToString("D2");
+                    path = SystemBase.ProgramNvramAppInstanceDirectory;
                 }
 
                 if (string.IsNullOrEmpty(path))
@@ -96,16 +96,31 @@ namespace UXAV.AVnetCore.Config
                 if (!string.IsNullOrEmpty(_filePath)) return _filePath;
 
                 _filePath = DefaultConfigPath;
-                if (!File.Exists(ConfigDirectory + "/configfile.info"))
+
+                var configInfoFilePath = ConfigDirectory + $"/{ConfigNameSpace}.configfile.info";
+                if (!File.Exists(configInfoFilePath))
                 {
-                    File.WriteAllText(ConfigDirectory + "/configfile.info", _filePath);
+                    Logger.Log($"No config info found at: {configInfoFilePath}");
+                    if (File.Exists(ConfigDirectory + "/configfile.info"))
+                    {
+                        _filePath = File.ReadAllText(ConfigDirectory + "/configfile.info");
+                        if (Regex.IsMatch(_filePath, @"\/(?:\w+\.)?" + ConfigNameSpace.ToLower() + @"\."))
+                        {
+                            Logger.Warn($"Old style info file found with relevant namespace content, will convert and remove");
+                            File.Delete(ConfigDirectory + "/configfile.info");
+                        }
+                    }
+
+                    File.WriteAllText(ConfigDirectory + $"/{ConfigNameSpace}.configfile.info", _filePath);
                     return _filePath;
                 }
 
-                _filePath = File.ReadAllText(ConfigDirectory + "/configfile.info");
+                _filePath = File.ReadAllText(configInfoFilePath);
+                Logger.Log($"Config file path loaded is: {_filePath}");
 
                 if (string.IsNullOrEmpty(_filePath))
                 {
+                    Logger.Warn($"Config file path loaded is invalid. Setting default: {DefaultConfigPath}");
                     _filePath = DefaultConfigPath;
                 }
 
@@ -418,6 +433,7 @@ namespace UXAV.AVnetCore.Config
             {
                 _client = new HttpClient {Timeout = TimeSpan.FromSeconds(10)};
             }
+
             var stream = await _client.GetStreamAsync(url);
             var reader = new StreamReader(stream);
             var csv = new CsvReader(reader, CultureInfo.InvariantCulture);

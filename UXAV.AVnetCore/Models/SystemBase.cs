@@ -379,6 +379,25 @@ namespace UXAV.AVnetCore.Models
 
         public static string ProgramNvramDirectory => ProgramRootDirectory + "/nvram";
 
+        /// <summary>
+        /// The app instance directory for the program e.g nvram/app_01
+        /// </summary>
+        public static string ProgramNvramAppInstanceDirectory
+        {
+            get
+            {
+                var path = ProgramNvramDirectory + "/app_" +
+                           InitialParametersClass.ApplicationNumber
+                               .ToString("D2");
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                return path;
+            }
+        }
+
         public static string ProgramHtmlDirectory => ProgramRootDirectory + "/html";
 
         public DateTime ProgramBuildTime => _programBuildTime;
@@ -696,7 +715,7 @@ namespace UXAV.AVnetCore.Models
                 Logger.Log("Checking version of {0} to see if \"{1}\" is new", appAssembly.GetName().Name,
                     runningVersion);
 
-                var filePath = $"{ProgramNvramDirectory}/{appAssembly.GetName().Name}_version.info";
+                var filePath = $"{ProgramNvramAppInstanceDirectory}/{appAssembly.GetName().Name}_version.info";
 
                 if (!File.Exists(filePath))
                 {
