@@ -26,7 +26,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                     case "program":
                         foreach (var httpContent in data.Contents)
                         {
-                            var name = httpContent.Headers.ContentDisposition.Name.Trim('\"');
+                            var name = httpContent.Headers.ContentDisposition.FileName.Trim('\"');
                             if (!Regex.IsMatch(name, @"[\w\-\[\]\(\)\x20]+\.cpz"))
                             {
                                 Logger.Warn($"File: \"{name}\" is not a valid cpz file name");
@@ -47,6 +47,32 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
 
                         HandleError(406, "Not Acceptable",
                             "One or more files did not match the required format");
+                        return;
+                    case "nvram":
+                        try
+                        {
+                            foreach (var httpContent in data.Contents)
+                            {
+                                var name = httpContent.Headers.ContentDisposition.FileName.Trim('\"');
+                                using (var newStream =
+                                    File.OpenWrite(SystemBase.ProgramNvramAppInstanceDirectory + "/" + name))
+                                {
+                                    var stream = httpContent.ReadAsStreamAsync().Result;
+                                    Logger.Debug($"Uploaded {name}, size: {stream.Length}");
+                                    stream.CopyTo(newStream);
+                                }
+
+                                Logger.Highlight(
+                                    $"File uploaded to: {SystemBase.ProgramNvramAppInstanceDirectory}/{name}");
+                                WriteResponse(
+                                    $"File uploaded to: {SystemBase.ProgramNvramAppInstanceDirectory}/{name}");
+                                return;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            HandleError(e);
+                        }
                         return;
                     default:
                         HandleError(400, "Bad Request",

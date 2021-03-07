@@ -146,7 +146,7 @@ namespace UXAV.AVnetCore.WebScripting.Download
                             "autodiscover query tableformat",
                             "reportcresnet",
                         };
-                        
+
                         foreach (var command in commands)
                         {
                             infoStream.WriteLine("Ran Console Command: {0}", command);
