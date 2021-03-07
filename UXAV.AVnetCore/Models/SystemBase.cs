@@ -249,6 +249,7 @@ namespace UXAV.AVnetCore.Models
                 ApiServer.AddRoute(@"/api/diagnostics", typeof(DiagnosticsApiHandler));
                 ApiServer.AddRoute(@"/api/sysmon", typeof(SystemMonitorHandler));
                 ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
+                ApiServer.AddRoute(@"/api/upload/uploadedfiles/<fileType:\w+>", typeof(UploadedFilesApiHandler));
             }
             catch (Exception e)
             {
