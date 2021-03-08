@@ -32,14 +32,23 @@ namespace UXAV.AVnetCore.UI
         private readonly Dictionary<DeviceExtender, string> _deviceExtenderNames =
             new Dictionary<DeviceExtender, string>();
 
-        protected Core3ControllerBase(SystemBase system, uint roomId, string typeName, uint ipId, string description)
+        protected Core3ControllerBase(SystemBase system, uint roomId, string typeName, uint ipId, string description,
+            string pathOfVtzForXPanel = "")
         {
             _roomId = roomId;
             System = system;
             Logger.Highlight(
                 $"Creating {GetType().FullName} with device type {typeName} with IP ID: {ipId:X2}");
 
-            Device = (BasicTriListWithSmartObject) CipDevices.CreateDevice(typeName, ipId, description);
+            if (typeName == typeof(XpanelForSmartGraphics).FullName)
+            {
+                Device = (BasicTriListWithSmartObject) CipDevices.CreateXPanelForSmartGraphics(ipId, description,
+                    pathOfVtzForXPanel);
+            }
+            else
+            {
+                Device = (BasicTriListWithSmartObject) CipDevices.CreateDevice(typeName, ipId, description);
+            }
 
             SigProvider = new SigProviderDevice(Device);
 

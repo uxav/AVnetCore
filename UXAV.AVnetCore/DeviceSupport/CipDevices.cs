@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.Fusion;
+using Crestron.SimplSharpPro.UI;
 using UXAV.AVnetCore.Models;
 using UXAV.AVnetCore.Models.Diagnostics;
 using UXAV.Logging;
@@ -17,6 +18,9 @@ namespace UXAV.AVnetCore.DeviceSupport
     {
         private static readonly ConcurrentDictionary<uint, GenericDevice> Devices =
             new ConcurrentDictionary<uint, GenericDevice>();
+
+        private static readonly ConcurrentDictionary<uint, string> XPanelFilePaths =
+            new ConcurrentDictionary<uint, string>();
 
         public static void Init(CrestronControlSystem controlSystem)
         {
@@ -65,6 +69,13 @@ namespace UXAV.AVnetCore.DeviceSupport
             device.Description = description;
             Devices[device.ID] = device;
             device.OnlineStatusChange += DeviceOnOnlineStatusChange;
+            return device;
+        }
+
+        public static GenericDevice CreateXPanelForSmartGraphics(uint ipId, string description, string pathOfVtzFile)
+        {
+            var device = CreateDevice(typeof(XpanelForSmartGraphics).FullName, ipId, description);
+            XPanelFilePaths[ipId] = pathOfVtzFile;
             return device;
         }
 
@@ -119,6 +130,11 @@ namespace UXAV.AVnetCore.DeviceSupport
                 @ConnectionInfo = $"IP ID: {currentdevice.ID:X2}",
                 @Online = args.DeviceOnLine
             });
+        }
+
+        internal static string GetPathOfVtzFileForXPanel(uint ipId)
+        {
+            return XPanelFilePaths.ContainsKey(ipId) ? XPanelFilePaths[ipId] : string.Empty;
         }
 
         private static Type GetType(string typeName)
