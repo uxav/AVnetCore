@@ -44,7 +44,7 @@ namespace UXAV.AVnetCore.WebScripting
             }
             catch (Exception e)
             {
-                HandleNotFound();
+                HandleError(e);
             }
         }
     }
