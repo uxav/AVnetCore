@@ -218,6 +218,8 @@ namespace UXAV.AVnetCore.Models
                 FileServer.AddRoute(@"/files/user/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(UserFileRequestHandler));
                 FileServer.AddRoute(@"/files/nvram/<filepath:[\/\w\.\-\[\]\(\)\x20]+>",
                     typeof(NvramFileRequestHandler));
+                FileServer.AddRoute(@"/files/xpanels/<filename:Core3XPanel_\w{2}\.(?:vtz|c3p)$>",
+                    typeof(XPanelResourceFileHandler));
                 FileServer.AddRoute(@"/files/service", typeof(ServicePackageFileHandler));
             }
             catch (Exception e)
@@ -250,6 +252,7 @@ namespace UXAV.AVnetCore.Models
                 ApiServer.AddRoute(@"/api/sysmon", typeof(SystemMonitorHandler));
                 ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
                 ApiServer.AddRoute(@"/api/upload/uploadedfiles/<fileType:\w+>", typeof(UploadedFilesApiHandler));
+                ApiServer.AddRoute(@"/api/xpanels", typeof(XPanelDetailsHandler));
             }
             catch (Exception e)
             {
