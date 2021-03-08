@@ -12,6 +12,12 @@ namespace UXAV.AVnetCore.Models.Diagnostics
             if (device is CrestronGo && !device.IsOnline)
                 return new DiagnosticMessage(MessageLevel.Warning, $"{device.Name} is offline!",
                     $"IP ID: {device.ID:X2}", device.GetType().Name, device.Description);
+            if (device is XpanelForHtml5 || device is XpanelForSmartGraphics)
+            {
+                if (!device.IsOnline)
+                    return new DiagnosticMessage(MessageLevel.Info, $"{device.Name} is offline",
+                        $"IP ID: {device.ID:X2}", device.GetType().Name, device.Description);
+            }
             if (!device.IsOnline)
                 return new DiagnosticMessage(MessageLevel.Danger, $"{device.Name} is offline!",
                     $"IP ID: {device.ID:X2}", device.GetType().Name, device.Description);

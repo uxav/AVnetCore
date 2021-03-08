@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
@@ -32,14 +33,23 @@ namespace UXAV.AVnetCore.UI
         private readonly Dictionary<DeviceExtender, string> _deviceExtenderNames =
             new Dictionary<DeviceExtender, string>();
 
-        protected Core3ControllerBase(SystemBase system, uint roomId, string typeName, uint ipId, string description)
+        protected Core3ControllerBase(SystemBase system, uint roomId, string typeName, uint ipId, string description,
+            string pathOfVtzForXPanel = "")
         {
             _roomId = roomId;
             System = system;
             Logger.Highlight(
                 $"Creating {GetType().FullName} with device type {typeName} with IP ID: {ipId:X2}");
 
-            Device = (BasicTriListWithSmartObject) CipDevices.CreateDevice(typeName, ipId, description);
+            if (typeName == typeof(XpanelForSmartGraphics).FullName)
+            {
+                Device = (BasicTriListWithSmartObject) CipDevices.CreateXPanelForSmartGraphics(ipId, description,
+                    pathOfVtzForXPanel);
+            }
+            else
+            {
+                Device = (BasicTriListWithSmartObject) CipDevices.CreateDevice(typeName, ipId, description);
+            }
 
             SigProvider = new SigProviderDevice(Device);
 
@@ -114,7 +124,19 @@ namespace UXAV.AVnetCore.UI
             var files = Directory.GetFiles(SystemBase.ProgramApplicationDirectory,
                 "*.sgd", SearchOption.AllDirectories);
             // Look for SGD files with priority given to file names containing the device type name... ie 'CrestronApp'
-            var posibleFiles = files.OrderByDescending(f => f.Contains(Device.Name)).ToArray();
+
+            var posibleFiles = new List<string>();
+            var search = files.OrderByDescending(f => f.Contains(Device.Name)).ToArray();
+            if (!posibleFiles.Any(f => f.Contains(Device.Name)))
+            {
+                var xpanelVtzPath = CipDevices.GetPathOfVtzFileForXPanel(Device.ID);
+                if (!string.IsNullOrEmpty(xpanelVtzPath))
+                {
+                    var fileName = Regex.Replace(xpanelVtzPath, @"\.\w+$", ".sgd");
+                    posibleFiles.Add(fileName);
+                }
+            }
+            posibleFiles.AddRange(search);
             foreach (var file in posibleFiles)
             {
                 Logger.Debug($"Possible sgd file: {file}");

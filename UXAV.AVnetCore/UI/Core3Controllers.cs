@@ -42,6 +42,14 @@ namespace UXAV.AVnetCore.UI
             }
         }
 
+        public static bool Contains(uint ipId)
+        {
+            lock (Controllers)
+            {
+                return Controllers.ContainsKey(ipId);
+            }
+        }
+
         public static Core3ControllerBase Get(uint ipId)
         {
             lock (Controllers)
