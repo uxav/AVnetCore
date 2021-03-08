@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Crestron.SimplSharp.CrestronIO;
 using UXAV.AVnetCore.DeviceSupport;
 
@@ -16,8 +17,9 @@ namespace UXAV.AVnetCore.WebScripting
         {
             try
             {
-                var ipId = uint.Parse(Request.RoutePatternArgs["ipid"], NumberStyles.HexNumber);
-                var extension = Request.RoutePatternArgs["extension"];
+                var fileName = Request.RoutePatternArgs["filename"];
+                var match = Regex.Match(fileName, @"_(\w{2})\.(?:c3p|vtz)$");
+                var ipId = uint.Parse(match.Groups[1].Value, NumberStyles.HexNumber);
 
                 if (!CipDevices.ContainsDevice(ipId))
                 {

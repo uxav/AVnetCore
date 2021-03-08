@@ -218,7 +218,7 @@ namespace UXAV.AVnetCore.Models
                 FileServer.AddRoute(@"/files/user/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(UserFileRequestHandler));
                 FileServer.AddRoute(@"/files/nvram/<filepath:[\/\w\.\-\[\]\(\)\x20]+>",
                     typeof(NvramFileRequestHandler));
-                FileServer.AddRoute(@"/files/xpanels/Core3XPanel_<ipid:\/\w{2}><extension:\/\.(?:vtz|c3p)>",
+                FileServer.AddRoute(@"/files/xpanels/<filename:Core3XPanel_\w{2}\.(?:vtz|c3p)$>",
                     typeof(XPanelResourceFileHandler));
                 FileServer.AddRoute(@"/files/service", typeof(ServicePackageFileHandler));
             }
