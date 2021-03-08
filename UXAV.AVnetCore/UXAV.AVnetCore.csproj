@@ -353,6 +353,7 @@
         <Compile Include="WebScripting\UserFileRequestHandler.cs" />
         <Compile Include="WebScripting\WebScriptingRequest.cs" />
         <Compile Include="WebScripting\WebScriptingServer.cs" />
+        <Compile Include="WebScripting\XPanelResourceFileHandler.cs" />
     </ItemGroup>
     <ItemGroup>
       <None Include="packages.config" />
