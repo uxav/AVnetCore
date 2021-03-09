@@ -344,7 +344,7 @@
         <Compile Include="WebScripting\InternalApi\SourcesApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\StatusApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\UploadedFilesApiHandler.cs" />
-        <Compile Include="WebScripting\InternalApi\XPanelDetailsHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\XPanelDetailsApiHandler.cs" />
         <Compile Include="WebScripting\NvramFileRequestHandler.cs" />
         <Compile Include="WebScripting\RequestHandler.cs" />
         <Compile Include="WebScripting\SecureRequestAttribute.cs" />
