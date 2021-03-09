@@ -29,6 +29,27 @@ namespace UXAV.AVnetCore.DeviceSupport
 
         public static CrestronControlSystem ControlSystem { get; private set; }
 
+        public static uint GetNextAvailableIpId()
+        {
+            return GetNextAvailableIpId(0x03);
+        }
+
+        public static uint GetNextAvailableIpId(uint ipId)
+        {
+            if(ipId < 0x03) throw new IndexOutOfRangeException("id must be greater than 0x03");
+            for (var id = ipId; id <= 0xFE; id++)
+            {
+                if(ContainsDevice(id)) continue;
+                return id;
+            }
+            throw new InvalidOperationException("No more ID's available");
+        }
+
+        public static IEnumerable<uint> GetUsedIpIds()
+        {
+            return Devices.Keys.ToArray();
+        }
+
         public static GenericDevice GetOrCreateDevice(string typeName, uint ipId, string description)
         {
             if (Devices.ContainsKey(ipId))
