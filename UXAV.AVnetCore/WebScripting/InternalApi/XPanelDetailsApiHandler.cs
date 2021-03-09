@@ -7,9 +7,9 @@ using UXAV.AVnetCore.UI;
 
 namespace UXAV.AVnetCore.WebScripting.InternalApi
 {
-    public class XPanelDetailsHandler : ApiRequestHandler
+    public class XPanelDetailsApiHandler : ApiRequestHandler
     {
-        public XPanelDetailsHandler(WebScriptingServer server, WebScriptingRequest request)
+        public XPanelDetailsApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)
         {
         }
@@ -47,7 +47,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                 var resourcePath = CipDevices.GetPathOfVtzFileForXPanel(device.ID);
                 var link =
                     $"CrestronDesktop:https://{SystemBase.IpAddress}/cws/files/xpanels/Core3XPanel_{device.ID:X2}.c3p"
-                    + $" -- overrideHost=true host={SystemBase.IpAddress} ipid={device.ID:x2} port=41796 enableSSL=true"
+                    + $" -- overrideHost=true host={SystemBase.IpAddress} ipid={device.ID} port=41796 enableSSL=true"
                     + " SupportsSerialAppend=true bypasslogindialog=true";
 
                 results.Add(new
