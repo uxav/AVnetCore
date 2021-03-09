@@ -17,16 +17,31 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
         public void Get()
         {
             var results = new List<object>();
+            var roomCounts = new Dictionary<uint, int>();
             foreach (var device in CipDevices.GetDevices()
                 .Where(d => d is XpanelForSmartGraphics))
             {
                 uint roomId = 0;
                 var roomName = string.Empty;
+                var roomCount = 0;
                 if (Core3Controllers.Contains(device.ID))
                 {
                     var controller = Core3Controllers.Get(device.ID);
                     roomId = controller.AllocatedRoom?.Id ?? 0;
                     roomName = controller.AllocatedRoom?.Name ?? string.Empty;
+                    if (roomId > 0)
+                    {
+                        if (!roomCounts.ContainsKey(roomId))
+                        {
+                            roomCounts[roomId] = 1;
+                        }
+                        else
+                        {
+                            roomCounts[roomId]++;
+                        }
+
+                        roomCount = roomCounts[roomId];
+                    }
                 }
 
                 var resourcePath = CipDevices.GetPathOfVtzFileForXPanel(device.ID);
@@ -42,6 +57,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                     Type = device.GetType().FullName,
                     RoomId = roomId,
                     RoomName = roomName,
+                    RoomPanelIndex = roomCount,
                     Resource = resourcePath,
                     Available = !string.IsNullOrEmpty(resourcePath),
                     Link = link
