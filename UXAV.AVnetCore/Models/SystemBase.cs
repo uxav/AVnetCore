@@ -252,7 +252,7 @@ namespace UXAV.AVnetCore.Models
                 ApiServer.AddRoute(@"/api/sysmon", typeof(SystemMonitorHandler));
                 ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
                 ApiServer.AddRoute(@"/api/upload/uploadedfiles/<fileType:\w+>", typeof(UploadedFilesApiHandler));
-                ApiServer.AddRoute(@"/api/xpanels", typeof(XPanelDetailsHandler));
+                ApiServer.AddRoute(@"/api/xpanels", typeof(XPanelDetailsApiHandler));
             }
             catch (Exception e)
             {
