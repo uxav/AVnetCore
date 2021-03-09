@@ -45,6 +45,11 @@ namespace UXAV.AVnetCore.DeviceSupport
             throw new InvalidOperationException("No more ID's available");
         }
 
+        public static IEnumerable<uint> GetUsedIpIds()
+        {
+            return Devices.Keys.ToArray();
+        }
+
         public static GenericDevice GetOrCreateDevice(string typeName, uint ipId, string description)
         {
             if (Devices.ContainsKey(ipId))

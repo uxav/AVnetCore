@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 
 namespace UXAV.AVnetCore.DeviceSupport
 {
@@ -18,6 +19,11 @@ namespace UXAV.AVnetCore.DeviceSupport
         public IpIdHelper(IEnumerable<uint> usedIpIds)
         {
             _usedValues = new ConcurrentBag<uint>(usedIpIds);
+        }
+
+        public static IpIdHelper GetFromSystemAvailability()
+        {
+            return new IpIdHelper(CipDevices.GetUsedIpIds());
         }
 
         public uint GetNextValue()
