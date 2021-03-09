@@ -129,7 +129,7 @@ namespace UXAV.AVnetCore.Config
             private set
             {
                 _filePath = value;
-                File.WriteAllText(ConfigDirectory + "/configfile.info", value);
+                File.WriteAllText(ConfigDirectory + $"/{ConfigNameSpace}.configfile.info", value);
             }
         }
 
