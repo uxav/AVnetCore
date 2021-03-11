@@ -112,12 +112,24 @@ namespace UXAV.AVnetCore.DeviceSupport
         private void PortOnVersiportChange(Versiport port, VersiportEventArgs args)
         {
             if (args.Event != eVersiportEvent.DigitalInChange) return;
+            if (!_initialized)
+            {
+                Logger.Log($"Fire versiport = {port.DigitalIn}" +
+                           $", not yet initialized so ignoring and will use this as normal value when it does");
+                return;
+            }
             Logger.Warn($"Fire versiport = {port.DigitalIn}");
             FireState = port.DigitalIn != _normalState;
         }
 
         private void DigitalInputOnStateChange(DigitalInput digitalinput, DigitalInputEventArgs args)
         {
+            if (!_initialized)
+            {
+                Logger.Log($"Fire digital input = {args.State}" +
+                           $", not yet initialized so ignoring and will use this as normal value when it does");
+                return;
+            }
             Logger.Warn($"Fire digital input = {args.State}");
             FireState = args.State != _normalState;
         }
