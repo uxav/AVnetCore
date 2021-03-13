@@ -156,16 +156,20 @@ namespace UXAV.AVnetCore.WebScripting
             _lock.ExitWriteLock();
         }
 
-        public static Session StartSession(string username, string password)
+        public static Session StartSession(string username, string password, bool stayLoggedIn = false)
         {
             var userToken = Authentication.GetAuthenticationToken(username, password);
             if (!userToken.Valid) throw new UnauthorizedAccessException();
             var sessionId = Convert.ToBase64String(Guid.NewGuid().ToByteArray())
                 .Replace("=", "")
                 .Replace("+", "");
-            var expiry = DateTime.Now + TimeSpan.FromHours(12);
+            var expiry = DateTime.Now + TimeSpan.FromMinutes(30);
+            if (stayLoggedIn)
+            {
+                expiry = DateTime.Now + TimeSpan.FromDays(30);
+            }
             var session = new Session(sessionId, userToken.UserName, expiry);
-            //Logger.Log("Created new WebApp Session {0}, Expires {1}", sessionId, expiry.ToString("R"));
+            Logger.Log("Created new WebApp Session {0}, Expires {1}", sessionId, expiry.ToString("R"));
             lock (Sessions)
             {
                 Sessions.Add(sessionId, session);
