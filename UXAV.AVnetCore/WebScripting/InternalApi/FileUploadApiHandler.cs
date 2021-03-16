@@ -57,6 +57,11 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                             {
                                 var newPath = SystemBase.ProgramApplicationDirectory + "/" + fileName;
                                 Logger.Debug($"Received end of file upload: \"{tempPath}\", moving to \"{newPath}\"");
+                                if (File.Exists(newPath))
+                                {
+                                    Logger.Debug($"File {newPath} exists, removing first");
+                                    File.Delete(newPath);
+                                }
                                 File.Move(tempPath, newPath);
                                 Logger.Debug($"Moved file to \"{newPath}\"");
                                 results[fileName] = new FileInfo(newPath).Length;

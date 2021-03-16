@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Crestron.SimplSharpPro;
+using UXAV.AVnetCore.Models;
 using UXAV.Logging;
 
 namespace UXAV.AVnetCore
@@ -18,6 +19,25 @@ namespace UXAV.AVnetCore
         public string Name { get; internal set; } = string.Empty;
 
         public Version Version { get; internal set; }
+
+        public bool IsRunningProgram
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Name)) return false;
+                return Name == SystemBase.AppAssembly.GetName().Name;
+            }
+        }
+
+        public bool IsDowngrade
+        {
+            get
+            {
+                if (Version == null) return false;
+                if (!IsRunningProgram) return false;
+                return Version < SystemBase.AppAssembly.GetName().Version;
+            }
+        }
 
         public string VersionString => Version?.ToString();
 
@@ -43,11 +63,13 @@ namespace UXAV.AVnetCore
                                 Logger.Debug($"Checking \"{entry.FullName}\" ...");
                                 using (var entryStream = entry.Open())
                                 {
-                                    using (var ms = new MemoryStream())
+                                    var tmpFilePath = SystemBase.TempFileDirectory + "/" + entry.FullName;
+                                    Logger.Debug($"Writing file to temp file: {tmpFilePath}");
+                                    using (var tmpFile = File.Open(tmpFilePath, FileMode.Create, FileAccess.ReadWrite,
+                                        FileShare.None))
                                     {
-                                        entryStream.CopyTo(ms);
-                                        ms.Seek(0, SeekOrigin.Begin);
-                                        var assembly = Assembly.ReflectionOnlyLoad(ms.ToArray());
+                                        entryStream.CopyTo(tmpFile);
+                                        var assembly = Assembly.ReflectionOnlyLoadFrom(tmpFilePath);
                                         var types = assembly.GetTypes();
                                         foreach (var type in types)
                                         {
@@ -70,11 +92,14 @@ namespace UXAV.AVnetCore
                                                     $"Error looking at {type}, {e.GetType().Name}: {e.Message}");
                                             }
                                         }
+                                    }
 
-                                        if (!string.IsNullOrEmpty(result.Name))
-                                        {
-                                            break;
-                                        }
+                                    Logger.Debug($"Deleting temp file: {tmpFilePath}");
+                                    File.Delete(tmpFilePath);
+
+                                    if (!string.IsNullOrEmpty(result.Name))
+                                    {
+                                        break;
                                     }
                                 }
                             }
