@@ -286,6 +286,7 @@
         <Compile Include="Models\UxEnvironment.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="ShellHelper.cs" />
+        <Compile Include="SystemMonitor.cs" />
         <Compile Include="Tools.cs" />
         <Compile Include="UI\Components\IAnalogItem.cs" />
         <Compile Include="UI\Components\IButton.cs" />
