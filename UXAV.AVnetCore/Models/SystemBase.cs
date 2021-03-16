@@ -102,6 +102,7 @@ namespace UXAV.AVnetCore.Models
             {
                 Logger.Warn($"Could not load info from ProgramInfo.config, {e.Message}");
             }
+
             SystemMonitor.Init();
             try
             {
@@ -357,6 +358,20 @@ namespace UXAV.AVnetCore.Models
         }
 
         public static string ProgramApplicationDirectory => InitialParametersClass.ProgramDirectory.ToString();
+
+        public static string TempFileDirectory
+        {
+            get
+            {
+                var path = ProgramNvramDirectory + "/tmp";
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                return path;
+            }
+        }
 
         public static string ProgramUserDirectory => ProgramRootDirectory + "/user";
 
