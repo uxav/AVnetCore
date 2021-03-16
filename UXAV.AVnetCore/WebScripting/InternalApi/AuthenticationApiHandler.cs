@@ -45,7 +45,10 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                             var password =
                                 (json["password"] ?? throw new InvalidOperationException("No password stated"))
                                 .Value<string>();
-                            var session = AppAuthentication.StartSession(username, password);
+                            var rememberme =
+                                (json["rememberme"] ?? false)
+                                .Value<bool>();
+                            var session = AppAuthentication.StartSession(username, password, rememberme);
                             Response.SetCookie(new HttpCwsCookie("sessionId")
                             {
                                 Value = session.SessionId,

@@ -103,27 +103,7 @@ namespace UXAV.AVnetCore.Models
                 Logger.Warn($"Could not load info from ProgramInfo.config, {e.Message}");
             }
 
-            SystemMonitor.CPUStatisticChange += args =>
-            {
-                if (args.StatisticWhichChanged != eCPUStatisticChange.MaximumUtilization) return;
-                EventService.Notify(EventMessageType.SystemMonitorCpuStatsChange, new
-                {
-                    Cpu = SystemMonitor.CPUUtilization,
-                    CpuMax = SystemMonitor.MaximumCPUUtilization,
-                });
-            };
-
-            SystemMonitor.ProcessStatisticChange += args =>
-            {
-                if (args.StatisticWhichChanged != eProcessStatisticChange.RAMFreeMinimum) return;
-                EventService.Notify(EventMessageType.SystemMonitorMemoryStatsChange, new
-                {
-                    Memory = (int) Tools.ScaleRange(args.TotalRAMSize - args.RAMFree, 0, args.TotalRAMSize, 0, 100),
-                    MemoryMax = (int) Tools.ScaleRange(args.TotalRAMSize - args.RAMFreeMinimum, 0, args.TotalRAMSize, 0,
-                        100),
-                });
-            };
-            SystemMonitor.SetUpdateInterval(10);
+            SystemMonitor.Init();
             try
             {
                 Logger.Highlight("Calling CrestronDataStoreStatic.InitCrestronDataStore()");
@@ -144,7 +124,7 @@ namespace UXAV.AVnetCore.Models
 
             ControlSystem = controlSystem;
 
-            var callingAssembly = Assembly.GetCallingAssembly();
+            AppAssembly = Assembly.GetCallingAssembly();
 
             Logger.Log("FrameworkDescription: {0}", RuntimeInformation.FrameworkDescription);
             Logger.Log("ProcessArchitecture: {0}", RuntimeInformation.ProcessArchitecture);
@@ -157,10 +137,10 @@ namespace UXAV.AVnetCore.Models
             Logger.Log("ApplicationNumber: {0}", InitialParametersClass.ApplicationNumber);
             Logger.Log("FirmwareVersion: {0}", InitialParametersClass.FirmwareVersion);
             Logger.Log("SerialNumber: {0}", CrestronEnvironment.SystemInfo.SerialNumber);
-            Logger.Log("App Info: {0}", callingAssembly.GetName().FullName);
+            Logger.Log("App Info: {0}", AppAssembly.GetName().FullName);
             var avnetInfo = Assembly.GetExecutingAssembly().GetName();
             Logger.Log("{0} Version: {1}", avnetInfo.Name, avnetInfo.Version);
-            Logger.Log("Starting app version {0}", callingAssembly.GetName().Version);
+            Logger.Log("Starting app version {0}", AppAssembly.GetName().Version);
             Logger.Log($"Program Info states build time as: {_programBuildTime:R}");
             Logger.Log("ProcessId: {0}", Process.GetCurrentProcess().Id);
             Logger.Log("Room Name: {0}", InitialParametersClass.RoomName);
@@ -188,7 +168,7 @@ namespace UXAV.AVnetCore.Models
             }
 
             UpdateBootStatus(EBootStatus.Booting, "Checking upgrade requirements", 0);
-            var appIsUpgrading = CheckIfNewVersion(callingAssembly);
+            var appIsUpgrading = CheckIfNewVersion(AppAssembly);
             Logger.Warn("App is new version: {0}", appIsUpgrading);
             if (appIsUpgrading)
             {
@@ -206,7 +186,7 @@ namespace UXAV.AVnetCore.Models
             }
             else
             {
-                Logger.Log("App is not upgrading. Remains at {0}", callingAssembly.GetName().Version);
+                Logger.Log("App is not upgrading. Remains at {0}", AppAssembly.GetName().Version);
             }
 
             UpdateBootStatus(EBootStatus.Booting, "Starting web scripting services", 0);
@@ -319,6 +299,8 @@ namespace UXAV.AVnetCore.Models
 
         protected WebScriptingServer WebAppServer { get; }
 
+        internal static Assembly AppAssembly { get; private set; }
+
         public static string SystemName
         {
             get => string.IsNullOrEmpty(_systemName) ? InitialParametersClass.RoomName : _systemName;
@@ -378,6 +360,20 @@ namespace UXAV.AVnetCore.Models
         }
 
         public static string ProgramApplicationDirectory => InitialParametersClass.ProgramDirectory.ToString();
+
+        public static string TempFileDirectory
+        {
+            get
+            {
+                var path = ProgramNvramDirectory + "/tmp";
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                return path;
+            }
+        }
 
         public static string ProgramUserDirectory => ProgramRootDirectory + "/user";
 

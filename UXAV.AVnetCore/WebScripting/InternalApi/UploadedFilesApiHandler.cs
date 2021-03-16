@@ -16,14 +16,31 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
         [SecureRequest]
         public void Get()
         {
-            var files = new List<FileInfo>();
+            var files = new List<object>();
             try
             {
                 switch (Request.RoutePatternArgs["fileType"])
                 {
                     case "program":
                         var appDirectory = new DirectoryInfo(SystemBase.ProgramApplicationDirectory);
-                        files.AddRange(appDirectory.GetFiles("*.cpz", SearchOption.TopDirectoryOnly));
+                        var cpzFiles = appDirectory.GetFiles("*.cpz", SearchOption.TopDirectoryOnly);
+                        foreach (var fileInfo in cpzFiles)
+                        {
+                            try
+                            {
+                                var info = ProgramFileVersion.Get(fileInfo.FullName);
+                                files.Add(new
+                                {
+                                    FileInfo = fileInfo,
+                                    Size = Tools.PrettyByteSize(fileInfo.Length, 1),
+                                    ProgramInfo = info
+                                });
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.Error(e);
+                            }
+                        }
                         break;
                     case "nvram":
                         var nvramDirectory = new DirectoryInfo(SystemBase.ProgramNvramAppInstanceDirectory);

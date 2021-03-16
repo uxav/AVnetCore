@@ -11,13 +11,14 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
 {
     public class FileUploadApiHandler : ApiRequestHandler
     {
-        public FileUploadApiHandler(WebScriptingServer server, WebScriptingRequest request) : base(server, request)
+        public FileUploadApiHandler(WebScriptingServer server, WebScriptingRequest request)
+            : base(server, request, true)
         {
         }
 
         private static long WriteFile(string path, int chunkSequence, Stream data)
         {
-            var mode = chunkSequence > 0 ? FileMode.Append : FileMode.OpenOrCreate;
+            var mode = chunkSequence > 0 ? FileMode.Append : FileMode.Create;
 
             using (var file = File.Open(path, mode, FileAccess.Write, FileShare.None))
             {
@@ -26,6 +27,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
             }
         }
 
+        [SecureRequest]
         public void Post()
         {
             try
@@ -33,7 +35,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                 var content = new StreamContent(Request.InputStream.GetNormalStream());
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse(Request.ContentType);
                 var data = content.ReadAsMultipartAsync().Result;
-                var results = new Dictionary<string, long>();
+                var results = new Dictionary<string, object>();
                 switch (Request.RoutePatternArgs["fileType"])
                 {
                     case "program":
@@ -49,18 +51,34 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                                 return;
                             }
 
-                            var chunkSequence = 0;
-                            if (Request.Query["chunked"] != null)
+                            var tempPath = SystemBase.TempFileDirectory + "/" + fileName;
+
+                            if (name == "end")
                             {
-                                // name should be chunk_1 etc
-                                chunkSequence = int.Parse(name.Substring(6, name.Length - 6));
-                                Logger.Debug($"Received chunk {chunkSequence:D3} of {fileName}");
+                                var newPath = SystemBase.ProgramApplicationDirectory + "/" + fileName;
+                                Logger.Debug($"Received end of file upload: \"{tempPath}\", moving to \"{newPath}\"");
+                                if (File.Exists(newPath))
+                                {
+                                    Logger.Debug($"File {newPath} exists, removing first");
+                                    File.Delete(newPath);
+                                }
+                                File.Move(tempPath, newPath);
+                                Logger.Debug($"Moved file to \"{newPath}\"");
+                                results[fileName] = new FileInfo(newPath).Length;
                             }
+                            else
+                            {
+                                var chunkSequence = 0;
+                                if (Request.Query["chunked"] != null)
+                                {
+                                    // name should be chunk_1 etc
+                                    chunkSequence = int.Parse(name.Substring(6, name.Length - 6));
+                                    //Logger.Debug($"Received chunk {chunkSequence:D3} of {fileName}");
+                                }
 
-                            var path = SystemBase.ProgramApplicationDirectory + "/" + fileName;
-
-                            var size = WriteFile(path, chunkSequence, httpContent.ReadAsStreamAsync().Result);
-                            results[fileName] = size;
+                                var size = WriteFile(tempPath, chunkSequence, httpContent.ReadAsStreamAsync().Result);
+                                results[fileName] = size;
+                            }
                         }
 
                         break;
