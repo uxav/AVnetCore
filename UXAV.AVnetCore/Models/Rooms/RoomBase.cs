@@ -190,7 +190,7 @@ namespace UXAV.AVnetCore.Models.Rooms
             FusionRequested
         }
 
-        public void PowerOff(PowerOffRequestType type)
+        public void PowerOff(PowerOffRequestType type = PowerOffRequestType.UserRequested)
         {
             if (!Power) return;
 
