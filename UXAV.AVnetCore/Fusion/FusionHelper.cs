@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Crestron.SimplSharpPro.AudioDistribution;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models.Rooms;
 
@@ -19,7 +20,7 @@ namespace UXAV.AVnetCore.Fusion
 
         public static FusionInstance GetFusionInstance(this RoomBase room)
         {
-            return Rooms[room.Id];
+            return !Rooms.ContainsKey(room.Id) ? null : Rooms[room.Id];
         }
 
         public static void CreateFusionAsset(IFusionAsset device)

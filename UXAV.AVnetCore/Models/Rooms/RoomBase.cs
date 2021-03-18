@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UXAV.AVnetCore.DeviceSupport;
+using UXAV.AVnetCore.Fusion;
 using UXAV.AVnetCore.Models.Sources;
 using UXAV.AVnetCore.UI;
 using UXAV.Logging;
@@ -173,6 +174,7 @@ namespace UXAV.AVnetCore.Models.Rooms
                 Logger.Highlight($"Room {Id} Power set to {_power}");
                 if (_power) Task.Run(RoomPowerOnProcess);
                 else Task.Run(RoomPowerOffProcessInternal);
+                Task.Run(SetFusionPowerState);
                 EventService.Notify(EventMessageType.OnPowerChange, new
                 {
                     Room = Id,
@@ -227,6 +229,20 @@ namespace UXAV.AVnetCore.Models.Rooms
             }
 
             RoomPowerOffProcess();
+        }
+
+        private void SetFusionPowerState()
+        {
+            try
+            {
+                var fusion = this.GetFusionInstance();
+                if (fusion == null) return;
+                fusion.FusionRoom.SystemPowerOn.InputSig.BoolValue = Power;
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         protected abstract void RoomPowerOffProcess();

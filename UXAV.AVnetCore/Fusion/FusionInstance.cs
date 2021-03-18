@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.Fusion;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models;
 using UXAV.AVnetCore.Models.Rooms;
+using UXAV.Logging;
 
 namespace UXAV.AVnetCore.Fusion
 {
@@ -99,6 +101,17 @@ namespace UXAV.AVnetCore.Fusion
             var key = GetKeyForAssetDevice((IFusionAsset) device);
             var fusionAsset = (FusionStaticAsset) FusionRoom.UserConfigurableAssetDetails[key].Asset;
             fusionAsset.PowerOn.InputSig.BoolValue = device.Power;
+            if (device is DisplayDeviceBase display)
+            {
+                Task.Run(() =>
+                {
+                    var displayDevices =
+                        UxEnvironment.System.DevicesDict.Values.Where(d =>
+                            d is DisplayDeviceBase && d.AllocatedRoom == _room).Cast<DisplayDeviceBase>();
+                    var powerFeedback = displayDevices.Any(d => d.Power);
+                    _fusionRoom.DisplayPowerOn.InputSig.BoolValue = powerFeedback;
+                });
+            }
         }
 
         private void AssetOnDeviceCommunicatingChange(IConnectedItem device, bool communicating)
@@ -141,6 +154,7 @@ namespace UXAV.AVnetCore.Fusion
                 case FusionEventIds.SystemPowerOffReceivedEventId:
                     if (_fusionRoom.SystemPowerOff.OutputSig.BoolValue)
                     {
+                        Logger.Highlight($"Fusion requested power off in {_room.Name}");
                         _room.PowerOff();
                     }
 
@@ -148,6 +162,7 @@ namespace UXAV.AVnetCore.Fusion
                 case FusionEventIds.SystemPowerOnReceivedEventId:
                     if (_fusionRoom.SystemPowerOn.OutputSig.BoolValue)
                     {
+                        Logger.Highlight($"Fusion requested power on in {_room.Name}");
                         _room.PowerOn();
                     }
 
@@ -159,6 +174,8 @@ namespace UXAV.AVnetCore.Fusion
                             .Where(d => d is DisplayDeviceBase)
                             .Cast<DisplayDeviceBase>()
                             .Where(d => d.AllocatedRoom == _room);
+
+                        Logger.Highlight($"Fusion requested displays off in {_room.Name}");
                         foreach (var display in displays)
                         {
                             display.Power = false;
@@ -173,6 +190,8 @@ namespace UXAV.AVnetCore.Fusion
                             .Where(d => d is DisplayDeviceBase)
                             .Cast<DisplayDeviceBase>()
                             .Where(d => d.AllocatedRoom == _room);
+
+                        Logger.Highlight($"Fusion requested displays on in {_room.Name}");
                         foreach (var display in displays)
                         {
                             display.Power = true;
