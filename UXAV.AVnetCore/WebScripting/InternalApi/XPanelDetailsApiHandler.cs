@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Crestron.SimplSharpPro.UI;
+using UXAV.AVnetCore.Config;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models;
 using UXAV.AVnetCore.UI;
@@ -45,9 +46,11 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                 }
 
                 var resourcePath = CipDevices.GetPathOfVtzFileForXPanel(device.ID);
+                var ssl = ConfigManager.GetOrCreatePropertyListItem("xpanelsslmode", false);
+                var port = ConfigManager.GetOrCreatePropertyListItem("xpanelport", 41794);
                 var link =
                     $"CrestronDesktop:https://{SystemBase.IpAddress}/cws/files/xpanels/Core3XPanel_{device.ID:X2}.c3p"
-                    + $" -- overrideHost=true host={SystemBase.IpAddress} ipid={device.ID} port=41796 enableSSL=true"
+                    + $" -- overrideHost=true host={SystemBase.IpAddress} ipid={device.ID} port={port} enableSSL={ssl}"
                     + " SupportsSerialAppend=true bypasslogindialog=true";
 
                 results.Add(new
