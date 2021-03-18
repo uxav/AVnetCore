@@ -55,7 +55,7 @@ namespace UXAV.AVnetCore.Models
                 try
                 {
                     var roomId = uint.Parse(args["room"]);
-                    GetRoom(roomId).PowerOff();
+                    GetRoom(roomId).PowerOff(RoomBase.PowerOffRequestType.UserRequested);
                 }
                 catch (Exception e)
                 {

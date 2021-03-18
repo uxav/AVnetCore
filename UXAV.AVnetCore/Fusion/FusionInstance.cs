@@ -123,28 +123,46 @@ namespace UXAV.AVnetCore.Fusion
 
         private void FusionRoomOnOnlineStatusChange(GenericBase currentdevice, OnlineOfflineEventArgs args)
         {
-            foreach (var kvp in _fusionAssets)
+            if (!args.DeviceOnLine) return;
+
+            Task.Run(() =>
             {
-                var staticAsset = _fusionRoom.UserConfigurableAssetDetails[kvp.Key].Asset as FusionStaticAsset;
-
-                if (staticAsset == null) continue;
-
-                var asset = kvp.Value;
-
-                staticAsset.FusionGenericAssetSerialsAsset3.StringInput[50].StringValue = asset.Identity;
-                staticAsset.FusionGenericAssetSerialsAsset3.StringInput[51].StringValue = asset.SerialNumber;
-
-                if (asset is IConnectedItem connectedItem)
+                foreach (var kvp in _fusionAssets)
                 {
-                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[52].StringValue =
-                        connectedItem.ConnectionInfo;
+                    var staticAsset = _fusionRoom.UserConfigurableAssetDetails[kvp.Key].Asset as FusionStaticAsset;
+
+                    if (staticAsset == null) continue;
+
+                    var asset = kvp.Value;
+
+                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[50].StringValue = asset.Identity;
+                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[51].StringValue = asset.SerialNumber;
+
+                    if (asset is IConnectedItem connectedItem)
+                    {
+                        staticAsset.FusionGenericAssetSerialsAsset3.StringInput[52].StringValue =
+                            connectedItem.ConnectionInfo;
+                        staticAsset.Connected.InputSig.BoolValue = connectedItem.DeviceCommunicating;
+                    }
+
+                    if (asset is IDevice device)
+                    {
+                        staticAsset.FusionGenericAssetSerialsAsset3.StringInput[53].StringValue = device.VersionInfo;
+                    }
+
+                    if (asset is IPowerDevice powerDevice)
+                    {
+                        staticAsset.PowerOn.InputSig.BoolValue = powerDevice.Power;
+                    }
                 }
 
-                if (asset is IDevice device)
-                {
-                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[53].StringValue = device.VersionInfo;
-                }
-            }
+                _fusionRoom.SystemPowerOn.InputSig.BoolValue = _room.Power;
+                var displayDevices =
+                    UxEnvironment.System.DevicesDict.Values.Where(d =>
+                        d is DisplayDeviceBase && d.AllocatedRoom == _room).Cast<DisplayDeviceBase>();
+                var powerFeedback = displayDevices.Any(d => d.Power);
+                _fusionRoom.DisplayPowerOn.InputSig.BoolValue = powerFeedback;
+            });
         }
 
         private void FusionRoomOnFusionStateChange(FusionBase device, FusionStateEventArgs args)
@@ -155,7 +173,7 @@ namespace UXAV.AVnetCore.Fusion
                     if (_fusionRoom.SystemPowerOff.OutputSig.BoolValue)
                     {
                         Logger.Highlight($"Fusion requested power off in {_room.Name}");
-                        _room.PowerOff();
+                        Task.Run(() => _room.FusionRequestedPowerOff());
                     }
 
                     break;
@@ -163,7 +181,7 @@ namespace UXAV.AVnetCore.Fusion
                     if (_fusionRoom.SystemPowerOn.OutputSig.BoolValue)
                     {
                         Logger.Highlight($"Fusion requested power on in {_room.Name}");
-                        _room.PowerOn();
+                        Task.Run(() => _room.FusionRequestedPowerOn());
                     }
 
                     break;
