@@ -162,8 +162,15 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         public virtual bool Power => _power;
 
-        public abstract void FusionRequestedPowerOn();
-        public abstract void FusionRequestedPowerOff();
+        public virtual void FusionRequestedPowerOn()
+        {
+            PowerOn();
+        }
+
+        public virtual void FusionRequestedPowerOff()
+        {
+            PowerOff(PowerOffRequestType.FusionRequested);
+        }
 
         public void PowerOn()
         {
