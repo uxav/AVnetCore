@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UXAV.AVnetCore.DeviceSupport;
+using UXAV.AVnetCore.Fusion;
 using UXAV.AVnetCore.Models.Sources;
 using UXAV.AVnetCore.UI;
 using UXAV.Logging;
@@ -159,26 +160,16 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         public abstract IVolumeControl VolumeControl { get; }
 
-        public virtual bool Power
-        {
-            get => _power;
-            private set
-            {
-                if (_power == value)
-                {
-                    return;
-                }
+        public virtual bool Power => _power;
 
-                _power = value;
-                Logger.Highlight($"Room {Id} Power set to {_power}");
-                if (_power) Task.Run(RoomPowerOnProcess);
-                else Task.Run(RoomPowerOffProcessInternal);
-                EventService.Notify(EventMessageType.OnPowerChange, new
-                {
-                    Room = Id,
-                    Power = _power
-                });
-            }
+        public virtual void FusionRequestedPowerOn()
+        {
+            PowerOn();
+        }
+
+        public virtual void FusionRequestedPowerOff()
+        {
+            PowerOff(PowerOffRequestType.FusionRequested);
         }
 
         public void PowerOn()
@@ -189,25 +180,56 @@ namespace UXAV.AVnetCore.Models.Rooms
                 throw new InvalidOperationException("Source selection is busy");
             }
 
-            Power = true;
+            _power = true;
+            Logger.Highlight($"Room \"{ScreenName}\", Power set to {_power}");
+            Task.Run(RoomPowerOnProcess);
+            Task.Run(SetFusionPowerState);
+            EventService.Notify(EventMessageType.OnPowerChange, new
+            {
+                Room = Id,
+                Power = _power
+            });
         }
 
-        public void PowerOff()
+        public enum PowerOffRequestType
+        {
+            UserRequested,
+            FusionRequested
+        }
+
+        public void PowerOff(PowerOffRequestType type = PowerOffRequestType.UserRequested)
         {
             if (!Power) return;
-            Power = false;
+
+            _power = false;
+            Logger.Highlight($"Room \"{ScreenName}\", Power set to {_power}");
+            Task.Run(() => RoomPowerOffProcessInternal(type));
+            Task.Run(SetFusionPowerState);
+            EventService.Notify(EventMessageType.OnPowerChange, new
+            {
+                Room = Id,
+                Power = _power
+            });
         }
 
         internal bool SetPower(bool roomPower)
         {
             if (_sourceSelectBusy.Values.Any(busy => busy) || _power == roomPower) return false;
-            Power = roomPower;
+            if (roomPower)
+            {
+                PowerOn();
+            }
+            else
+            {
+                PowerOff(PowerOffRequestType.UserRequested);
+            }
+
             return true;
         }
 
         protected abstract void RoomPowerOnProcess();
 
-        private void RoomPowerOffProcessInternal()
+        private void RoomPowerOffProcessInternal(PowerOffRequestType requestType)
         {
             var count = 0;
             while (_sourceSelectBusy.Values.Any(busy => busy))
@@ -226,10 +248,24 @@ namespace UXAV.AVnetCore.Models.Rooms
                 controller.RoomPoweringOff();
             }
 
-            RoomPowerOffProcess();
+            RoomPowerOffProcess(requestType);
         }
 
-        protected abstract void RoomPowerOffProcess();
+        private void SetFusionPowerState()
+        {
+            try
+            {
+                var fusion = this.GetFusionInstance();
+                if (fusion == null) return;
+                fusion.FusionRoom.SystemPowerOn.InputSig.BoolValue = Power;
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+        }
+
+        protected abstract void RoomPowerOffProcess(PowerOffRequestType powerOffRequestType);
 
         private void SelectSourceInternal(SourceBase previousSource, SourceBase newSource, uint forIndex)
         {

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.Fusion;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models;
 using UXAV.AVnetCore.Models.Rooms;
+using UXAV.Logging;
 
 namespace UXAV.AVnetCore.Fusion
 {
@@ -99,6 +101,17 @@ namespace UXAV.AVnetCore.Fusion
             var key = GetKeyForAssetDevice((IFusionAsset) device);
             var fusionAsset = (FusionStaticAsset) FusionRoom.UserConfigurableAssetDetails[key].Asset;
             fusionAsset.PowerOn.InputSig.BoolValue = device.Power;
+            if (device is DisplayDeviceBase display)
+            {
+                Task.Run(() =>
+                {
+                    var displayDevices =
+                        UxEnvironment.System.DevicesDict.Values.Where(d =>
+                            d is DisplayDeviceBase && d.AllocatedRoom == _room).Cast<DisplayDeviceBase>();
+                    var powerFeedback = displayDevices.Any(d => d.Power);
+                    _fusionRoom.DisplayPowerOn.InputSig.BoolValue = powerFeedback;
+                });
+            }
         }
 
         private void AssetOnDeviceCommunicatingChange(IConnectedItem device, bool communicating)
@@ -110,28 +123,46 @@ namespace UXAV.AVnetCore.Fusion
 
         private void FusionRoomOnOnlineStatusChange(GenericBase currentdevice, OnlineOfflineEventArgs args)
         {
-            foreach (var kvp in _fusionAssets)
+            if (!args.DeviceOnLine) return;
+
+            Task.Run(() =>
             {
-                var staticAsset = _fusionRoom.UserConfigurableAssetDetails[kvp.Key].Asset as FusionStaticAsset;
-
-                if (staticAsset == null) continue;
-
-                var asset = kvp.Value;
-
-                staticAsset.FusionGenericAssetSerialsAsset3.StringInput[50].StringValue = asset.Identity;
-                staticAsset.FusionGenericAssetSerialsAsset3.StringInput[51].StringValue = asset.SerialNumber;
-
-                if (asset is IConnectedItem connectedItem)
+                foreach (var kvp in _fusionAssets)
                 {
-                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[52].StringValue =
-                        connectedItem.ConnectionInfo;
+                    var staticAsset = _fusionRoom.UserConfigurableAssetDetails[kvp.Key].Asset as FusionStaticAsset;
+
+                    if (staticAsset == null) continue;
+
+                    var asset = kvp.Value;
+
+                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[50].StringValue = asset.Identity;
+                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[51].StringValue = asset.SerialNumber;
+
+                    if (asset is IConnectedItem connectedItem)
+                    {
+                        staticAsset.FusionGenericAssetSerialsAsset3.StringInput[52].StringValue =
+                            connectedItem.ConnectionInfo;
+                        staticAsset.Connected.InputSig.BoolValue = connectedItem.DeviceCommunicating;
+                    }
+
+                    if (asset is IDevice device)
+                    {
+                        staticAsset.FusionGenericAssetSerialsAsset3.StringInput[53].StringValue = device.VersionInfo;
+                    }
+
+                    if (asset is IPowerDevice powerDevice)
+                    {
+                        staticAsset.PowerOn.InputSig.BoolValue = powerDevice.Power;
+                    }
                 }
 
-                if (asset is IDevice device)
-                {
-                    staticAsset.FusionGenericAssetSerialsAsset3.StringInput[53].StringValue = device.VersionInfo;
-                }
-            }
+                _fusionRoom.SystemPowerOn.InputSig.BoolValue = _room.Power;
+                var displayDevices =
+                    UxEnvironment.System.DevicesDict.Values.Where(d =>
+                        d is DisplayDeviceBase && d.AllocatedRoom == _room).Cast<DisplayDeviceBase>();
+                var powerFeedback = displayDevices.Any(d => d.Power);
+                _fusionRoom.DisplayPowerOn.InputSig.BoolValue = powerFeedback;
+            });
         }
 
         private void FusionRoomOnFusionStateChange(FusionBase device, FusionStateEventArgs args)
@@ -141,14 +172,16 @@ namespace UXAV.AVnetCore.Fusion
                 case FusionEventIds.SystemPowerOffReceivedEventId:
                     if (_fusionRoom.SystemPowerOff.OutputSig.BoolValue)
                     {
-                        _room.PowerOff();
+                        Logger.Highlight($"Fusion requested power off in {_room.Name}");
+                        Task.Run(() => _room.FusionRequestedPowerOff());
                     }
 
                     break;
                 case FusionEventIds.SystemPowerOnReceivedEventId:
                     if (_fusionRoom.SystemPowerOn.OutputSig.BoolValue)
                     {
-                        _room.PowerOn();
+                        Logger.Highlight($"Fusion requested power on in {_room.Name}");
+                        Task.Run(() => _room.FusionRequestedPowerOn());
                     }
 
                     break;
@@ -159,6 +192,8 @@ namespace UXAV.AVnetCore.Fusion
                             .Where(d => d is DisplayDeviceBase)
                             .Cast<DisplayDeviceBase>()
                             .Where(d => d.AllocatedRoom == _room);
+
+                        Logger.Highlight($"Fusion requested displays off in {_room.Name}");
                         foreach (var display in displays)
                         {
                             display.Power = false;
@@ -173,6 +208,8 @@ namespace UXAV.AVnetCore.Fusion
                             .Where(d => d is DisplayDeviceBase)
                             .Cast<DisplayDeviceBase>()
                             .Where(d => d.AllocatedRoom == _room);
+
+                        Logger.Highlight($"Fusion requested displays on in {_room.Name}");
                         foreach (var display in displays)
                         {
                             display.Power = true;
