@@ -657,6 +657,33 @@ namespace UXAV.AVnetCore.Models
             {
                 FusionRVI.GenerateFileForAllFusionDevices();
                 Logger.Success("Generated Fusion RVI file");
+                try
+                {
+                    var dir = new DirectoryInfo(ProgramApplicationDirectory);
+                    var rviFile = dir.GetFiles("*.rvi").FirstOrDefault();
+                    if (rviFile != null)
+                    {
+                        Logger.Log($"RVI File found, checking contents to fix null endings, {rviFile.Name}");
+                        var lines = File.ReadAllLines(rviFile.FullName);
+                        File.Delete(rviFile.FullName);
+                        var newLines = new List<string>();
+                        foreach (var line in lines)
+                        {
+                            if (line.Contains("</RoomViewInfo>"))
+                            {
+                                newLines.Add(line);
+                                break;
+                            }
+
+                            newLines.Add(line);
+                        }
+                        File.WriteAllLines(rviFile.FullName, newLines);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
             }
             catch (Exception e)
             {
