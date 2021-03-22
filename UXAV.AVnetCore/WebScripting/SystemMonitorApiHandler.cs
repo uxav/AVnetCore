@@ -1,8 +1,8 @@
 namespace UXAV.AVnetCore.WebScripting
 {
-    public class SystemMonitorHandler : ApiRequestHandler
+    public class SystemMonitorApiHandler : ApiRequestHandler
     {
-        public SystemMonitorHandler(WebScriptingServer server, WebScriptingRequest request)
+        public SystemMonitorApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request, true)
         {
         }
@@ -20,6 +20,8 @@ namespace UXAV.AVnetCore.WebScripting
                 MemoryMax = (int) Tools.ScaleRange(maxRamUsed, 0, totalRam, 0, 100),
                 Processes = SystemMonitor.NumberOfRunningProcesses,
                 ProcessesMax = SystemMonitor.MaximumNumberOfRunningProcesses,
+                MemoryHistory = SystemMonitor.GetMemoryStats(),
+                CpuHistory = SystemMonitor.GetCpuStats(),
             };
             WriteResponse(data);
         }
