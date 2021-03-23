@@ -47,7 +47,11 @@ namespace UXAV.AVnetCore.WebScripting
             while (true)
             {
                 var signalled = WaitHandle.WaitOne(TimeSpan.FromMinutes(1));
-                if (signalled) return;
+                if (signalled)
+                {
+                    Logger.Warn("Leaving app authentication thread");
+                    return;
+                }
 
                 if (!ClearOldSessions() && !_updated) continue;
                 lock (Sessions)
@@ -104,14 +108,14 @@ namespace UXAV.AVnetCore.WebScripting
                     return null;
                 }
 
-                if (!renew) return session;
+                if (!renew || session.ExpiryTime > DateTime.Now + TimeSpan.FromMinutes(1)) return session;
 
                 lock (Sessions)
                 {
-                    var newExpiry = DateTime.Now + TimeSpan.FromHours(12);
+                    var newExpiry = DateTime.Now + TimeSpan.FromMinutes(30);
                     session.ExpiryTime = newExpiry;
                     _updated = true;
-                    //Logger.Debug("Session {0} extended to {1}", session.SessionId, session.ExpiryTime);
+                    Logger.Debug("Session {0} extended to {1}", session.SessionId, session.ExpiryTime);
                     return session;
                 }
             }
