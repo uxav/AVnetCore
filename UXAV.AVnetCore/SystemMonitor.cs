@@ -66,7 +66,7 @@ namespace UXAV.AVnetCore
             lock (StatHistory)
             {
                 StatHistory.Enqueue(stat);
-                while (StatHistory.Count > 300)
+                while (StatHistory.Count > 360)
                 {
                     StatHistory.TryDequeue(out var oldMemStat);
                     //Logger.Debug($"Removed old memory stat with time: {oldMemStat.Time:u}");
