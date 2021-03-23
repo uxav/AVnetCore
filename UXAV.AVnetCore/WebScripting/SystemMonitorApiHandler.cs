@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Crestron.SimplSharp.CrestronIO;
 using Newtonsoft.Json.Linq;
 
@@ -16,6 +17,18 @@ namespace UXAV.AVnetCore.WebScripting
             var totalRam = SystemMonitor.TotalRamSize;
             var ramUsed = totalRam - SystemMonitor.RamFree;
             var maxRamUsed = totalRam - SystemMonitor.RamFreeMinimum;
+            var history = SystemMonitor.GetStatHistory();
+            //var historyTimes = history.Select(sysMonStat => sysMonStat.Time);
+            var cpuData = history.Select(sysMonStat => new
+            {
+                x = sysMonStat.Time,
+                y = sysMonStat.CpuUtilization
+            });
+            var memoryData = history.Select(sysMonStat => new
+            {
+                x = sysMonStat.Time,
+                y = sysMonStat.RamPercent
+            });
             var data = new
             {
                 Cpu = SystemMonitor.CpuUtilization,
@@ -24,8 +37,11 @@ namespace UXAV.AVnetCore.WebScripting
                 MemoryMax = (int) Tools.ScaleRange(maxRamUsed, 0, totalRam, 0, 100),
                 Processes = SystemMonitor.NumberOfRunningProcesses,
                 ProcessesMax = SystemMonitor.MaximumNumberOfRunningProcesses,
-                MemoryHistory = SystemMonitor.GetMemoryStats(),
-                CpuHistory = SystemMonitor.GetCpuStats(),
+                HistoryChartData = new
+                {
+                    CpuData = cpuData,
+                    MemoryData = memoryData,
+                }
             };
             WriteResponse(data);
         }

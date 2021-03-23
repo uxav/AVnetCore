@@ -104,9 +104,25 @@ namespace UXAV.AVnetCore
             }
         }
 
-        public static double GetPercentage(this ushort ushortValue)
+        public static double ScaleRange(double value,
+            double fromMinValue, double fromMaxValue,
+            double toMinValue, double toMaxValue, int decimalPlaces)
         {
-            return ScaleRange(ushortValue, ushort.MinValue, ushort.MaxValue, 0, 1);
+            try
+            {
+                return Math.Round((value - fromMinValue) *
+                    (toMaxValue - toMinValue) /
+                    (fromMaxValue - fromMinValue) + toMinValue, decimalPlaces);
+            }
+            catch
+            {
+                return double.NaN;
+            }
+        }
+
+        public static double GetPercentage(this ushort ushortValue, int decimalPlaces = 0)
+        {
+            return ScaleRange(ushortValue, ushort.MinValue, ushort.MaxValue, 0, 1, decimalPlaces);
         }
 
         public static SystemBase CreateSystem(this CrestronControlSystem controlSystem, Assembly assembly,
@@ -341,7 +357,7 @@ namespace UXAV.AVnetCore
             var fields = typeof(DMInputEventIds).GetFields();
             foreach (var field in fields)
             {
-                if(field.FieldType != typeof(int)) continue;
+                if (field.FieldType != typeof(int)) continue;
                 var v = (int) field.GetValue(null);
                 if (v == eventIdValue) return field.Name;
             }

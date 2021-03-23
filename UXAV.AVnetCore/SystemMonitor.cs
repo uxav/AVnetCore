@@ -5,8 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro.Diagnostics;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using UXAV.AVnetCore.Models;
 
 namespace UXAV.AVnetCore
@@ -16,11 +14,8 @@ namespace UXAV.AVnetCore
         private static bool _init;
         private static readonly AutoResetEvent CheckWait = new AutoResetEvent(false);
 
-        private static readonly ConcurrentQueue<MemoryStat>
-            MemoryUsageHistory = new ConcurrentQueue<MemoryStat>();
-
-        private static readonly ConcurrentQueue<CpuStat>
-            CpuUsageHistory = new ConcurrentQueue<CpuStat>();
+        private static readonly ConcurrentQueue<SysMonStat>
+            StatHistory = new ConcurrentQueue<SysMonStat>();
 
         private static bool _programStopping;
 
@@ -29,9 +24,9 @@ namespace UXAV.AVnetCore
         public static ushort MaximumCpuUtilization =>
             Crestron.SimplSharpPro.Diagnostics.SystemMonitor.MaximumCPUUtilization;
 
-        public static uint TotalRamSize => Crestron.SimplSharpPro.Diagnostics.SystemMonitor.TotalRAMSize;
-        public static uint RamFree => Crestron.SimplSharpPro.Diagnostics.SystemMonitor.RAMFree;
-        public static uint RamFreeMinimum => Crestron.SimplSharpPro.Diagnostics.SystemMonitor.RAMFreeMinimum;
+        public static long TotalRamSize => Crestron.SimplSharpPro.Diagnostics.SystemMonitor.TotalRAMSize * 1000;
+        public static long RamFree => Crestron.SimplSharpPro.Diagnostics.SystemMonitor.RAMFree * 1000;
+        public static long RamFreeMinimum => Crestron.SimplSharpPro.Diagnostics.SystemMonitor.RAMFreeMinimum * 1000;
 
         public static ushort NumberOfRunningProcesses =>
             Crestron.SimplSharpPro.Diagnostics.SystemMonitor.NumberOfRunningProcesses;
@@ -44,8 +39,6 @@ namespace UXAV.AVnetCore
             if (_init) return;
             _init = true;
             Crestron.SimplSharpPro.Diagnostics.SystemMonitor.CPUStatisticChange += OnSystemMonitorOnCpuStatisticChange;
-            Crestron.SimplSharpPro.Diagnostics.SystemMonitor.ProcessStatisticChange +=
-                OnSystemMonitorOnProcessStatisticChange;
             Crestron.SimplSharpPro.Diagnostics.SystemMonitor.SetUpdateInterval(10);
             CrestronEnvironment.ProgramStatusEventHandler += type =>
             {
@@ -57,7 +50,7 @@ namespace UXAV.AVnetCore
             {
                 while (true)
                 {
-                    if (CheckWait.WaitOne(TimeSpan.FromSeconds(30)) || _programStopping)
+                    if (CheckWait.WaitOne(TimeSpan.FromSeconds(10)) || _programStopping)
                     {
                         return;
                     }
@@ -69,121 +62,69 @@ namespace UXAV.AVnetCore
 
         private static void CheckStats()
         {
-            var memStat = new MemoryStat(Crestron.SimplSharpPro.Diagnostics.SystemMonitor.RAMFree,
-                Crestron.SimplSharpPro.Diagnostics.SystemMonitor.RAMFreeMinimum);
-            lock (MemoryUsageHistory)
+            var stat = new SysMonStat(RamFree, CpuUtilization, NumberOfRunningProcesses);
+            lock (StatHistory)
             {
-                MemoryUsageHistory.Enqueue(memStat);
-                while (MemoryUsageHistory.Count > 120)
+                StatHistory.Enqueue(stat);
+                while (StatHistory.Count > 300)
                 {
-                    MemoryUsageHistory.TryDequeue(out var oldMemStat);
+                    StatHistory.TryDequeue(out var oldMemStat);
                     //Logger.Debug($"Removed old memory stat with time: {oldMemStat.Time:u}");
                 }
             }
-
-            var cpuStat = new CpuStat(Crestron.SimplSharpPro.Diagnostics.SystemMonitor.CPUUtilization,
-                Crestron.SimplSharpPro.Diagnostics.SystemMonitor.MaximumCPUUtilization);
-            lock (CpuUsageHistory)
+            EventService.Notify(EventMessageType.SystemMonitorStatsChange, new
             {
-                CpuUsageHistory.Enqueue(cpuStat);
-                while (CpuUsageHistory.Count > 120)
+                CpuValue = new
                 {
-                    CpuUsageHistory.TryDequeue(out var oldCpuStat);
-                    //Logger.Debug($"Removed old cpu stat with time: {oldCpuStat.Time:u}");
+                    x = stat.Time,
+                    y = stat.CpuUtilization
+                },
+                MemoryValue = new
+                {
+                    x = stat.Time,
+                    y = stat.RamPercent
                 }
-            }
-        }
-
-        private static void OnSystemMonitorOnProcessStatisticChange(ProcessStatisticChangeEventArgs args)
-        {
-            if (args.StatisticWhichChanged != eProcessStatisticChange.RAMFreeMinimum) return;
-            EventService.Notify(EventMessageType.SystemMonitorMemoryStatsChange,
-                new
-                {
-                    Memory = (int) Tools.ScaleRange(args.TotalRAMSize - args.RAMFree, 0, args.TotalRAMSize, 0, 100),
-                    MemoryMax = (int) Tools.ScaleRange(args.TotalRAMSize - args.RAMFreeMinimum, 0, args.TotalRAMSize, 0,
-                        100),
-                });
+            });
         }
 
         private static void OnSystemMonitorOnCpuStatisticChange(CPUStatisticChangeEventArgs args)
         {
             if (args.StatisticWhichChanged != eCPUStatisticChange.MaximumUtilization) return;
-            EventService.Notify(EventMessageType.SystemMonitorCpuStatsChange,
-                new
-                {
-                    Cpu = Crestron.SimplSharpPro.Diagnostics.SystemMonitor.CPUUtilization,
-                    CpuMax = Crestron.SimplSharpPro.Diagnostics.SystemMonitor.MaximumCPUUtilization,
-                });
+            //
         }
 
-        public static MemoryStat[] GetMemoryStats()
+        public static SysMonStat[] GetStatHistory()
         {
-            lock (MemoryUsageHistory)
+            lock (StatHistory)
             {
-                return MemoryUsageHistory.OrderBy(i => i.Time).ToArray();
-            }
-        }
-
-        public static CpuStat[] GetCpuStats()
-        {
-            lock (CpuUsageHistory)
-            {
-                return CpuUsageHistory.OrderBy(i => i.Time).ToArray();
+                return StatHistory.OrderByDescending(i => i.Time).ToArray();
             }
         }
     }
 
-    public class MemoryStat : SysMonStat
+    public class SysMonStat
     {
-        internal MemoryStat(uint ramFree, uint ramFreeMinimum)
-        {
-            BytesFree = (int) ramFree;
-            BytesFreeMinimum = (int) ramFreeMinimum;
-        }
-
-        public int BytesFree { get; }
-        public int BytesFreeMinimum { get; }
-        public int TotalSize => (int) Crestron.SimplSharpPro.Diagnostics.SystemMonitor.TotalRAMSize;
-        public int BytesUsed => TotalSize - BytesFree;
-        public int BytesUsedMax => TotalSize - BytesFreeMinimum;
-        public override StatType Type => StatType.MemoryUsage;
-        public override int PercentageUsed => (int) Tools.ScaleRange(BytesUsed, 0, TotalSize, 0, 100);
-        public override int PercentageUsedMax => (int) Tools.ScaleRange(BytesUsedMax, 0, TotalSize, 0, 100);
-    }
-
-    public class CpuStat : SysMonStat
-    {
-        internal CpuStat(ushort cpuUtilization, ushort maximumCpuUtilization)
-        {
-            PercentageUsed = cpuUtilization;
-            PercentageUsedMax = maximumCpuUtilization;
-        }
-
-        public override StatType Type => StatType.CpuUsage;
-        public override int PercentageUsed { get; }
-        public override int PercentageUsedMax { get; }
-    }
-
-    public abstract class SysMonStat
-    {
-        protected SysMonStat()
+        internal SysMonStat(long ramFree, ushort cpuUtilization, uint processes)
         {
             Time = DateTime.Now;
-        }
-
-        public enum StatType
-        {
-            MemoryUsage,
-            CpuUsage
+            RamFree = ramFree;
+            CpuUtilization = cpuUtilization;
+            NumberOfRunningProcesses = processes;
         }
 
         public DateTime Time { get; }
 
-        [JsonConverter(typeof(StringEnumConverter))]
-        public abstract StatType Type { get; }
+        public long RamFree { get; }
 
-        public abstract int PercentageUsed { get; }
-        public abstract int PercentageUsedMax { get; }
+        public string RamFreeLabel => Tools.PrettyByteSize(RamUsed, 1);
+
+        public long RamUsed => SystemMonitor.TotalRamSize - RamFree;
+
+        public string RamUsedLabel => Tools.PrettyByteSize(RamUsed, 1);
+
+        public double RamPercent => Tools.ScaleRange(RamUsed, 0, SystemMonitor.TotalRamSize, 0, 100, 1);
+
+        public uint CpuUtilization { get; }
+        public uint NumberOfRunningProcesses { get; }
     }
 }

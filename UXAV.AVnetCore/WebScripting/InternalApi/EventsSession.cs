@@ -63,7 +63,7 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
             {
                 return messages;
             }
-            
+
             Thread.Sleep(200);
 
             return messages;
