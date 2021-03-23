@@ -1,3 +1,7 @@
+using System;
+using Crestron.SimplSharp.CrestronIO;
+using Newtonsoft.Json.Linq;
+
 namespace UXAV.AVnetCore.WebScripting
 {
     public class SystemMonitorApiHandler : ApiRequestHandler
@@ -24,6 +28,31 @@ namespace UXAV.AVnetCore.WebScripting
                 CpuHistory = SystemMonitor.GetCpuStats(),
             };
             WriteResponse(data);
+        }
+
+        [SecureRequest]
+        public void Post()
+        {
+            try
+            {
+                var reader = new StreamReader(Request.InputStream);
+                var json = JToken.Parse(reader.ReadToEnd());
+                var method = (json["method"] ?? throw new InvalidOperationException("No method stated"))
+                    .Value<string>();
+                switch (method)
+                {
+                    case "resetmaxvalues":
+                        Crestron.SimplSharpPro.Diagnostics.SystemMonitor.ResetMaximums();
+                        WriteResponse(true);
+                        return;
+                }
+                HandleError(400, "Bad Request", $"Method \"{method}\" not known");
+                return;
+            }
+            catch (Exception e)
+            {
+                HandleError(e);
+            }
         }
     }
 }

@@ -8,7 +8,6 @@ using Crestron.SimplSharpPro.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using UXAV.AVnetCore.Models;
-using UXAV.Logging;
 
 namespace UXAV.AVnetCore
 {
@@ -78,7 +77,7 @@ namespace UXAV.AVnetCore
                 while (MemoryUsageHistory.Count > 120)
                 {
                     MemoryUsageHistory.TryDequeue(out var oldMemStat);
-                    Logger.Debug($"Removed old memory stat with time: {oldMemStat.Time:u}");
+                    //Logger.Debug($"Removed old memory stat with time: {oldMemStat.Time:u}");
                 }
             }
 
@@ -90,7 +89,7 @@ namespace UXAV.AVnetCore
                 while (CpuUsageHistory.Count > 120)
                 {
                     CpuUsageHistory.TryDequeue(out var oldCpuStat);
-                    Logger.Debug($"Removed old cpu stat with time: {oldCpuStat.Time:u}");
+                    //Logger.Debug($"Removed old cpu stat with time: {oldCpuStat.Time:u}");
                 }
             }
         }
