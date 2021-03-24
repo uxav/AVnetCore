@@ -39,6 +39,7 @@ namespace UXAV.AVnetCore
             if (_init) return;
             _init = true;
             Crestron.SimplSharpPro.Diagnostics.SystemMonitor.CPUStatisticChange += OnSystemMonitorOnCpuStatisticChange;
+            Crestron.SimplSharpPro.Diagnostics.SystemMonitor.ProcessStatisticChange += SystemMonitorOnProcessStatisticChange;
             Crestron.SimplSharpPro.Diagnostics.SystemMonitor.SetUpdateInterval(10);
             CrestronEnvironment.ProgramStatusEventHandler += type =>
             {
@@ -89,8 +90,10 @@ namespace UXAV.AVnetCore
 
         private static void OnSystemMonitorOnCpuStatisticChange(CPUStatisticChangeEventArgs args)
         {
-            if (args.StatisticWhichChanged != eCPUStatisticChange.MaximumUtilization) return;
-            //
+        }
+
+        private static void SystemMonitorOnProcessStatisticChange(ProcessStatisticChangeEventArgs args)
+        {
         }
 
         public static SysMonStat[] GetStatHistory()
