@@ -78,14 +78,24 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                 room.Id,
                 room.Name,
                 room.ScreenName,
+                room.Description,
+                room.HasBookingFacility,
+                room.Booked,
+                room.HasOccupancy,
+                room.Occupied,
+                room.HasConferenceFacility,
+                room.InCall,
                 @RoomType = room.GetType().Name,
                 Parent = room.ParentRoom?.Id ?? 0,
                 SlaveRooms = room.ChildRooms.Keys,
                 room.Power,
                 @Source = room.GetCurrentSource()?.Id ?? 0,
-                @Volume = 50,
-                @VolumeMute = false,
-                @MicMute = false
+                @HasVolume = room.VolumeControl != null && room.VolumeControl.SupportsVolumeLevel,
+                @Volume = room.VolumeControl?.VolumeLevel ?? 0,
+                @HasVolumeMute = room.VolumeControl != null && room.VolumeControl.SupportsMute,
+                @VolumeMute = room.VolumeControl?.Muted ?? false,
+                @HasMicMute = room.MicMute != null && room.MicMute.SupportsMute,
+                @MicMute = room.MicMute?.Muted ?? false
             };
         }
     }

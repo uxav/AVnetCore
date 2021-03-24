@@ -47,10 +47,15 @@ namespace UXAV.AVnetCore.Models.Rooms
         }
 
         public uint Id { get; }
-
         public string Name { get; }
-
         public string ScreenName { get; }
+        public abstract string Description { get; }
+        public abstract bool HasBookingFacility { get; }
+        public abstract bool Booked { get; }
+        public abstract bool HasOccupancy { get; }
+        public abstract bool Occupied { get; }
+        public abstract bool HasConferenceFacility { get; }
+        public abstract bool InCall { get; }
 
         public RoomBase ParentRoom
         {
@@ -143,10 +148,7 @@ namespace UXAV.AVnetCore.Models.Rooms
                 });
 
                 Logger.Debug($"Starting source load task forIndex = {forIndex}");
-                await Task.Run(() =>
-                {
-                    SelectSourceInternal(previousSource, newSource, forIndex);
-                });
+                await Task.Run(() => { SelectSourceInternal(previousSource, newSource, forIndex); });
             }
             catch (Exception e)
             {
@@ -159,6 +161,8 @@ namespace UXAV.AVnetCore.Models.Rooms
         }
 
         public abstract IVolumeControl VolumeControl { get; }
+
+        public abstract IVolumeControl MicMute { get; }
 
         public virtual bool Power => _power;
 
