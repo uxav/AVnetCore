@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime;
 using System.Text.RegularExpressions;
 using UXAV.AVnetCore.Models;
 using UXAV.Logging;
@@ -11,6 +13,10 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
 {
     public class FileUploadApiHandler : ApiRequestHandler
     {
+        public static readonly Dictionary<string, Dictionary<int, MemoryStream>> UploadStreams =
+            new Dictionary<string, Dictionary<int, MemoryStream>>();
+        public static readonly Dictionary<string, long> UploadProgress = new Dictionary<string, long>();
+
         public FileUploadApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request, true)
         {
@@ -18,11 +24,48 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
 
         private static long WriteFile(string path, int chunkSequence, Stream data)
         {
-            var mode = chunkSequence > 0 ? FileMode.Append : FileMode.Create;
-
-            using (var file = File.Open(path, mode, FileAccess.Write, FileShare.None))
+            if (chunkSequence == 0)
             {
-                data.CopyTo(file);
+                if (UploadStreams.ContainsKey(path))
+                {
+                    foreach (var s in UploadStreams[path].Values)
+                    {
+                        s.Dispose();
+                    }
+                }
+                UploadStreams[path] = new Dictionary<int, MemoryStream>();
+                UploadProgress[path] = 0;
+            }
+
+            var stream = new MemoryStream();
+            UploadStreams[path][chunkSequence] = stream;
+
+            data.CopyTo(stream);
+            UploadProgress[path] += stream.Length;
+            return UploadProgress[path];
+        }
+
+        private static long SaveToDisk(string path)
+        {
+            using (var file = File.Create(path))
+            {
+                var streams = UploadStreams[path].OrderBy(i => i.Key).Select(i => i.Value).ToArray();
+                var chunk = 0;
+                foreach (var memoryStream in streams)
+                {
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+                    memoryStream.CopyTo(file);
+                    UploadStreams[path][chunk].Dispose();
+                    UploadStreams[path][chunk] = null;
+                    UploadStreams[path].Remove(chunk);
+                    chunk++;
+                }
+
+                UploadStreams.Remove(path);
+                Logger.Debug("Starting garbage collection...");
+                GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+                GC.Collect();
+                Logger.Debug("Completed garbage collection!");
                 return file.Length;
             }
         }
@@ -51,20 +94,11 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                                 return;
                             }
 
-                            var tempPath = SystemBase.TempFileDirectory + "/" + fileName;
+                            var path = SystemBase.ProgramApplicationDirectory + "/" + fileName;
 
                             if (name == "end")
                             {
-                                var newPath = SystemBase.ProgramApplicationDirectory + "/" + fileName;
-                                Logger.Debug($"Received end of file upload: \"{tempPath}\", moving to \"{newPath}\"");
-                                if (File.Exists(newPath))
-                                {
-                                    Logger.Debug($"File {newPath} exists, removing first");
-                                    File.Delete(newPath);
-                                }
-                                File.Move(tempPath, newPath);
-                                Logger.Debug($"Moved file to \"{newPath}\"");
-                                results[fileName] = new FileInfo(newPath).Length;
+                                results[fileName] = SaveToDisk(path);
                             }
                             else
                             {
@@ -76,29 +110,9 @@ namespace UXAV.AVnetCore.WebScripting.InternalApi
                                     //Logger.Debug($"Received chunk {chunkSequence:D3} of {fileName}");
                                 }
 
-                                var size = WriteFile(tempPath, chunkSequence, httpContent.ReadAsStreamAsync().Result);
+                                var size = WriteFile(path, chunkSequence, httpContent.ReadAsStreamAsync().Result);
                                 results[fileName] = size;
                             }
-                        }
-
-                        break;
-                    case "nvram":
-                        foreach (var httpContent in data.Contents)
-                        {
-                            var name = httpContent.Headers.ContentDisposition.Name.Trim('\"');
-                            var fileName = httpContent.Headers.ContentDisposition.FileName.Trim('\"');
-                            var chunkSequence = 0;
-                            if (Request.Query["chunked"] != null)
-                            {
-                                // name should be chunk_1 etc
-                                chunkSequence = int.Parse(name.Substring(6, name.Length - 6));
-                                Logger.Debug($"Received chunk {chunkSequence:D3} of {fileName}");
-                            }
-
-                            var path = SystemBase.ProgramNvramAppInstanceDirectory + "/" + fileName;
-
-                            var size = WriteFile(path, chunkSequence, httpContent.ReadAsStreamAsync().Result);
-                            results[fileName] = size;
                         }
 
                         break;
