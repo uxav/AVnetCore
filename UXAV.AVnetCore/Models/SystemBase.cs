@@ -12,7 +12,6 @@ using System.Xml;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
-using Crestron.SimplSharpPro.Diagnostics;
 using Crestron.SimplSharpPro.Fusion;
 using UXAV.AVnetCore.Cloud;
 using UXAV.AVnetCore.Config;
@@ -229,7 +228,7 @@ namespace UXAV.AVnetCore.Models
                 ApiServer.AddRoute(@"/api/autodiscovery", typeof(AutoDiscoveryApiHandler));
                 ApiServer.AddRoute(@"/api/console", typeof(ConsoleApiHandler));
                 ApiServer.AddRoute(@"/api/diagnostics", typeof(DiagnosticsApiHandler));
-                ApiServer.AddRoute(@"/api/sysmon", typeof(SystemMonitorHandler));
+                ApiServer.AddRoute(@"/api/sysmon", typeof(SystemMonitorApiHandler));
                 ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
                 ApiServer.AddRoute(@"/api/upload/uploadedfiles/<fileType:\w+>", typeof(UploadedFilesApiHandler));
                 ApiServer.AddRoute(@"/api/xpanels", typeof(XPanelDetailsApiHandler));

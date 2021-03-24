@@ -129,6 +129,10 @@ namespace UXAV.AVnetCore.WebScripting
                 {
                     method.Invoke(this, new object[] { });
                 }
+                catch (TargetInvocationException e)
+                {
+                    HandleError(e.InnerException);
+                }
                 catch (ThreadAbortException)
                 {
                 }
