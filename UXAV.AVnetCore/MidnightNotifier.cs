@@ -5,7 +5,7 @@ using Microsoft.Win32;
 
 namespace UXAV.AVnetCore
 {
-    static class MidnightNotifier
+    public static class MidnightNotifier
     {
         private static readonly Timer Timer;
 
