@@ -266,6 +266,7 @@
         <Compile Include="DeviceSupport\TcpConnectionBase.cs" />
         <Compile Include="Fusion\FusionHelper.cs" />
         <Compile Include="Fusion\FusionInstance.cs" />
+        <Compile Include="MidnightNotifier.cs" />
         <Compile Include="Models\Collections\UXCollection.cs" />
         <Compile Include="Models\Diagnostics\DeviceMessageExtenders.cs" />
         <Compile Include="Models\Diagnostics\DiagnosticMessage.cs" />
