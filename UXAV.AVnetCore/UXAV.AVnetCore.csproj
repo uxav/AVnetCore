@@ -297,6 +297,7 @@
         <Compile Include="UI\Components\IEnableItem.cs" />
         <Compile Include="UI\Components\ITextItem.cs" />
         <Compile Include="UI\Components\IVisibleItem.cs" />
+        <Compile Include="UI\Components\VolumeMuteButton.cs" />
         <Compile Include="UI\Components\UIButton.cs" />
         <Compile Include="UI\Components\UIButtonCollection.cs" />
         <Compile Include="UI\Components\UIDynamicButtonList.cs" />
