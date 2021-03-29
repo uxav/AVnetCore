@@ -266,6 +266,7 @@
         <Compile Include="DeviceSupport\TcpConnectionBase.cs" />
         <Compile Include="Fusion\FusionHelper.cs" />
         <Compile Include="Fusion\FusionInstance.cs" />
+        <Compile Include="MidnightNotifier.cs" />
         <Compile Include="Models\Collections\UXCollection.cs" />
         <Compile Include="Models\Diagnostics\DeviceMessageExtenders.cs" />
         <Compile Include="Models\Diagnostics\DiagnosticMessage.cs" />
@@ -296,6 +297,7 @@
         <Compile Include="UI\Components\IEnableItem.cs" />
         <Compile Include="UI\Components\ITextItem.cs" />
         <Compile Include="UI\Components\IVisibleItem.cs" />
+        <Compile Include="UI\Components\VolumeMuteButton.cs" />
         <Compile Include="UI\Components\UIButton.cs" />
         <Compile Include="UI\Components\UIButtonCollection.cs" />
         <Compile Include="UI\Components\UIDynamicButtonList.cs" />
