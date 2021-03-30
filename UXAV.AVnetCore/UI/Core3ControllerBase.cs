@@ -110,6 +110,7 @@ namespace UXAV.AVnetCore.UI
             ExtenderCrestronAppFunctions = UseDeviceExtenderByName("ExtenderCrestronAppFunctions");
             ExtenderPinPoint = UseDeviceExtenderByName("ExtenderPinPointReservedSigs");
             ExtenderSetup = UseDeviceExtenderByName("ExtenderSetupReservedSigs");
+            ExtenderToolbar = UseDeviceExtenderByName("ExtenderButtonToolbarReservedSigs");
 
             Pages = new UIPageCollection(this);
 
@@ -136,6 +137,7 @@ namespace UXAV.AVnetCore.UI
                     posibleFiles.Add(fileName);
                 }
             }
+
             posibleFiles.AddRange(search);
             foreach (var file in posibleFiles)
             {
@@ -185,7 +187,7 @@ namespace UXAV.AVnetCore.UI
             }
             catch (Exception e)
             {
-                Logger.Warn(
+                Logger.Debug(
                     $"Could not get {name} Device Extender from {Device.GetType().FullName}, {e.Message}");
             }
 
@@ -255,6 +257,8 @@ namespace UXAV.AVnetCore.UI
         protected DeviceExtender ExtenderAutoUpdate { get; }
 
         public DeviceExtender ExtenderSetup { get; }
+
+        public DeviceExtender ExtenderToolbar { get; }
 
         public DeviceExtender ExtenderPinPoint { get; }
 
