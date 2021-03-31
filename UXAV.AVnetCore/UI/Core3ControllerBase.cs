@@ -127,7 +127,18 @@ namespace UXAV.AVnetCore.UI
             // Look for SGD files with priority given to file names containing the device type name... ie 'CrestronApp'
 
             var posibleFiles = new List<string>();
-            var search = files.OrderByDescending(f => f.Contains(Device.Name)).ToArray();
+            var deviceName = Device.Name;
+            switch (Device)
+            {
+                case CrestronGo _:
+                    deviceName = "CrestronGo";
+                    break;
+                case CrestronApp _:
+                    deviceName = "CrestronApp";
+                    break;
+            }
+
+            var search = files.OrderByDescending(f => f.Contains(deviceName)).ToArray();
             if (!posibleFiles.Any(f => f.Contains(Device.Name)))
             {
                 var xpanelVtzPath = CipDevices.GetPathOfVtzFileForXPanel(Device.ID);
