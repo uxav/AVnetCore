@@ -16,13 +16,14 @@ namespace UXAV.AVnetCore.DeviceSupport
         /// <summary>
         /// The default Constructor.
         /// </summary>
+        [Obsolete("Please use ctor without passing SystemBase.")]
         protected DisplayDeviceBase(SystemBase system, string name, uint roomAllocatedId = 0)
             : base(system, name, roomAllocatedId)
         {
         }
 
         protected DisplayDeviceBase(RoomBase room, string name)
-            : base(room.System, name, room.Id)
+            : base(name, room.Id)
         {
         }
 
