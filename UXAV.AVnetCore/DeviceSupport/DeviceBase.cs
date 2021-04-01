@@ -15,11 +15,12 @@ namespace UXAV.AVnetCore.DeviceSupport
         private string _name;
         private bool _deviceCommunicating;
 
+        [Obsolete("Method is no longer used. Please use ctor without passing SystemBase.")]
+        // ReSharper disable once UnusedParameter.Local
         protected DeviceBase(SystemBase system, string name, uint roomIdAllocated = 0)
         {
             _name = name;
             _roomIdAllocated = roomIdAllocated;
-            System = system;
             _idCount++;
             Id = _idCount;
             System.DevicesDict[Id] = this;
@@ -33,13 +34,36 @@ namespace UXAV.AVnetCore.DeviceSupport
             Logger.Log($"Created device {GetType().Name} \"{Name}\" with device ID {Id}");
         }
 
+        protected DeviceBase(string name, uint roomIdAllocated = 0)
+        {
+            _name = name;
+            _roomIdAllocated = roomIdAllocated;
+            _idCount++;
+            Id = _idCount;
+            System.DevicesDict[Id] = this;
+            CrestronEnvironment.ProgramStatusEventHandler += type =>
+            {
+                if (type == eProgramStatusEventType.Stopping)
+                {
+                    OnProgramStopping();
+                }
+            };
+            Logger.Log($"Created device {GetType().Name} \"{Name}\" with device ID {Id}");
+        }
+
+        [Obsolete("Method is no longer used. Please use ctor(name, room).")]
         protected DeviceBase(RoomBase room, string name)
-            : this(room.System, name, room.Id)
+            : this(name, room.Id)
+        {
+        }
+
+        protected DeviceBase(string name, RoomBase room)
+            : this(name, room.Id)
         {
         }
 
         public abstract IEnumerable<DiagnosticMessage> GetMessages();
-        public SystemBase System { get; }
+        public SystemBase System => UxEnvironment.System;
         public uint Id { get; }
 
         public string Name => string.IsNullOrEmpty(_name) ? GetType().Name : _name;
@@ -81,7 +105,7 @@ namespace UXAV.AVnetCore.DeviceSupport
                 {
                     @Device = Name,
                     @Description = AllocatedRoom?.Name,
-                    @ConnectionInfo = ConnectionInfo,
+                    ConnectionInfo,
                     @Online = value
                 });
             }
@@ -108,7 +132,7 @@ namespace UXAV.AVnetCore.DeviceSupport
 
         internal void AllocateRoom(RoomBase room)
         {
-            if(AllocatedRoom == room) return;
+            if (AllocatedRoom == room) return;
             AllocatedRoom = room;
         }
 
