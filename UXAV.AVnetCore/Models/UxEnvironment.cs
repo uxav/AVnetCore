@@ -16,17 +16,13 @@ namespace UXAV.AVnetCore.Models
     {
         private static readonly SourceCollection<SourceBase> SourceCollection = new SourceCollection<SourceBase>();
         private static readonly RoomCollection<RoomBase> RoomsCollection = new RoomCollection<RoomBase>();
-        private static readonly Version _assemblyVersion;
-        private static readonly Version _version;
-        private static readonly string _name;
+        private static Version _version;
 
         static UxEnvironment()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
-            _name = assembly.GetName().Name;
-            _assemblyVersion = assembly.GetName().Version;
-            _version = new Version(fileVersionInfo.ProductVersion);
+            Name = assembly.GetName().Name;
+            AssemblyVersion = assembly.GetName().Version;
         }
 
         internal static void InitConsoleCommands()
@@ -85,9 +81,20 @@ namespace UXAV.AVnetCore.Models
 
         public static SystemBase System { get; internal set; }
         public static CrestronControlSystem ControlSystem { get; internal set; }
-        public static string Name => _name;
-        public static Version AssemblyVersion => _assemblyVersion;
-        public static Version Version => _version;
+        public static string Name { get; }
+        public static Version AssemblyVersion { get; }
+
+        public static Version Version
+        {
+            get
+            {
+                if (_version != null) return _version;
+                var assembly = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
+                _version = new Version(assembly.FileVersion);
+
+                return _version;
+            }
+        }
 
         public static bool RoomWithIdExists(uint id)
         {
