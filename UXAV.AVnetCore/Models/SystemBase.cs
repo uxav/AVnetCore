@@ -340,7 +340,7 @@ namespace UXAV.AVnetCore.Models
                 CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
                     .EthernetLANAdapter));
 
-        public abstract string AppName { get; }
+        public virtual string AppName => AppAssembly.GetName().Name;
 
         public virtual Version AppVersion
         {
