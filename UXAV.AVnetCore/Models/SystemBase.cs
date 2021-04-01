@@ -137,8 +137,8 @@ namespace UXAV.AVnetCore.Models
             Logger.Log("FirmwareVersion: {0}", InitialParametersClass.FirmwareVersion);
             Logger.Log("SerialNumber: {0}", CrestronEnvironment.SystemInfo.SerialNumber);
             Logger.Log("App Info: {0}", AppAssembly.GetName().FullName);
-            var avnetInfo = Assembly.GetExecutingAssembly().GetName();
-            Logger.Log("{0} Version: {1}", avnetInfo.Name, avnetInfo.Version);
+            Logger.Log("{0} Version: {1}", UxEnvironment.Name, UxEnvironment.Version);
+            Logger.Log("{0} Assembly Version: {1}", UxEnvironment.Name, UxEnvironment.AssemblyVersion);
             Logger.Log("Starting app version {0}", AppAssembly.GetName().Version);
             Logger.Log($"Program Info states build time as: {_programBuildTime:R}");
             Logger.Log("ProcessId: {0}", Process.GetCurrentProcess().Id);
@@ -341,7 +341,17 @@ namespace UXAV.AVnetCore.Models
                     .EthernetLANAdapter));
 
         public abstract string AppName { get; }
-        public abstract Version AppVersion { get; }
+
+        public virtual Version AppVersion
+        {
+            get
+            {
+                var fileVersionInfo = FileVersionInfo.GetVersionInfo(AppAssembly.Location);
+                return new Version(fileVersionInfo.ProductVersion);
+            }
+        }
+
+        public virtual Version AppAssemblyVersion => AppAssembly.GetName().Version;
 
         public static eDevicePlatform DevicePlatform => CrestronEnvironment.DevicePlatform;
 
