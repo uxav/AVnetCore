@@ -83,6 +83,10 @@ namespace UXAV.AVnetCore.UI.Components
         /// <summary>
         /// The item did hide
         /// </summary>
-        DidHide
+        DidHide,
+        /// <summary>
+        /// Signalled if the animation complete join is triggered
+        /// </summary>
+        AnimationComplete
     }
 }
