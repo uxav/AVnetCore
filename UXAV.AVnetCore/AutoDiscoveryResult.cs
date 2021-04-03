@@ -26,7 +26,7 @@ namespace UXAV.AVnetCore
             _adapter = element.AdapterType;
             _detailsString = element.DeviceIdString;
             var details = Regex.Match(_detailsString,
-                @"([\w-]+).*\[(.+?)(?: \((.+)\))?, *#(\w{8})\]\ ?(?:@E-(\w{12}))*");
+                @"([\w-]+).*\[(.+?)(?: \((.+)\))?, *[^\w]?(\w{8,})\]\ ?(?:@E-(\w{12}))*");
             if (details.Success)
             {
                 _model = details.Groups[1].Value;
