@@ -115,6 +115,8 @@ namespace UXAV.AVnetCore.UI
             ExtenderPinPoint = UseDeviceExtenderByName("ExtenderPinPointReservedSigs");
             ExtenderSetup = UseDeviceExtenderByName("ExtenderSetupReservedSigs");
             ExtenderToolbar = UseDeviceExtenderByName("ExtenderButtonToolbarReservedSigs");
+            
+            ActivityMonitor.Register(this, ExtenderTouchDetection, ExtenderSystem3);
 
             Pages = new UIPageCollection(this);
 

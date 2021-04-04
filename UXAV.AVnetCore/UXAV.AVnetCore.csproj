@@ -290,6 +290,9 @@
         <Compile Include="ShellHelper.cs" />
         <Compile Include="SystemMonitor.cs" />
         <Compile Include="Tools.cs" />
+        <Compile Include="UI\ActivityMonitor.cs" />
+        <Compile Include="UI\ControllerActivityMonitor.cs" />
+        <Compile Include="UI\ActivityTimeOut.cs" />
         <Compile Include="UI\Components\IAnalogItem.cs" />
         <Compile Include="UI\Components\IButton.cs" />
         <Compile Include="UI\Components\IButtonCollection.cs" />

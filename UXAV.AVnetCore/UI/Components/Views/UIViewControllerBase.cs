@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Threading;
-using System.Timers;
 using UXAV.AVnetCore.DeviceSupport;
 using UXAV.AVnetCore.Models;
 using UXAV.Logging;
-using Timer = System.Timers.Timer;
 
 namespace UXAV.AVnetCore.UI.Components.Views
 {
@@ -13,13 +11,13 @@ namespace UXAV.AVnetCore.UI.Components.Views
     /// </summary>
     public abstract class UIViewControllerBase : UIObject, IVisibleItem, IGenericItem
     {
-        private readonly Timer _timeOut;
         private readonly Mutex _mutex = new Mutex();
+        private ActivityTimeOut _timeOut;
 
         /// <summary>
         /// 
         /// </summary>
-        internal UIViewControllerBase(ISigProvider sigProvider, uint visibleJoinNumber)
+        internal UIViewControllerBase(ISigProvider sigProvider, uint visibleJoinNumber, bool createTimeOutWithProximity = false)
             : base(sigProvider)
         {
             VisibleJoinNumber = visibleJoinNumber;
@@ -29,13 +27,15 @@ namespace UXAV.AVnetCore.UI.Components.Views
                 Parent.VisibilityChanged += ParentVisibilityChanged;
             }
 
-            _timeOut = new Timer(TimeSpan.FromSeconds(60).TotalMilliseconds) {AutoReset = false};
-            _timeOut.Elapsed += TimeOutOnElapsed;
-
             Logger.Debug($"Created {GetType().Name} with join {VisibleJoinNumber}");
             if (Parent != null)
             {
                 Logger.Debug($"View has parent: {Parent.GetType().Name} with join {Parent.VisibleJoinNumber}");
+            }
+
+            if (createTimeOutWithProximity)
+            {
+                CreateTimeOut(TimeSpan.Zero, true);
             }
         }
 
@@ -55,7 +55,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
 
         public uint Id => VisibleJoinNumber;
 
-        public TimeSpan TimeOutTime => TimeSpan.FromMilliseconds(_timeOut.Interval);
+        public ActivityTimeOut TimeOut => _timeOut;
 
         public string Name { get; set; } = string.Empty;
 
@@ -98,7 +98,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
         /// </summary>
         public virtual void Show()
         {
-            _timeOut.Stop();
+            _timeOut?.Reset(TimeSpan.Zero);
             Visible = true;
         }
 
@@ -108,27 +108,40 @@ namespace UXAV.AVnetCore.UI.Components.Views
         /// <param name="time">TimeSpan duration to timeout</param>
         public virtual void Show(TimeSpan time)
         {
-            if (time.TotalMilliseconds > 0)
+            Logger.Debug($"{this} {nameof(Show)} with Timeout: {time}");
+            if (_timeOut == null && time > TimeSpan.Zero)
             {
-                Logger.Debug($"{this} {nameof(Show)} with Timeout: {time}");
-                _timeOut.Interval = time.TotalMilliseconds;
-                _timeOut.Start();
+                CreateTimeOut(time);
+            }
+            else
+            {
+                _timeOut?.Reset(time);
             }
 
             Visible = true;
         }
 
         /// <summary>
-        /// Set the timeout if the page is already showing
+        /// Set the timeout if the page is already showing. Resets timer each time it set.
         /// </summary>
         /// <param name="time">TimeSpan duration to timeout</param>
         protected void SetTimeOut(TimeSpan time)
         {
             Logger.Debug($"{this} {nameof(SetTimeOut)}(time = {time})");
-            _timeOut.Stop();
-            _timeOut.Interval = time.TotalMilliseconds;
-            _timeOut.Enabled = true;
-            _timeOut.Start();
+            if (_timeOut == null && time > TimeSpan.Zero)
+            {
+                CreateTimeOut(time);
+            }
+            else if(_timeOut != null)
+            {
+                _timeOut.TimeOut = time;
+            }
+        }
+
+        private void CreateTimeOut(TimeSpan time, bool useProximity = false)
+        {
+            _timeOut = ActivityMonitor.CreateTimeOut(this, time, useProximity);
+            _timeOut.TimedOut += OnTimedOut;
         }
 
         /// <summary>
@@ -187,18 +200,10 @@ namespace UXAV.AVnetCore.UI.Components.Views
                     {
                         Logger.Error(e);
                     }
-
-                    _timeOut.Stop();
                     break;
             }
 
             handler?.Invoke(item, args);
-        }
-
-        private void TimeOutOnElapsed(object sender, ElapsedEventArgs e)
-        {
-            Logger.Debug($"{this} Timeout elapsed");
-            Hide();
         }
 
         protected abstract void WillShow();
@@ -212,6 +217,11 @@ namespace UXAV.AVnetCore.UI.Components.Views
         private void ParentVisibilityChanged(IVisibleItem item, VisibilityChangeEventArgs args)
         {
             if (args.EventType != VisibilityChangeEventType.DidHide) return;
+            Hide();
+        }
+
+        protected virtual void OnTimedOut(ActivityTimeOut timeout, ActivityTimedOutEventArgs args)
+        {
             Hide();
         }
 
