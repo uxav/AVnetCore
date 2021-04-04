@@ -91,7 +91,11 @@ namespace UXAV.AVnetCore.UI
             ExtenderAutoUpdate = UseDeviceExtenderByName("ExtenderAutoUpdateReservedSigs");
             ExtenderCamera = UseDeviceExtenderByName("ExtenderCameraReservedSigs");
             ExtenderEthernet = UseDeviceExtenderByName("ExtenderEthernetReservedSigs");
-            //ExtenderApplication = UseDeviceExtenderByName("ExtenderApplicationControlReservedSigs");
+            if (Device is TswXX70Base)
+            {
+                ExtenderApplication = UseDeviceExtenderByName("ExtenderApplicationControlReservedSigs");
+            }
+
             ExtenderZoomRoom = UseDeviceExtenderByName("ExtenderZoomRoomAppReservedSigs");
             ExtenderHardButton = UseDeviceExtenderByName("ExtenderHardButtonReservedSigs");
             ExtenderHardButton?.SetUShortPropertyValue("Brightness", ushort.MaxValue);
