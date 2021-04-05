@@ -63,7 +63,7 @@ namespace UXAV.AVnetCore.UI
                 {
                     foreach (var timeOut in _timeOuts)
                     {
-                        if(touch) timeOut.HoldOff();
+                        if(touch) timeOut.Cancel();
                         else timeOut.Restart();
                     }
                 }

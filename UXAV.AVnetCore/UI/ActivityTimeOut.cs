@@ -37,8 +37,8 @@ namespace UXAV.AVnetCore.UI
         }
 
         public event ActivityTimedOutEventHandler TimedOut;
-
-        internal void HoldOff()
+        
+        internal void Cancel()
         {
             _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }

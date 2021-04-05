@@ -195,6 +195,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
                     try
                     {
                         DidHide();
+                        _timeOut?.Cancel();
                     }
                     catch (Exception e)
                     {
@@ -222,7 +223,6 @@ namespace UXAV.AVnetCore.UI.Components.Views
 
         protected virtual void OnTimedOut(ActivityTimeOut timeout, ActivityTimedOutEventArgs args)
         {
-            Logger.Debug($"{this}, Timed Out!");
             Hide();
         }
 

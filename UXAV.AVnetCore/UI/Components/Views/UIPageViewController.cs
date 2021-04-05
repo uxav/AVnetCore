@@ -110,10 +110,12 @@ namespace UXAV.AVnetCore.UI.Components.Views
 
         public void Back()
         {
-            var previousPage = _core3Controller.Pages.PreviousPages.LastOrDefault();
-            if (previousPage == null) return;
-            Visible = false;
-            previousPage.Show();
+            PreviousPage?.Show();
+        }
+
+        protected override void OnTimedOut(ActivityTimeOut timeout, ActivityTimedOutEventArgs args)
+        {
+            Back();
         }
     }
 }
