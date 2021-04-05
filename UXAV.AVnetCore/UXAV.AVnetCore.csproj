@@ -230,8 +230,8 @@
         </Reference>
         <Reference Include="System.Web" />
         <Reference Include="System.Xml" />
-        <Reference Include="UXAV.Logging, Version=1.1.7.17387, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\packages\UXAV.Logging.1.1.7\lib\net47\UXAV.Logging.dll</HintPath>
+        <Reference Include="UXAV.Logging, Version=1.1.8.12338, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\packages\UXAV.Logging.1.1.8\lib\net47\UXAV.Logging.dll</HintPath>
           <Private>True</Private>
         </Reference>
     </ItemGroup>
