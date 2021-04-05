@@ -222,6 +222,7 @@ namespace UXAV.AVnetCore.UI.Components.Views
 
         protected virtual void OnTimedOut(ActivityTimeOut timeout, ActivityTimedOutEventArgs args)
         {
+            Logger.Debug($"{this}, Timed Out!");
             Hide();
         }
 
