@@ -40,6 +40,12 @@ namespace UXAV.AVnetCore.UI
         
         internal void Cancel()
         {
+            _timeOut = TimeSpan.Zero;
+            _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        }
+        
+        internal void HoldOff()
+        {
             _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
 
@@ -79,6 +85,7 @@ namespace UXAV.AVnetCore.UI
         {
             try
             {
+                _timeOut = TimeSpan.Zero;
                 TimedOut?.Invoke(timeOut, args);
             }
             catch (Exception e)
