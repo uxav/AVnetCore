@@ -72,6 +72,11 @@ namespace UXAV.AVnetCore.Models.Sources
             return new SourceCollection<T>(this.Where(s => s.GroupName == groupName));
         }
 
+        public SourceCollection<T> Where(Func<T, bool> predicate)
+        {
+            return new SourceCollection<T>(InternalDictionary.Values.Where(predicate));
+        }
+
         public bool ContainsSourceOfType(SourceType type)
         {
             return InternalDictionary.Values.Any(s => s.Type == type);
