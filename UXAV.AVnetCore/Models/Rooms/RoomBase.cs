@@ -96,7 +96,7 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         public virtual SourceBase DefaultSource => _lastMainSource ?? Sources.FirstOrDefault();
 
-        public SourceCollection<SourceBase> Sources => UxEnvironment.GetSources().SourcesForRoomOrGlobal(this);
+        public virtual SourceCollection<SourceBase> Sources => UxEnvironment.GetSources().SourcesForRoomOrGlobal(this);
 
         public virtual async Task<bool> SelectSourceAsync(SourceBase newSource, uint forIndex = 1)
         {
