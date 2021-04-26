@@ -34,7 +34,7 @@ namespace UXAV.AVnetCore.UI
             new Dictionary<DeviceExtender, string>();
 
         protected Core3ControllerBase(SystemBase system, uint roomId, string typeName, uint ipId, string description,
-            string pathOfVtzForXPanel = "")
+            string pathOfVtzForXPanel = "", string sgdPathOverride = "")
         {
             _roomId = roomId;
             System = system;
@@ -133,32 +133,46 @@ namespace UXAV.AVnetCore.UI
             // Look for SGD files with priority given to file names containing the device type name... ie 'CrestronApp'
 
             var posibleFiles = new List<string>();
-            var deviceName = Device.Name;
-            switch (Device)
+            if (!string.IsNullOrEmpty(sgdPathOverride) && File.Exists(sgdPathOverride))
             {
-                case CrestronGo _:
-                    deviceName = "CrestronGo";
-                    break;
-                case CrestronApp _:
-                    deviceName = "CrestronApp";
-                    break;
+                Logger.Success($"SGD Override path defined: \"{sgdPathOverride}\"");
+                posibleFiles.Add(sgdPathOverride);
             }
-
-            var search = files.OrderByDescending(f => f.Contains(deviceName)).ToArray();
-            if (!posibleFiles.Any(f => f.Contains(Device.Name)))
+            else
             {
-                var xpanelVtzPath = CipDevices.GetPathOfVtzFileForXPanel(Device.ID);
-                if (!string.IsNullOrEmpty(xpanelVtzPath))
+                var deviceName = Device.Name;
+                switch (Device)
                 {
-                    var fileName = Regex.Replace(xpanelVtzPath, @"\.\w+$", ".sgd");
-                    posibleFiles.Add(fileName);
+                    case CrestronGo _:
+                        deviceName = "CrestronGo";
+                        break;
+                    case CrestronApp _:
+                        deviceName = "CrestronApp";
+                        break;
                 }
-            }
 
-            posibleFiles.AddRange(search);
-            foreach (var file in posibleFiles)
-            {
-                Logger.Debug($"Possible sgd file: {file}");
+                var search = files.OrderByDescending(f => f.Contains(deviceName)).ToArray();
+                if (!posibleFiles.Any(f => f.Contains(Device.Name)))
+                {
+                    Logger.Warn($"No SGD files contain \"{deviceName}\"... will look for for vtz path definitions...");
+                    var xpanelVtzPath = CipDevices.GetPathOfVtzFileForXPanel(Device.ID);
+                    if (!string.IsNullOrEmpty(xpanelVtzPath))
+                    {
+                        var fileName = Regex.Replace(xpanelVtzPath, @"\.\w+$", ".sgd");
+                        Logger.Highlight($"Found vtz definition and will use in search.. \"{fileName}\"");
+                        posibleFiles.Add(fileName);
+                    }
+                    else
+                    {
+                        Logger.Warn("No vtz file definitions !!");
+                    }
+                }
+
+                posibleFiles.AddRange(search);
+                foreach (var file in posibleFiles)
+                {
+                    Logger.Debug($"Possible sgd file: {file}");
+                }
             }
 
             foreach (var file in posibleFiles)
