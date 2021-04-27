@@ -152,7 +152,7 @@ namespace UXAV.AVnetCore.UI
                 }
 
                 var search = files.OrderByDescending(f => f.Contains(deviceName)).ToArray();
-                if (!posibleFiles.Any(f => f.Contains(Device.Name)))
+                if (!search.Any(f => f.Contains(deviceName)))
                 {
                     Logger.Warn($"No SGD files contain \"{deviceName}\"... will look for for vtz path definitions...");
                     var xpanelVtzPath = CipDevices.GetPathOfVtzFileForXPanel(Device.ID);
@@ -167,8 +167,11 @@ namespace UXAV.AVnetCore.UI
                         Logger.Warn("No vtz file definitions !!");
                     }
                 }
+                else
+                {
+                    posibleFiles.AddRange(search);
+                }
 
-                posibleFiles.AddRange(search);
                 foreach (var file in posibleFiles)
                 {
                     Logger.Debug($"Possible sgd file: {file}");
