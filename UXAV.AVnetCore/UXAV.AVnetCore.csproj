@@ -254,6 +254,7 @@
         <Compile Include="DeviceSupport\IDeviceWithStandbyMode.cs" />
         <Compile Include="DeviceSupport\IFusionAsset.cs" />
         <Compile Include="DeviceSupport\IGenericDeviceWrapper.cs" />
+        <Compile Include="DeviceSupport\IMuteControl.cs" />
         <Compile Include="DeviceSupport\IpIdHelper.cs" />
         <Compile Include="DeviceSupport\IVolumeControl.cs" />
         <Compile Include="DeviceSupport\IVolumeLevelDevice.cs" />
