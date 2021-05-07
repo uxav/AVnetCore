@@ -162,7 +162,7 @@ namespace UXAV.AVnetCore.Models.Rooms
 
         public abstract IVolumeControl VolumeControl { get; }
 
-        public abstract IVolumeControl MicMute { get; }
+        public abstract IMuteControl MicMute { get; }
 
         public virtual bool Power => _power;
 
