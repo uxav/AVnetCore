@@ -140,7 +140,15 @@ namespace UXAV.AVnetCore
                 throw new Exception($"Could not get ctor for type: {systemType.FullName}");
             }
 
-            return (SystemBase) ctor.Invoke(new object[] {controlSystem});
+            try
+            {
+                return (SystemBase) ctor.Invoke(new object[] {controlSystem});
+            }
+            catch (TargetInvocationException e)
+            {
+                Logger.Error(e.InnerException);
+                throw;
+            }
         }
 
         public static string DevicePortAddressCreate(string device, uint ipId, uint port = 0)
