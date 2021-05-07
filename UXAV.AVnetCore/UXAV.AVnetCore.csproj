@@ -293,6 +293,7 @@
         <Compile Include="Tools.cs" />
         <Compile Include="UI\ActivityMonitor.cs" />
         <Compile Include="UI\Components\UITextField.cs" />
+        <Compile Include="UI\Components\Views\UIPinCodeView.cs" />
         <Compile Include="UI\ControllerActivityMonitor.cs" />
         <Compile Include="UI\ActivityTimeOut.cs" />
         <Compile Include="UI\Components\IAnalogItem.cs" />
