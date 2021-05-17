@@ -84,5 +84,24 @@ namespace UXAV.AVnetCore.UI
                     select c).ToArray();
             }
         }
+        
+        public static Core3ControllerBase[] GetDefaultCore3Controllers(this RoomBase room)
+        {
+            lock (Controllers)
+            {
+                return Controllers.Values.Where(controller => controller.DefaultRoom == room).ToArray();
+            }
+        }
+
+        public static T[] GetDefaultCore3Controllers<T>(this RoomBase room) where T : Core3ControllerBase
+        {
+            lock (Controllers)
+            {
+                return (from controller in Controllers.Values
+                    let c = controller as T
+                    where c != null && controller.DefaultRoom == room
+                    select c).ToArray();
+            }
+        }
     }
 }
