@@ -24,7 +24,7 @@ jobs:
       - name: Get Version Number
         shell: powershell
         run: |
-          $version = ./.github/scripts/GetVersionFromAssemblyInfo.ps1 -Path UXAV.AVnetCore/Properties/AssemblyInfo.cs
+          $version = ./.github/scripts/GetVersionFromAssemblyInfo.ps1 -Path UXAV.AVnet.Core/Properties/AssemblyInfo.cs
           Write-Output "Version is: $version"
           $versionTitle = ./.github/scripts/CreateVersionTitle.ps1 -Version $version
           Write-Output "Version title is: $version"
@@ -45,7 +45,7 @@ jobs:
 
       - name: Update AssemblyInfo.cs
         shell: powershell
-        run: ./.github/scripts/UpdateAssemblyVersion.ps1 -Path UXAV.AVnetCore/Properties/AssemblyInfo.cs -Version ${{ env.VERSION }}
+        run: ./.github/scripts/UpdateAssemblyVersion.ps1 -Path UXAV.AVnet.Core/Properties/AssemblyInfo.cs -Version ${{ env.VERSION }}
         
       - name: Setup MsBuild
         uses: microsoft/setup-msbuild@v1
@@ -66,7 +66,7 @@ jobs:
         run: msbuild AVnetCore.sln /p:Configuration=Release
 
       - name: Pack Nuget
-        run: nuget pack UXAV.AVnetCore/UXAV.AVnetCore.csproj
+        run: nuget pack UXAV.AVnet.Core/UXAV.AVnet.Core.csproj
 
       - name: Push generated package to nuget.org
         run: nuget push *.nupkg -source https://api.nuget.org/v3/index.json

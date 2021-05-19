@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UXAV.AVnetCore", "UXAV.AVnetCore\UXAV.AVnetCore.csproj", "{9B3BAD80-9F92-4687-915E-C02F3910DCEF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UXAV.AVnet.Core", "UXAV.AVnet.Core\UXAV.AVnet.Core.csproj", "{9B3BAD80-9F92-4687-915E-C02F3910DCEF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
