@@ -115,7 +115,9 @@ namespace UXAV.AVnet.Core.UI
             ExtenderPinPoint = UseDeviceExtenderByName("ExtenderPinPointReservedSigs");
             ExtenderSetup = UseDeviceExtenderByName("ExtenderSetupReservedSigs");
             ExtenderToolbar = UseDeviceExtenderByName("ExtenderButtonToolbarReservedSigs");
-            
+            ExtenderLyncMeetingRoom = UseDeviceExtenderByName("ExtenderLyncMeetingRoomReservedSigs");
+            ExtenderUcEngine = UseDeviceExtenderByName("ExtenderUcEngineReservedSigs");
+
             ActivityMonitor.Register(this, ExtenderTouchDetection, ExtenderSystem3);
 
             Pages = new UIPageCollection(this);
@@ -221,7 +223,7 @@ namespace UXAV.AVnet.Core.UI
             }
             catch (Exception e)
             {
-                Logger.Debug(
+                Logger.Warn(
                     $"Could not get {name} Device Extender from {Device.GetType().FullName}, {e.Message}");
             }
 
@@ -293,6 +295,10 @@ namespace UXAV.AVnet.Core.UI
         public DeviceExtender ExtenderSetup { get; }
 
         public DeviceExtender ExtenderToolbar { get; }
+        
+        public DeviceExtender ExtenderLyncMeetingRoom { get; }
+        
+        public DeviceExtender ExtenderUcEngine { get; }
 
         public DeviceExtender ExtenderPinPoint { get; }
 
