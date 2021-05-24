@@ -11,7 +11,11 @@
     <projectUrl>https://github.com/uxav/AVnetCore/</projectUrl>
     <repository type="git" url="https://github.com/uxav/AVnetCore.git"/>
     <description>$description$</description>
-    <copyright>Copyright 2020 UXAV Solutions Limited</copyright>
-    <tags>uxav avnet crestron simplsharp simplsharppro</tags>
+    <copyright>$copyright$</copyright>
+    <tags>uxav avnet crestron simplsharp simplsharppro audiovisual</tags>
+    <icon>images\logo@2x.png</icon>
   </metadata>
+  <files>
+    <file src="..\logo@2x.png" target="images\" />
+  </files>
 </package>

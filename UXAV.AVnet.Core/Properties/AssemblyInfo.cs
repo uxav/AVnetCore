@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("A Crestron Simpl# Pro Library")]
 [assembly: AssemblyCompany("UXAV")]
 [assembly: AssemblyProduct("UXAV.AVnet.Core Library")]
-[assembly: AssemblyCopyright("Copyright © UXAV Solutions Limited 2020")]
+[assembly: AssemblyCopyright("Copyright © UXAV Solutions Limited 2021")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
