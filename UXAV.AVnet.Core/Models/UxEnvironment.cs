@@ -131,6 +131,11 @@ namespace UXAV.AVnet.Core.Models
             return SourceCollection;
         }
 
+        public static bool SourcesContainSourceWithId(uint id)
+        {
+            return SourceCollection.HasItemWithId(id);
+        }
+
         public static SourceCollection<T> GetSources<T>() where T : SourceBase
         {
             return new SourceCollection<T>(SourceCollection.Cast<T>());

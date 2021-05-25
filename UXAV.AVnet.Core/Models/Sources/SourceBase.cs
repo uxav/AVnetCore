@@ -19,6 +19,16 @@ namespace UXAV.AVnet.Core.Models.Sources
 
         protected SourceBase(uint id, SourceType type, string name, string groupName, string iconName)
         {
+            if (id == 0)
+            {
+                throw new ArgumentException("id cannot be 0", nameof(id));
+            }
+
+            if (UxEnvironment.SourcesContainSourceWithId(id))
+            {
+                throw new ArgumentException("value already exists", nameof(id));
+            }
+
             Id = id;
             Type = type;
             _name = name;
