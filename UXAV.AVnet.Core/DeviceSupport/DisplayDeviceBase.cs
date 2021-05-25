@@ -22,8 +22,14 @@ namespace UXAV.AVnet.Core.DeviceSupport
         {
         }
 
+        [Obsolete("Method is no longer used. Please use ctor(name, roomAllocatedId).")]
         protected DisplayDeviceBase(RoomBase room, string name)
             : base(name, room.Id)
+        {
+        }
+         
+        protected DisplayDeviceBase(string name, uint roomAllocatedId = 0)
+            : base(name, roomAllocatedId)
         {
         }
 
