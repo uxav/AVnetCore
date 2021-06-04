@@ -13,6 +13,7 @@ namespace UXAV.AVnet.Core.Models
         private readonly string _name;
         private SourceBase _source;
         private bool _enabled = true;
+
         /// <summary>
         /// Only used if device is null
         /// </summary>
@@ -31,6 +32,13 @@ namespace UXAV.AVnet.Core.Models
 
         public async Task<bool> SelectSourceAsync(SourceBase source, uint forIndex = 1)
         {
+            if (_source == source && source != null && Enabled && _device != null && _device.Power == false)
+            {
+                _device.Power = true;
+                Logger.Debug($"{Name} source already set to {_source}, but powered off so setting power to on!");
+                return true;
+            }
+
             if (_source == source) return false;
             _source = source;
             var name = _source != null ? _source.ToString() : "none";
@@ -114,6 +122,7 @@ namespace UXAV.AVnet.Core.Models
                     _device.AllocateRoom(value);
                     return;
                 }
+
                 _allocatedRoom = value;
             }
         }
