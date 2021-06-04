@@ -487,9 +487,14 @@ namespace UXAV.AVnet.Core.Models
             return _initialConfig != configString;
         }
 
-        public void InitCloudConnector(Assembly assembly, string token)
+        /// <summary>
+        /// Initialise the cloud check-in connector for monitoring
+        /// </summary>
+        /// <param name="assembly">The app assembly</param>
+        /// <param name="baseUri">The base URI for the cloud service</param>
+        public void InitCloudConnector(Assembly assembly, string baseUri)
         {
-            CloudConnector.Init(assembly, token);
+            CloudConnector.Init(assembly, baseUri);
         }
 
         public void RebootAppliance()
