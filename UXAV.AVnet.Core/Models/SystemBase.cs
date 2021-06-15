@@ -583,6 +583,9 @@ namespace UXAV.AVnet.Core.Models
         {
             UpdateBootStatus(EBootStatus.Initializing, $"Initializing process started", 5);
             Thread.Sleep(500);
+            
+            UpdateBootStatus(EBootStatus.Initializing, $"Initializing web app if installed", 7);
+            InitWebApp();
 
             UpdateBootStatus(EBootStatus.Initializing, "Registering CIP devices not already registered", 10);
             CipDevices.RegisterDevices();
