@@ -238,52 +238,6 @@ namespace UXAV.AVnet.Core.Models
                 Logger.Warn("Could not load API web scripting server, {0}", e.Message);
             }
 
-            Logger.Highlight("Loading WebApp server for Angular app");
-            try
-            {
-                WebAppServer = new WebScriptingServer(this, "app");
-                WebAppServer.AddRedirect(@"/app", @"/cws/app/");
-                WebAppServer.AddRoute(@"/app/", typeof(WebAppFileHandler));
-                WebAppServer.AddRoute(@"/app/<filepath:[~\/\w\.\-\[\]\(\)\x20]+>", typeof(WebAppFileHandler));
-            }
-            catch (Exception e)
-            {
-                Logger.Error("Could not load angular app web scripting server, {0}", e.Message);
-                UpdateBootStatus(EBootStatus.DidNotBoot, $"{GetType().Name}.CTOR FAIL, {e.Message}", 0);
-                return;
-            }
-
-            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
-            {
-                Logger.Log("Device is appliance, Creating default index redirect to cws app");
-                try
-                {
-                    var path = ProgramHtmlDirectory + "/index.html";
-                    using (var file = File.CreateText(path))
-                    {
-                        file.Write(@"<meta http-equiv=""refresh"" content=""0; URL=/cws/app"" />");
-                    }
-
-                    Logger.Log($"Created file: \"{path}\"");
-
-                    path = ProgramHtmlDirectory + "/_config_ini_";
-                    using (var file = File.CreateText(path))
-                    {
-                        file.Write(@"webdefault=index.html");
-                    }
-
-                    Logger.Log($"Created file: \"{path}\"");
-
-                    var response = string.Empty;
-                    CrestronConsole.SendControlSystemCommand("webinit", ref response);
-                    Logger.Highlight($"webinit response: {response}");
-                }
-                catch (Exception e)
-                {
-                    Logger.Error($"Error trying to init web server index, {e.Message}");
-                }
-            }
-
             // Wait for above handlers to start accepting requests and update.
             Thread.Sleep(1000);
             Logger.Success(".ctor() Complete", true);
@@ -296,7 +250,7 @@ namespace UXAV.AVnet.Core.Models
 
         protected WebScriptingServer ApiServer { get; }
 
-        protected WebScriptingServer WebAppServer { get; }
+        protected WebScriptingServer WebAppServer { get; private set; }
 
         internal static Assembly AppAssembly { get; private set; }
 
@@ -427,6 +381,60 @@ namespace UXAV.AVnet.Core.Models
         {
             return GetDevices().OfType<DisplayDeviceBase>();
         }
+
+        private void InitWebApp()
+        {
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            {
+                Logger.Highlight("Loading WebApp server for Angular app");
+                try
+                {
+                    WebAppServer = new WebScriptingServer(this, "app");
+                    WebAppServer.AddRedirect(@"/app", @"/cws/app/");
+                    WebAppServer.AddRoute(@"/app/", typeof(WebAppFileHandler));
+                    WebAppServer.AddRoute(@"/app/<filepath:[~\/\w\.\-\[\]\(\)\x20]+>", typeof(WebAppFileHandler));
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("Could not load angular app web scripting server, {0}", e.Message);
+                    return;
+                }
+
+                Logger.Log("Device is appliance, Creating default index redirect to cws app");
+                try
+                {
+                    var path = ProgramHtmlDirectory + "/index.html";
+                    using (var file = File.CreateText(path))
+                    {
+                        file.Write($"<meta http-equiv=\"refresh\" content=\"0; URL={ApplianceWebServerRedirect}\" />");
+                    }
+
+                    Logger.Log($"Created file: \"{path}\"");
+
+                    path = ProgramHtmlDirectory + "/_config_ini_";
+                    using (var file = File.CreateText(path))
+                    {
+                        file.Write(@"webdefault=index.html");
+                    }
+
+                    Logger.Log($"Created file: \"{path}\"");
+
+                    var response = string.Empty;
+                    CrestronConsole.SendControlSystemCommand("webinit", ref response);
+                    Logger.Highlight($"webinit response: {response}");
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Error trying to init web server index, {e.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Default URL for control system appliances to redirect.
+        /// Default value returns "/cws/app" for the cws web dashboard
+        /// </summary>
+        protected virtual string ApplianceWebServerRedirect => "/cws/app";
 
         public enum EBootStatus
         {
@@ -575,6 +583,9 @@ namespace UXAV.AVnet.Core.Models
         {
             UpdateBootStatus(EBootStatus.Initializing, $"Initializing process started", 5);
             Thread.Sleep(500);
+            
+            UpdateBootStatus(EBootStatus.Initializing, $"Initializing web app if installed", 7);
+            InitWebApp();
 
             UpdateBootStatus(EBootStatus.Initializing, "Registering CIP devices not already registered", 10);
             CipDevices.RegisterDevices();
@@ -691,6 +702,7 @@ namespace UXAV.AVnet.Core.Models
 
                             newLines.Add(line);
                         }
+
                         File.WriteAllLines(rviFile.FullName, newLines);
                     }
                 }
