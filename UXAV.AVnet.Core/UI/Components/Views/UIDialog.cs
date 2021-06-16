@@ -37,6 +37,12 @@ namespace UXAV.AVnet.Core.UI.Components.Views
         public void Show(UIDialogCallbackHandler callback, string dialogId, string title, string subTitle,
             params string[] optionTitles)
         {
+            Show(callback, dialogId, title, subTitle, TimeSpan.Zero, optionTitles);
+        }
+
+        public void Show(UIDialogCallbackHandler callback, string dialogId, string title, string subTitle, TimeSpan timeoutTime,
+            params string[] optionTitles)
+        {
             Callback = callback;
             DialogId = dialogId;
             _list.ClearList();
@@ -55,7 +61,7 @@ namespace UXAV.AVnet.Core.UI.Components.Views
                     _list[index].Name = optionTitle;
                 }
             });
-            base.Show();
+            base.Show(timeoutTime);
         }
 
         protected UIDialogCallbackHandler Callback { get; private set; }
