@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.AVnet.Core.Models.Collections;
+using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.UI.Components
 {
@@ -59,8 +61,15 @@ namespace UXAV.AVnet.Core.UI.Components
 
         private void OnButtonEvent(IButton button, ButtonEventArgs args)
         {
-            _buttonEvent?.Invoke(button, new ButtonEventArgs(args.EventType, args.HoldTime, this,
-                InternalDictionary.First(kvp => kvp.Value.DigitalJoinNumber == button.DigitalJoinNumber).Key));
+            try
+            {
+                _buttonEvent?.Invoke(button, new ButtonEventArgs(args.EventType, args.HoldTime, this,
+                    InternalDictionary.First(kvp => kvp.Value.DigitalJoinNumber == button.DigitalJoinNumber).Key));
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         public void SetInterlockedFeedback(uint key)
