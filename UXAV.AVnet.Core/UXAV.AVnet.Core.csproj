@@ -282,6 +282,7 @@
         <Compile Include="Models\RoomClock.cs" />
         <Compile Include="Models\Rooms\RoomBase.cs" />
         <Compile Include="Models\Rooms\RoomCollection.cs" />
+        <Compile Include="Models\Sources\Extensions.cs" />
         <Compile Include="Models\Sources\SourceBase.cs" />
         <Compile Include="Models\Sources\SourceCollection.cs" />
         <Compile Include="Models\SystemBase.cs" />
