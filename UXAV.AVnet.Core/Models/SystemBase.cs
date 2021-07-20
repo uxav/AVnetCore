@@ -726,6 +726,20 @@ namespace UXAV.AVnet.Core.Models
             Logger.Highlight("Initializing Core 3 UI Controllers");
             InitializeCore3Controllers();
             Thread.Sleep(200);
+            try
+            {
+                OnInitializeComplete();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+                throw;
+            }
+        }
+
+        protected virtual void OnInitializeComplete()
+        {
+            // optional complete init method
         }
 
         /// <summary>
