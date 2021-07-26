@@ -6,10 +6,12 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
+using Crestron.SimplSharp.CrestronDataStore;
 using CsvHelper;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -106,7 +108,8 @@ namespace UXAV.AVnet.Core.Config
                         _filePath = File.ReadAllText(ConfigDirectory + "/configfile.info");
                         if (Regex.IsMatch(_filePath, @"\/(?:\w+\.)?" + ConfigNameSpace.ToLower() + @"\."))
                         {
-                            Logger.Warn($"Old style info file found with relevant namespace content, will convert and remove");
+                            Logger.Warn(
+                                $"Old style info file found with relevant namespace content, will convert and remove");
                             File.Delete(ConfigDirectory + "/configfile.info");
                         }
                     }
@@ -227,7 +230,7 @@ namespace UXAV.AVnet.Core.Config
         {
             if (_schema == null)
             {
-                var generator = new JSchemaGenerator {DefaultRequired = Required.DisallowNull};
+                var generator = new JSchemaGenerator { DefaultRequired = Required.DisallowNull };
                 generator.GenerationProviders.Add(new StringEnumGenerationProvider());
                 _schema = generator.Generate(typeof(T));
             }
@@ -289,7 +292,7 @@ namespace UXAV.AVnet.Core.Config
                 if (JConfig["PropertyList"] != null) return JConfig["PropertyList"] as JObject;
                 Logger.Warn("PropertyList does not exist. Creating one");
                 JConfig["PropertyList"] = new JObject();
-                return (JObject) JConfig["PropertyList"];
+                return (JObject)JConfig["PropertyList"];
             }
         }
 
@@ -405,7 +408,7 @@ namespace UXAV.AVnet.Core.Config
                 return string.Empty;
             }
 
-            var item = (string) GetPropertyListItemWithKey(key);
+            var item = (string)GetPropertyListItemWithKey(key);
             if (item != null) return item;
             SetPropertyListItemWithKey(key, string.Empty);
             return string.Empty;
@@ -415,7 +418,7 @@ namespace UXAV.AVnet.Core.Config
         {
             Logger.Debug($"Getting cloud template data from: {url}");
             var request = WebRequest.CreateHttp(url);
-            var response = (HttpWebResponse) request.GetResponse();
+            var response = (HttpWebResponse)request.GetResponse();
             Logger.Debug($"Cloud template data response: {response.StatusCode}");
             var reader = new StreamReader(response.GetResponseStream() ?? throw new NullReferenceException());
             var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
@@ -431,7 +434,7 @@ namespace UXAV.AVnet.Core.Config
             Logger.Debug($"Getting cloud template data from: {url}");
             if (_client == null)
             {
-                _client = new HttpClient {Timeout = TimeSpan.FromSeconds(10)};
+                _client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             }
 
             var stream = await _client.GetStreamAsync(url);
@@ -506,6 +509,77 @@ namespace UXAV.AVnet.Core.Config
             if (_config == null) return;
             ConfigData = _config.ToString(Formatting.Indented);
             _config = null;
+        }
+
+        private static string[] GetPasswordKeyValues()
+        {
+            CrestronDataStoreStatic.GetGlobalStringValue("passwordKeys", out var keysString);
+            return keysString == null ? new string[] { } : keysString.Split(',');
+        }
+
+        private static void AddPasswordKeyValue(string keyValue)
+        {
+            var keys = GetPasswordKeyValues().ToList();
+            if (keys.Contains(keyValue)) return;
+            keys.Add(keyValue);
+            CrestronDataStoreStatic.SetGlobalStringValue("passwordKeys", string.Join(",", keys));
+        }
+
+        internal static System.Collections.ObjectModel.ReadOnlyDictionary<string, string> PasswordsGetAll()
+        {
+            var results = new Dictionary<string, string>();
+            var keys = GetPasswordKeyValues();
+            foreach (var key in keys)
+            {
+                results[key] = PasswordGet(key);
+            }
+
+            return new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(results);
+        }
+
+        public static string PasswordGet(string passwordKey)
+        {
+            var getResult = CrestronSecureStorage.Retrieve(passwordKey, true, null, out var password);
+            if (getResult == eCrestronSecureStorageStatus.RetrieveFailure)
+            {
+                throw new KeyNotFoundException($"No password stored with key \"{passwordKey}\"");
+            }
+
+            if (getResult != eCrestronSecureStorageStatus.Ok)
+            {
+                throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
+            }
+
+            return Encoding.UTF8.GetString(password, 0, password.Length);
+        }
+
+        public static string PasswordGetOrCreate(string passwordKey, string defaultValue)
+        {
+            if (!CrestronSecureStorage.Supported)
+                throw new NotSupportedException("Firmware does not support CrestronSecureStorage");
+
+            AddPasswordKeyValue(passwordKey);
+
+            var getResult = CrestronSecureStorage.Retrieve(passwordKey, true, null, out var password);
+            if (getResult == eCrestronSecureStorageStatus.RetrieveFailure && password == null)
+            {
+                var storeResult =
+                    CrestronSecureStorage.Store(passwordKey, true, Encoding.UTF8.GetBytes(defaultValue), null);
+                if (storeResult != eCrestronSecureStorageStatus.Ok)
+                {
+                    throw new Exception(
+                        $"Could not store value to {nameof(CrestronSecureStorage)}, result = {storeResult}");
+                }
+
+                return defaultValue;
+            }
+
+            if (getResult != eCrestronSecureStorageStatus.Ok)
+            {
+                throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
+            }
+
+            return Encoding.UTF8.GetString(password, 0, password.Length);
         }
 
         private static void ConfigPrintInfoToConsole(string argString,
