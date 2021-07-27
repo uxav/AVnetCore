@@ -198,7 +198,8 @@ namespace UXAV.AVnet.Core.Models.Rooms
         public enum PowerOffRequestType
         {
             UserRequested,
-            FusionRequested
+            FusionRequested,
+            Scheduled,
         }
 
         public void PowerOff(PowerOffRequestType type = PowerOffRequestType.UserRequested)
