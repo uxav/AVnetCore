@@ -6,10 +6,12 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
+using Crestron.SimplSharp.CrestronDataStore;
 using CsvHelper;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -106,7 +108,8 @@ namespace UXAV.AVnet.Core.Config
                         _filePath = File.ReadAllText(ConfigDirectory + "/configfile.info");
                         if (Regex.IsMatch(_filePath, @"\/(?:\w+\.)?" + ConfigNameSpace.ToLower() + @"\."))
                         {
-                            Logger.Warn($"Old style info file found with relevant namespace content, will convert and remove");
+                            Logger.Warn(
+                                $"Old style info file found with relevant namespace content, will convert and remove");
                             File.Delete(ConfigDirectory + "/configfile.info");
                         }
                     }
@@ -506,6 +509,110 @@ namespace UXAV.AVnet.Core.Config
             if (_config == null) return;
             ConfigData = _config.ToString(Formatting.Indented);
             _config = null;
+        }
+
+        private static string[] GetPasswordKeyValues()
+        {
+            CrestronDataStoreStatic.GetGlobalStringValue("passwordKeys", out var keysString);
+            return keysString == null ? new string[] { } : keysString.Split(',');
+        }
+
+        private static void AddPasswordKeyValue(string keyValue)
+        {
+            var keys = GetPasswordKeyValues().ToList();
+            if (keys.Contains(keyValue)) return;
+            keys.Add(keyValue);
+            CrestronDataStoreStatic.SetGlobalStringValue("passwordKeys", string.Join(",", keys));
+        }
+
+        private static void RemovePasswordKeyValue(string keyValue)
+        {
+            var keys = GetPasswordKeyValues().ToList();
+            if (!keys.Contains(keyValue)) return;
+            keys.Remove(keyValue);
+            CrestronDataStoreStatic.SetGlobalStringValue("passwordKeys", string.Join(",", keys));
+        }
+
+        internal static System.Collections.ObjectModel.ReadOnlyDictionary<string, string> PasswordsGetAll()
+        {
+            var results = new Dictionary<string, string>();
+            var keys = GetPasswordKeyValues();
+            foreach (var key in keys)
+            {
+                try
+                {
+                    results[key] = PasswordGet(key);
+                }
+                catch (KeyNotFoundException)
+                {
+                    RemovePasswordKeyValue(key);
+                }
+            }
+
+            return new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(results);
+        }
+
+        public static string PasswordGet(string passwordKey)
+        {
+            var getResult = CrestronSecureStorage.Retrieve(passwordKey, false, null, out var password);
+            if (getResult == eCrestronSecureStorageStatus.RetrieveFailure)
+            {
+                throw new KeyNotFoundException($"No password stored with key \"{passwordKey}\"");
+            }
+
+            if (getResult != eCrestronSecureStorageStatus.Ok)
+            {
+                throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
+            }
+
+            return Encoding.UTF8.GetString(password, 0, password.Length);
+        }
+
+        public static string PasswordGetOrCreate(string passwordKey, string defaultValue)
+        {
+            if (!CrestronSecureStorage.Supported)
+                throw new NotSupportedException("Firmware does not support CrestronSecureStorage");
+
+            AddPasswordKeyValue(passwordKey);
+
+            var getResult = CrestronSecureStorage.Retrieve(passwordKey, false, null, out var password);
+            if (getResult == eCrestronSecureStorageStatus.RetrieveFailure && password == null)
+            {
+                var storeResult =
+                    CrestronSecureStorage.Store(passwordKey, false, Encoding.UTF8.GetBytes(defaultValue), null);
+                if (storeResult != eCrestronSecureStorageStatus.Ok)
+                {
+                    throw new Exception(
+                        $"Could not store value to {nameof(CrestronSecureStorage)}, result = {storeResult}");
+                }
+
+                return defaultValue;
+            }
+
+            if (getResult != eCrestronSecureStorageStatus.Ok)
+            {
+                throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
+            }
+
+            return Encoding.UTF8.GetString(password, 0, password.Length);
+        }
+
+        public static void PasswordSet(string passwordKey, string value)
+        {
+            if (!CrestronSecureStorage.Supported)
+                throw new NotSupportedException("Firmware does not support CrestronSecureStorage");
+
+            AddPasswordKeyValue(passwordKey);
+            //Logger.Debug($"Trying to set password with key: {passwordKey}, and value: {value}");
+
+            var deleteResult = CrestronSecureStorage.Delete(passwordKey, false);
+            //Logger.Debug($"Delete result = {deleteResult}");
+            var setResult = CrestronSecureStorage.Store(passwordKey, false, Encoding.UTF8.GetBytes(value), null);
+            //Logger.Debug($"Set result = {setResult}");
+            if (setResult != eCrestronSecureStorageStatus.Ok)
+            {
+                throw new Exception($"Could not store value to {nameof(CrestronSecureStorage)}, result = {setResult}");
+            }
         }
 
         private static void ConfigPrintInfoToConsole(string argString,
