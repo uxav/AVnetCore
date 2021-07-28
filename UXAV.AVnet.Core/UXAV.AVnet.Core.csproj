@@ -374,10 +374,6 @@
     <ItemGroup>
       <None Include="UXAV.AVnet.Core.nuspec" />
     </ItemGroup>
-    <ItemGroup>
-      <Content Include="Upload Scripts\mac_upload_script.sh" />
-      <Content Include="Upload Scripts\WindowsUploadScript.ps1" />
-    </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <Import Project="..\packages\Crestron.SimplSharp.SDK.Library.2.14.154\build\Crestron.SimplSharp.SDK.Library.targets" Condition="Exists('..\packages\Crestron.SimplSharp.SDK.Library.2.14.154\build\Crestron.SimplSharp.SDK.Library.targets')" />
     <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
@@ -386,8 +382,6 @@
       </PropertyGroup>
       <Error Condition="!Exists('..\packages\Crestron.SimplSharp.SDK.Library.2.14.154\build\Crestron.SimplSharp.SDK.Library.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Crestron.SimplSharp.SDK.Library.2.14.154\build\Crestron.SimplSharp.SDK.Library.targets'))" />
       <Error Condition="!Exists('..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.14.154\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.14.154\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets'))" />
-      <Error Condition="!Exists('..\packages\UXAV.AutoUploader.1.1.2\build\net47\UXAV.AutoUploader.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\UXAV.AutoUploader.1.1.2\build\net47\UXAV.AutoUploader.targets'))" />
     </Target>
     <Import Project="..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.14.154\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets" Condition="Exists('..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.14.154\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets')" />
-    <Import Project="..\packages\UXAV.AutoUploader.1.1.2\build\net47\UXAV.AutoUploader.targets" Condition="Exists('..\packages\UXAV.AutoUploader.1.1.2\build\net47\UXAV.AutoUploader.targets')" />
 </Project>
