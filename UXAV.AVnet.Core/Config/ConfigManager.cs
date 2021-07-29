@@ -33,6 +33,7 @@ namespace UXAV.AVnet.Core.Config
         private static JSchema _schema;
         private static string _filePath;
         private static HttpClient _client;
+        private static Mutex _passwordMutex = new Mutex();
 
         static ConfigManager()
         {
@@ -513,7 +514,8 @@ namespace UXAV.AVnet.Core.Config
 
         private static string[] GetPasswordKeyValues()
         {
-            CrestronDataStoreStatic.GetGlobalStringValue("passwordKeys", out var keysString);
+            CrestronDataStoreStatic.GetLocalStringValue("passwordKeys", out var keysString);
+            //Logger.Debug($"Password keys string = {keysString}");
             return keysString == null ? new string[] { } : keysString.Split(',');
         }
 
@@ -522,7 +524,9 @@ namespace UXAV.AVnet.Core.Config
             var keys = GetPasswordKeyValues().ToList();
             if (keys.Contains(keyValue)) return;
             keys.Add(keyValue);
-            CrestronDataStoreStatic.SetGlobalStringValue("passwordKeys", string.Join(",", keys));
+            var keysString = string.Join(",", keys);
+            //Logger.Debug($"Password keys string = {keysString}");
+            CrestronDataStoreStatic.SetLocalStringValue("passwordKeys", keysString);
         }
 
         private static void RemovePasswordKeyValue(string keyValue)
@@ -530,42 +534,61 @@ namespace UXAV.AVnet.Core.Config
             var keys = GetPasswordKeyValues().ToList();
             if (!keys.Contains(keyValue)) return;
             keys.Remove(keyValue);
-            CrestronDataStoreStatic.SetGlobalStringValue("passwordKeys", string.Join(",", keys));
+            var keysString = string.Join(",", keys);
+            //Logger.Debug($"Password keys string = {keysString}");
+            CrestronDataStoreStatic.SetLocalStringValue("passwordKeys", keysString);
         }
 
         internal static System.Collections.ObjectModel.ReadOnlyDictionary<string, string> PasswordsGetAll()
         {
-            var results = new Dictionary<string, string>();
-            var keys = GetPasswordKeyValues();
-            foreach (var key in keys)
+            try
             {
-                try
+                _passwordMutex.WaitOne();
+                var results = new Dictionary<string, string>();
+                var keys = GetPasswordKeyValues();
+                foreach (var key in keys)
                 {
-                    results[key] = PasswordGet(key);
+                    try
+                    {
+                        results[key] = PasswordGet(key);
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        RemovePasswordKeyValue(key);
+                    }
                 }
-                catch (KeyNotFoundException)
-                {
-                    RemovePasswordKeyValue(key);
-                }
-            }
 
-            return new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(results);
+                return new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(results);
+            }
+            finally
+            {
+                _passwordMutex.ReleaseMutex();
+            }
         }
 
         public static string PasswordGet(string passwordKey)
         {
-            var getResult = CrestronSecureStorage.Retrieve(passwordKey, false, null, out var password);
-            if (getResult == eCrestronSecureStorageStatus.RetrieveFailure)
+            try
             {
-                throw new KeyNotFoundException($"No password stored with key \"{passwordKey}\"");
-            }
+                _passwordMutex.WaitOne();
 
-            if (getResult != eCrestronSecureStorageStatus.Ok)
+                var getResult = CrestronSecureStorage.Retrieve(passwordKey, false, null, out var password);
+                if (getResult == eCrestronSecureStorageStatus.RetrieveFailure)
+                {
+                    throw new KeyNotFoundException($"No password stored with key \"{passwordKey}\"");
+                }
+
+                if (getResult != eCrestronSecureStorageStatus.Ok)
+                {
+                    throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
+                }
+
+                return Encoding.UTF8.GetString(password, 0, password.Length);
+            }
+            finally
             {
-                throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
+                _passwordMutex.ReleaseMutex();
             }
-
-            return Encoding.UTF8.GetString(password, 0, password.Length);
         }
 
         public static string PasswordGetOrCreate(string passwordKey, string defaultValue)
@@ -573,28 +596,36 @@ namespace UXAV.AVnet.Core.Config
             if (!CrestronSecureStorage.Supported)
                 throw new NotSupportedException("Firmware does not support CrestronSecureStorage");
 
-            AddPasswordKeyValue(passwordKey);
-
-            var getResult = CrestronSecureStorage.Retrieve(passwordKey, false, null, out var password);
-            if (getResult == eCrestronSecureStorageStatus.RetrieveFailure && password == null)
+            try
             {
-                var storeResult =
-                    CrestronSecureStorage.Store(passwordKey, false, Encoding.UTF8.GetBytes(defaultValue), null);
-                if (storeResult != eCrestronSecureStorageStatus.Ok)
+                _passwordMutex.WaitOne();
+                var getResult = CrestronSecureStorage.Retrieve(passwordKey, false, null, out var password);
+                if (getResult == eCrestronSecureStorageStatus.RetrieveFailure && password == null)
                 {
-                    throw new Exception(
-                        $"Could not store value to {nameof(CrestronSecureStorage)}, result = {storeResult}");
+                    var storeResult =
+                        CrestronSecureStorage.Store(passwordKey, false, Encoding.UTF8.GetBytes(defaultValue), null);
+                    if (storeResult != eCrestronSecureStorageStatus.Ok)
+                    {
+                        throw new Exception(
+                            $"Could not store value to {nameof(CrestronSecureStorage)}, result = {storeResult}");
+                    }
+
+                    AddPasswordKeyValue(passwordKey);
+                    return defaultValue;
                 }
 
-                return defaultValue;
-            }
+                if (getResult != eCrestronSecureStorageStatus.Ok)
+                {
+                    throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
+                }
 
-            if (getResult != eCrestronSecureStorageStatus.Ok)
+                AddPasswordKeyValue(passwordKey);
+                return Encoding.UTF8.GetString(password, 0, password.Length);
+            }
+            finally
             {
-                throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
+                _passwordMutex.ReleaseMutex();
             }
-
-            return Encoding.UTF8.GetString(password, 0, password.Length);
         }
 
         public static void PasswordSet(string passwordKey, string value)
@@ -602,16 +633,25 @@ namespace UXAV.AVnet.Core.Config
             if (!CrestronSecureStorage.Supported)
                 throw new NotSupportedException("Firmware does not support CrestronSecureStorage");
 
-            AddPasswordKeyValue(passwordKey);
-            //Logger.Debug($"Trying to set password with key: {passwordKey}, and value: {value}");
-
-            var deleteResult = CrestronSecureStorage.Delete(passwordKey, false);
-            //Logger.Debug($"Delete result = {deleteResult}");
-            var setResult = CrestronSecureStorage.Store(passwordKey, false, Encoding.UTF8.GetBytes(value), null);
-            //Logger.Debug($"Set result = {setResult}");
-            if (setResult != eCrestronSecureStorageStatus.Ok)
+            try
             {
-                throw new Exception($"Could not store value to {nameof(CrestronSecureStorage)}, result = {setResult}");
+                _passwordMutex.WaitOne();
+                
+                AddPasswordKeyValue(passwordKey);
+                //Logger.Debug($"Trying to set password with key: {passwordKey}, and value: {value}");
+
+                var deleteResult = CrestronSecureStorage.Delete(passwordKey, false);
+                //Logger.Debug($"Delete result = {deleteResult}");
+                var setResult = CrestronSecureStorage.Store(passwordKey, false, Encoding.UTF8.GetBytes(value), null);
+                //Logger.Debug($"Set result = {setResult}");
+                if (setResult != eCrestronSecureStorageStatus.Ok)
+                {
+                    throw new Exception($"Could not store value to {nameof(CrestronSecureStorage)}, result = {setResult}");
+                }
+            }
+            finally
+            {
+                _passwordMutex.ReleaseMutex();
             }
         }
 
