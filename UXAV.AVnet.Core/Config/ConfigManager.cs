@@ -44,7 +44,17 @@ namespace UXAV.AVnet.Core.Config
             Logger.Highlight($"Config namespace is \"{ConfigNameSpace}\"");
         }
 
-        public static string ConfigDirectory => SystemBase.ProgramNvramAppInstanceDirectory;
+        public static string ConfigDirectory
+        {
+            get
+            {
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
+                {
+                    return SystemBase.ProgramUserDirectory;
+                }
+                return SystemBase.ProgramNvramAppInstanceDirectory;
+            }
+        }
 
         public static string ConfigNameSpace { get; }
 
