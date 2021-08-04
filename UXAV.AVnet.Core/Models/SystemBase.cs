@@ -102,7 +102,11 @@ namespace UXAV.AVnet.Core.Models
                 Logger.Warn($"Could not load info from ProgramInfo.config, {e.Message}");
             }
 
-            SystemMonitor.Init();
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            {
+                SystemMonitor.Init();
+            }
+
             try
             {
                 Logger.Highlight("Calling CrestronDataStoreStatic.InitCrestronDataStore()");
@@ -364,6 +368,19 @@ namespace UXAV.AVnet.Core.Models
 
         public static string ProgramHtmlDirectory => ProgramRootDirectory + "/html";
 
+        public static string CwsBaseUrl
+        {
+            get
+            {
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
+                {
+                    return $"http://{IpAddress}/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws";
+                }
+
+                return $"https://{IpAddress}/cws";
+            }
+        }
+
         public DateTime ProgramBuildTime => _programBuildTime;
 
         public string Include4DatInfo => _include4DatInfo;
@@ -385,22 +402,30 @@ namespace UXAV.AVnet.Core.Models
 
         private void InitWebApp()
         {
-            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            Logger.Highlight("Loading WebApp server for Angular app");
+            try
             {
-                Logger.Highlight("Loading WebApp server for Angular app");
-                try
+                WebAppServer = new WebScriptingServer(this, "app");
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
                 {
-                    WebAppServer = new WebScriptingServer(this, "app");
                     WebAppServer.AddRedirect(@"/app", @"/cws/app/");
-                    WebAppServer.AddRoute(@"/app/", typeof(WebAppFileHandler));
-                    WebAppServer.AddRoute(@"/app/<filepath:[~\/\w\.\-\[\]\(\)\x20]+>", typeof(WebAppFileHandler));
                 }
-                catch (Exception e)
+                else
                 {
-                    Logger.Error("Could not load angular app web scripting server, {0}", e.Message);
-                    return;
+                    WebAppServer.AddRoute(@"/app", typeof(WebAppFileHandler));
                 }
 
+                WebAppServer.AddRoute(@"/app/", typeof(WebAppFileHandler));
+                WebAppServer.AddRoute(@"/app/<filepath:[~\/\w\.\-\[\]\(\)\x20]+>", typeof(WebAppFileHandler));
+            }
+            catch (Exception e)
+            {
+                Logger.Error("Could not load angular app web scripting server, {0}", e.Message);
+                return;
+            }
+
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            {
                 Logger.Log("Device is appliance, Creating default index redirect to cws app");
                 try
                 {
@@ -584,7 +609,7 @@ namespace UXAV.AVnet.Core.Models
         {
             UpdateBootStatus(EBootStatus.Initializing, $"Initializing process started", 5);
             Thread.Sleep(500);
-            
+
             UpdateBootStatus(EBootStatus.Initializing, $"Initializing web app if installed", 7);
             InitWebApp();
 
