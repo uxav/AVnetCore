@@ -354,6 +354,11 @@ namespace UXAV.AVnet.Core.Models
         {
             get
             {
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
+                {
+                    return ProgramNvramDirectory;
+                }
+
                 var path = ProgramNvramDirectory + "/app_" +
                            InitialParametersClass.ApplicationNumber
                                .ToString("D2");
@@ -647,7 +652,7 @@ namespace UXAV.AVnet.Core.Models
                 {
                     itemCount++;
                     UpdateBootStatus(EBootStatus.Initializing, "Initializing " + item.Name,
-                        (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
+                        (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                     Logger.Highlight("Initializing {0}", item.ToString());
                     item.Initialize();
                 }
@@ -667,7 +672,7 @@ namespace UXAV.AVnet.Core.Models
             {
                 itemCount++;
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + room,
-                    (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
+                    (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                 Logger.Highlight("Initializing room: {0}", room);
                 room.InternalInitialize();
             }
@@ -684,7 +689,7 @@ namespace UXAV.AVnet.Core.Models
             {
                 itemCount++;
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + source,
-                    (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
+                    (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                 Logger.Highlight("Initializing source: {0}", source);
                 source.InternalInitialize();
             }
