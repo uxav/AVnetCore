@@ -52,6 +52,7 @@ namespace UXAV.AVnet.Core.Config
                 {
                     return SystemBase.ProgramUserDirectory;
                 }
+
                 return SystemBase.ProgramNvramAppInstanceDirectory;
             }
         }
@@ -217,7 +218,7 @@ namespace UXAV.AVnet.Core.Config
         {
             if (_schema == null)
             {
-                var generator = new JSchemaGenerator {DefaultRequired = Required.DisallowNull};
+                var generator = new JSchemaGenerator { DefaultRequired = Required.DisallowNull };
                 generator.GenerationProviders.Add(new StringEnumGenerationProvider());
                 _schema = generator.Generate(typeof(T));
             }
@@ -279,7 +280,7 @@ namespace UXAV.AVnet.Core.Config
                 if (JConfig["PropertyList"] != null) return JConfig["PropertyList"] as JObject;
                 Logger.Warn("PropertyList does not exist. Creating one");
                 JConfig["PropertyList"] = new JObject();
-                return (JObject) JConfig["PropertyList"];
+                return (JObject)JConfig["PropertyList"];
             }
         }
 
@@ -395,7 +396,7 @@ namespace UXAV.AVnet.Core.Config
                 return string.Empty;
             }
 
-            var item = (string) GetPropertyListItemWithKey(key);
+            var item = (string)GetPropertyListItemWithKey(key);
             if (item != null) return item;
             SetPropertyListItemWithKey(key, string.Empty);
             return string.Empty;
@@ -405,7 +406,7 @@ namespace UXAV.AVnet.Core.Config
         {
             Logger.Debug($"Getting cloud template data from: {url}");
             var request = WebRequest.CreateHttp(url);
-            var response = (HttpWebResponse) request.GetResponse();
+            var response = (HttpWebResponse)request.GetResponse();
             Logger.Debug($"Cloud template data response: {response.StatusCode}");
             var reader = new StreamReader(response.GetResponseStream() ?? throw new NullReferenceException());
             var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
@@ -421,7 +422,7 @@ namespace UXAV.AVnet.Core.Config
             Logger.Debug($"Getting cloud template data from: {url}");
             if (_client == null)
             {
-                _client = new HttpClient {Timeout = TimeSpan.FromSeconds(10)};
+                _client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             }
 
             var stream = await _client.GetStreamAsync(url);
@@ -554,6 +555,12 @@ namespace UXAV.AVnet.Core.Config
 
         public static string PasswordGet(string passwordKey)
         {
+            if (!CrestronSecureStorage.Supported)
+            {
+                Logger.Warn("Firmware does not support CrestronSecureStorage, will use config file plist!");
+                return GetPropertyListStringWithKey("pw_" + passwordKey);
+            }
+
             try
             {
                 _passwordMutex.WaitOne();
@@ -580,7 +587,10 @@ namespace UXAV.AVnet.Core.Config
         public static string PasswordGetOrCreate(string passwordKey, string defaultValue)
         {
             if (!CrestronSecureStorage.Supported)
-                throw new NotSupportedException("Firmware does not support CrestronSecureStorage");
+            {
+                Logger.Warn("Firmware does not support CrestronSecureStorage, will use config file plist!");
+                return GetOrCreatePropertyListItem("pw_" + passwordKey, defaultValue);
+            }
 
             try
             {
@@ -617,12 +627,16 @@ namespace UXAV.AVnet.Core.Config
         public static void PasswordSet(string passwordKey, string value)
         {
             if (!CrestronSecureStorage.Supported)
-                throw new NotSupportedException("Firmware does not support CrestronSecureStorage");
+            {
+                Logger.Warn("Firmware does not support CrestronSecureStorage, will use config file plist!");
+                SetPropertyListItemWithKey("pw_" + passwordKey, value);
+                return;
+            }
 
             try
             {
                 _passwordMutex.WaitOne();
-                
+
                 AddPasswordKeyValue(passwordKey);
                 //Logger.Debug($"Trying to set password with key: {passwordKey}, and value: {value}");
 
@@ -632,7 +646,8 @@ namespace UXAV.AVnet.Core.Config
                 //Logger.Debug($"Set result = {setResult}");
                 if (setResult != eCrestronSecureStorageStatus.Ok)
                 {
-                    throw new Exception($"Could not store value to {nameof(CrestronSecureStorage)}, result = {setResult}");
+                    throw new Exception(
+                        $"Could not store value to {nameof(CrestronSecureStorage)}, result = {setResult}");
                 }
             }
             finally
