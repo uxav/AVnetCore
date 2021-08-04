@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -407,6 +408,29 @@ namespace UXAV.AVnet.Core.Models
 
         private void InitWebApp()
         {
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
+            {
+                try
+                {
+                    var path = ProgramApplicationDirectory + "/webapp/index.html";
+                    if (File.Exists(path))
+                    {
+                        var contents = File.ReadAllText(path);
+                        if (Regex.IsMatch(contents, @"<base href=""/cws/app/"">"))
+                        {
+                            var baseHref = $"/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws/app/";
+                            Logger.Warn($"Replacing base href value in \"{path}\" to \"{baseHref}\"");
+                            contents = Regex.Replace(contents, @"<base href="".*"">",
+                                $"<base href=\"{baseHref}\"");
+                            File.WriteAllText(path, contents);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+            }
             Logger.Highlight("Loading WebApp server for Angular app");
             try
             {
