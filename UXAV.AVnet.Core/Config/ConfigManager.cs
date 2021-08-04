@@ -44,31 +44,7 @@ namespace UXAV.AVnet.Core.Config
             Logger.Highlight($"Config namespace is \"{ConfigNameSpace}\"");
         }
 
-        public static string ConfigDirectory
-        {
-            get
-            {
-                string path = string.Empty;
-                if (SystemBase.DevicePlatform == eDevicePlatform.Appliance)
-                {
-                    path = SystemBase.ProgramNvramAppInstanceDirectory;
-                }
-
-                if (string.IsNullOrEmpty(path))
-                {
-                    path = SystemBase.ProgramUserDirectory;
-                }
-
-                if (!Directory.Exists(path))
-                {
-                    Logger.Warn("Directory: {0} does not exist. Creating...",
-                        path);
-                    Directory.CreateDirectory(path);
-                }
-
-                return path;
-            }
-        }
+        public static string ConfigDirectory => SystemBase.ProgramNvramAppInstanceDirectory;
 
         public static string ConfigNameSpace { get; }
 

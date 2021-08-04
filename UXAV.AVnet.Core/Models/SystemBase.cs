@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -102,7 +103,11 @@ namespace UXAV.AVnet.Core.Models
                 Logger.Warn($"Could not load info from ProgramInfo.config, {e.Message}");
             }
 
-            SystemMonitor.Init();
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            {
+                SystemMonitor.Init();
+            }
+
             try
             {
                 Logger.Highlight("Calling CrestronDataStoreStatic.InitCrestronDataStore()");
@@ -350,6 +355,11 @@ namespace UXAV.AVnet.Core.Models
         {
             get
             {
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
+                {
+                    return ProgramNvramDirectory;
+                }
+
                 var path = ProgramNvramDirectory + "/app_" +
                            InitialParametersClass.ApplicationNumber
                                .ToString("D2");
@@ -363,6 +373,19 @@ namespace UXAV.AVnet.Core.Models
         }
 
         public static string ProgramHtmlDirectory => ProgramRootDirectory + "/html";
+
+        public static string CwsBaseUrl
+        {
+            get
+            {
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
+                {
+                    return $"http://{IpAddress}/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws";
+                }
+
+                return $"https://{IpAddress}/cws";
+            }
+        }
 
         public DateTime ProgramBuildTime => _programBuildTime;
 
@@ -385,22 +408,53 @@ namespace UXAV.AVnet.Core.Models
 
         private void InitWebApp()
         {
-            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
             {
-                Logger.Highlight("Loading WebApp server for Angular app");
                 try
                 {
-                    WebAppServer = new WebScriptingServer(this, "app");
-                    WebAppServer.AddRedirect(@"/app", @"/cws/app/");
-                    WebAppServer.AddRoute(@"/app/", typeof(WebAppFileHandler));
-                    WebAppServer.AddRoute(@"/app/<filepath:[~\/\w\.\-\[\]\(\)\x20]+>", typeof(WebAppFileHandler));
+                    var path = ProgramApplicationDirectory + "/webapp/index.html";
+                    if (File.Exists(path))
+                    {
+                        var contents = File.ReadAllText(path);
+                        if (Regex.IsMatch(contents, @"<base href=""/cws/app/"">"))
+                        {
+                            var baseHref = $"/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws/app/";
+                            Logger.Warn($"Replacing base href value in \"{path}\" to \"{baseHref}\"");
+                            contents = Regex.Replace(contents, @"<base href="".*"">",
+                                $"<base href=\"{baseHref}\"");
+                            File.WriteAllText(path, contents);
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
-                    Logger.Error("Could not load angular app web scripting server, {0}", e.Message);
-                    return;
+                    Logger.Error(e);
+                }
+            }
+            Logger.Highlight("Loading WebApp server for Angular app");
+            try
+            {
+                WebAppServer = new WebScriptingServer(this, "app");
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+                {
+                    WebAppServer.AddRedirect(@"/app", @"/cws/app/");
+                }
+                else
+                {
+                    WebAppServer.AddRoute(@"/app", typeof(WebAppFileHandler));
                 }
 
+                WebAppServer.AddRoute(@"/app/", typeof(WebAppFileHandler));
+                WebAppServer.AddRoute(@"/app/<filepath:[~\/\w\.\-\[\]\(\)\x20]+>", typeof(WebAppFileHandler));
+            }
+            catch (Exception e)
+            {
+                Logger.Error("Could not load angular app web scripting server, {0}", e.Message);
+                return;
+            }
+
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            {
                 Logger.Log("Device is appliance, Creating default index redirect to cws app");
                 try
                 {
@@ -522,7 +576,7 @@ namespace UXAV.AVnet.Core.Models
 
         protected abstract void OnProgramStatusEventHandler(eProgramStatusEventType eventType);
 
-        private IEnumerable<DiagnosticMessage> GenerateDiagnosticMessagesInternal()
+        internal IEnumerable<DiagnosticMessage> GenerateDiagnosticMessagesInternal()
         {
             var messages = new List<DiagnosticMessage>();
             if (Logger.ConsoleListening)
@@ -584,7 +638,7 @@ namespace UXAV.AVnet.Core.Models
         {
             UpdateBootStatus(EBootStatus.Initializing, $"Initializing process started", 5);
             Thread.Sleep(500);
-            
+
             UpdateBootStatus(EBootStatus.Initializing, $"Initializing web app if installed", 7);
             InitWebApp();
 
@@ -622,7 +676,7 @@ namespace UXAV.AVnet.Core.Models
                 {
                     itemCount++;
                     UpdateBootStatus(EBootStatus.Initializing, "Initializing " + item.Name,
-                        (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
+                        (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                     Logger.Highlight("Initializing {0}", item.ToString());
                     item.Initialize();
                 }
@@ -642,7 +696,7 @@ namespace UXAV.AVnet.Core.Models
             {
                 itemCount++;
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + room,
-                    (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
+                    (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                 Logger.Highlight("Initializing room: {0}", room);
                 room.InternalInitialize();
             }
@@ -659,7 +713,7 @@ namespace UXAV.AVnet.Core.Models
             {
                 itemCount++;
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + source,
-                    (uint) Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
+                    (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                 Logger.Highlight("Initializing source: {0}", source);
                 source.InternalInitialize();
             }

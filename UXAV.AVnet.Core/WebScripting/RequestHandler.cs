@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using System.Threading;
 using Crestron.SimplSharp;
+using Crestron.SimplSharp.CrestronAuthentication;
 using Crestron.SimplSharp.WebScripting;
 using UXAV.Logging;
 
@@ -103,7 +104,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 }
 
                 var secure = method.GetCustomAttribute<SecureRequestAttribute>();
-                if (secure != null)
+                if (secure != null && Authentication.Enabled)
                 {
                     if (!SuppressLogging)
                     {
