@@ -406,6 +406,10 @@ namespace UXAV.AVnet.Core.Models
             return GetDevices().OfType<DisplayDeviceBase>();
         }
 
+        public static string CwsPath => CrestronEnvironment.DevicePlatform == eDevicePlatform.Server
+            ? $"/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws"
+            : "/cws";
+
         private void InitWebApp()
         {
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
@@ -418,7 +422,7 @@ namespace UXAV.AVnet.Core.Models
                         var contents = File.ReadAllText(path);
                         if (Regex.IsMatch(contents, @"<base href=""/cws/app/"">"))
                         {
-                            var baseHref = $"/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws/app/";
+                            var baseHref = $"{CwsPath}/app/";
                             Logger.Warn($"Replacing base href value in \"{path}\" to \"{baseHref}\"");
                             contents = Regex.Replace(contents, @"<base href="".*"">",
                                 $"<base href=\"{baseHref}\"");
@@ -431,6 +435,7 @@ namespace UXAV.AVnet.Core.Models
                     Logger.Error(e);
                 }
             }
+
             Logger.Highlight("Loading WebApp server for Angular app");
             try
             {
