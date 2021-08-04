@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
@@ -9,6 +10,7 @@ using System.Web;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
 using Newtonsoft.Json.Linq;
+using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -90,7 +92,7 @@ namespace UXAV.AVnet.Core.Cloud
                         $"Error looking at {type}, {e.GetType().Name}: {e.Message}");
                 }
             }
-            
+
             _version = assembly.GetName().Version.ToString();
             _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
@@ -103,7 +105,7 @@ namespace UXAV.AVnet.Core.Cloud
             {
                 Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
                 await CheckInAsync();
-                if (!_waitHandle.WaitOne(TimeSpan.FromMinutes(5))) continue;
+                if (!_waitHandle.WaitOne(TimeSpan.FromMinutes(1))) continue;
                 Logger.Warn($"{nameof(CloudConnector)} leaving checkin process!");
                 return;
             }
@@ -133,6 +135,34 @@ namespace UXAV.AVnet.Core.Cloud
                     @app_number = InitialParametersClass.ApplicationNumber,
                     @logger_port = Logger.ListenPort,
                     @version = _version,
+                    @device_type = CrestronEnvironment.DevicePlatform.ToString(),
+                    @room_id = InitialParametersClass.RoomId,
+                    @room_name = InitialParametersClass.RoomName,
+                    @program_id_tag = InitialParametersClass.ProgramIDTag,
+                    @program_directory = InitialParametersClass.ProgramDirectory.ToString(),
+                    @diagnostics = UxEnvironment.System.GenerateDiagnosticMessagesInternal(),
+                    @app_rooms = UxEnvironment.GetRooms().Select(r => new
+                    {
+                        @id = r.Id,
+                        @name = r.Name,
+                        @screen_name = r.ScreenName,
+                        @description = r.Description,
+                    }),
+                    ConfigManager.ConfigPath,
+                    @ConfigRevisionTime = ConfigManager.LastRevisionTime,
+                    @location = new
+                    {
+                        @local_time = DateTime.Now.ToLocalTime().ToString("s"),
+                        @time_zone = new
+                        {
+                            @name = CrestronEnvironment.GetTimeZone().Name,
+                            @offset = CrestronEnvironment.GetTimeZone().NumericOffset,
+                            @formatted = CrestronEnvironment.GetTimeZone().Formatted,
+                            @dst = CrestronEnvironment.GetTimeZone().InDayLightSavings,
+                        },
+                        @longitude = CrestronEnvironment.Longitude,
+                        @latitude = CrestronEnvironment.Latitude
+                    }
                 };
                 var json = JToken.FromObject(data);
                 var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");

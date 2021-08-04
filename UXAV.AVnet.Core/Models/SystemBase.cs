@@ -547,7 +547,7 @@ namespace UXAV.AVnet.Core.Models
 
         protected abstract void OnProgramStatusEventHandler(eProgramStatusEventType eventType);
 
-        private IEnumerable<DiagnosticMessage> GenerateDiagnosticMessagesInternal()
+        internal IEnumerable<DiagnosticMessage> GenerateDiagnosticMessagesInternal()
         {
             var messages = new List<DiagnosticMessage>();
             if (Logger.ConsoleListening)
