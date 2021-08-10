@@ -87,7 +87,7 @@ namespace UXAV.AVnet.Core.Models
                                         _include4DatInfo = reader.Value;
                                         break;
                                     case "CompiledOn":
-                                        _programBuildTime = DateTime.Parse(reader.Value);
+                                        _programBuildTime = DateTime.Parse(reader.Value).ToUniversalTime();
                                         break;
                                 }
 
