@@ -150,6 +150,7 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("Room Name: {0}", InitialParametersClass.RoomName);
             Logger.Log("TimeZone: 🌍 {0}{1}", tz.Formatted, tz.InDayLightSavings ? " (DST)" : string.Empty);
             Logger.Log("ProgramRootDirectory = {0}", ProgramRootDirectory);
+            Logger.Log("ProgramApplicationDirectory = {0}", ProgramApplicationDirectory);
             Logger.Log("ProgramUserDirectory = {0}", ProgramUserDirectory);
             Logger.Log("ProgramNvramDirectory = {0}", ProgramNvramDirectory);
             Logger.Log("ProgramHtmlDirectory = {0}", ProgramHtmlDirectory);
