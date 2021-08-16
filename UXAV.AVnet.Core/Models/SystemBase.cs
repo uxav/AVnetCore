@@ -408,7 +408,7 @@ namespace UXAV.AVnet.Core.Models
         }
 
         public static string CwsPath => CrestronEnvironment.DevicePlatform == eDevicePlatform.Server
-            ? $"/apps/{InitialParametersClass.RoomId}"
+            ? $"/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws"
             : "/cws";
 
         private void InitWebApp()
