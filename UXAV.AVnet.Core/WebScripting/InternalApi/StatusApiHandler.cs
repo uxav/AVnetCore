@@ -56,6 +56,12 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
 
                 var session = ValidateSession(false);
 
+                var userPageAuth = false;
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+                {
+                    userPageAuth = Authentication.UserPageAuthEnabled;
+                }
+
                 WriteResponse(JToken.FromObject(new
                 {
                     InitialParametersClass.RoomId,
@@ -81,11 +87,14 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     SystemBase.UpTime,
                     @ConsolePort = Logger.ListenPort,
                     @ProcessId = process.Id,
+                    @CrestronSecureStorage = CrestronSecureStorage.Supported,
                     process.ProcessName,
                     @Authentication = new
                     {
                         Authentication.Enabled,
-                        Authentication.InCloudSync
+                        Authentication.InCloudSync,
+                        Authentication.AdministratorExist,
+                        @UserPageAuthEnabled = userPageAuth,
                     },
                     @Session = session,
                     @TimeZone = new
@@ -105,6 +114,11 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         Environment.ProcessorCount,
                         Environment.Is64BitOperatingSystem,
                         @NewLine = nl,
+                    },
+                    @Location = new
+                    {
+                        CrestronEnvironment.Latitude,
+                        CrestronEnvironment.Longitude,
                     },
                     @TimeInfo = new
                     {

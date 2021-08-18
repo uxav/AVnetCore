@@ -69,7 +69,7 @@ namespace UXAV.AVnet.Core.Models
 
         public string Name => _name;
 
-        public bool Enabled
+        public virtual bool Enabled
         {
             get => _enabled;
             set
@@ -84,18 +84,18 @@ namespace UXAV.AVnet.Core.Models
                     {
                         if (_enabled)
                         {
-                            OnSourceChange(_source);
+                            SetSourceOnEnableDisable(_source);
                             if (_device != null && _source != null)
                             {
-                                _device.Power = true;
+                                SetPowerOnEnableDisable(true);
                             }
                         }
                         else
                         {
-                            OnSourceChange(null);
+                            SetSourceOnEnableDisable(null);
                             if (_device != null)
                             {
-                                _device.Power = false;
+                                SetPowerOnEnableDisable(false);
                             }
                         }
                     }
@@ -107,6 +107,18 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
+        protected virtual void SetPowerOnEnableDisable(bool powerRequest)
+        {
+            if (_device != null)
+            {
+                _device.Power = powerRequest;
+            }
+        }
+
+        protected virtual void SetSourceOnEnableDisable(SourceBase source)
+        {
+            OnSourceChange(source);
+        }
 
         public virtual RoomBase Room
         {

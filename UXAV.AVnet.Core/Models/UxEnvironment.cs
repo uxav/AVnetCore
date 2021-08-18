@@ -118,7 +118,12 @@ namespace UXAV.AVnet.Core.Models
 
         public static RoomCollection<T> GetRooms<T>() where T : RoomBase
         {
-            return new RoomCollection<T>(RoomsCollection.Cast<T>());
+            return new RoomCollection<T>(RoomsCollection.Where(r => r is T).Cast<T>());
+        }
+
+        public static T GetSource<T>(uint sourceId) where T : SourceBase
+        {
+            return !SourceCollection.HasItemWithId(sourceId) ? null : SourceCollection[sourceId] as T;
         }
 
         public static SourceBase GetSource(uint sourceId)
@@ -138,7 +143,7 @@ namespace UXAV.AVnet.Core.Models
 
         public static SourceCollection<T> GetSources<T>() where T : SourceBase
         {
-            return new SourceCollection<T>(SourceCollection.Cast<T>());
+            return new SourceCollection<T>(SourceCollection.Where(s => s is T).Cast<T>());
         }
     }
 }
