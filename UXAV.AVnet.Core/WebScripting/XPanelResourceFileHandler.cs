@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Crestron.SimplSharp.CrestronIO;
 using UXAV.AVnet.Core.DeviceSupport;
+using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting
 {
@@ -34,10 +35,24 @@ namespace UXAV.AVnet.Core.WebScripting
                     return;
                 }
 
-                if (!File.Exists(path))
+                try
                 {
-                    HandleNotFound($"No file found at \"{path}\"");
-                    return;
+                    if (!File.Exists(path))
+                    {
+                        HandleNotFound($"No file found at \"{path}\"");
+                        return;
+                    }
+                }
+                catch (InvalidDirectoryLocationException)
+                {
+                    Logger.Debug("InvalidDirectoryLocationException, Looking for full path...");
+                    if (global::System.IO.File.Exists(path))
+                    {
+                        var info = new global::System.IO.FileInfo(path);
+                        path = info.FullName;
+                    }
+
+                    Logger.Debug($"Path is {path}");
                 }
 
                 var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
