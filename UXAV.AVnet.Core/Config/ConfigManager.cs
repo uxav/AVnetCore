@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -42,6 +43,8 @@ namespace UXAV.AVnet.Core.Config
                 "Print the current config file path and last save time");
             ConfigNameSpace = Assembly.GetCallingAssembly().GetName().Name.ToLower();
             Logger.Highlight($"Config namespace is \"{ConfigNameSpace}\"");
+            Logger.AddCommand((argString, args, connection, respond) => WriteCurrentConfigToDefaultPath(),
+                "ConfigWriteToDefault", $"Writes current loaded config to {DefaultConfigPath}");
         }
 
         public static string ConfigDirectory
@@ -268,6 +271,27 @@ namespace UXAV.AVnet.Core.Config
             if (filePath == ConfigPath)
             {
                 _config = null;
+            }
+        }
+
+        public static void WriteCurrentConfigToDefaultPath()
+        {
+            if (_filePath == DefaultConfigPath)
+            {
+                throw new Exception("Cannot write from default config");
+            }
+            Logger.Highlight($"Writing config from {_filePath} to default path {DefaultConfigPath}");
+            lock (LockWrite)
+            {
+                try
+                {
+                    Logger.Log("Writing config file at \"{0}\"", DefaultConfigPath);
+                    File.WriteAllText(DefaultConfigPath, _config.ToString(Formatting.Indented));
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("Could not write config file, {0}", e.Message);
+                }
             }
         }
 

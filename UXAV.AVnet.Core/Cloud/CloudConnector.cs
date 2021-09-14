@@ -26,6 +26,7 @@ namespace UXAV.AVnet.Core.Cloud
         private static EventWaitHandle _waitHandle;
         private static Uri _baseUri;
         private static Uri _checkinUri;
+        private static bool _suppressWarning;
 
         static CloudConnector()
         {
@@ -175,10 +176,14 @@ namespace UXAV.AVnet.Core.Cloud
                     var contents = await result.Content.ReadAsStringAsync();
                     Logger.Debug($"Cloud Rx:\r\n{contents}");
 #endif
+                    result.Dispose();
+                    _suppressWarning = false;
                 }
                 catch (Exception e)
                 {
+                    if(_suppressWarning) return;
                     Logger.Warn($"Could not checkin to cloud, {e.Message}");
+                    _suppressWarning = true;
                 }
             }
             catch (Exception e)
