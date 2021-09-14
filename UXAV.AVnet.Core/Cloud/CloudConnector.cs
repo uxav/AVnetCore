@@ -24,7 +24,6 @@ namespace UXAV.AVnet.Core.Cloud
         private static string _version;
         private static bool _init;
         private static EventWaitHandle _waitHandle;
-        private static Uri _baseUri;
         private static Uri _checkinUri;
         private static bool _suppressWarning;
 
@@ -39,8 +38,7 @@ namespace UXAV.AVnet.Core.Cloud
             {
                 if (_checkinUri == null)
                 {
-                    _checkinUri = new Uri(_baseUri,
-                        $"/checkin/v1/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}");
+                    _checkinUri = new Uri($"https://avnet.io/api/checkin/v1/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}");
                 }
 
                 return _checkinUri;
@@ -63,14 +61,8 @@ namespace UXAV.AVnet.Core.Cloud
             }
         }
 
-        internal static void Init(Assembly assembly, string baseUri)
+        internal static void Init(Assembly assembly)
         {
-            if (string.IsNullOrEmpty(baseUri))
-            {
-                throw new ArgumentException("No base URI specified", nameof(baseUri));
-            }
-
-            _baseUri = new Uri(baseUri);
             if (_init) return;
             _init = true;
             _applicationName = assembly.GetName().Name;
