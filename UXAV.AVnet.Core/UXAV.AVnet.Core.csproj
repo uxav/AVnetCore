@@ -360,6 +360,7 @@
         <Compile Include="WebScripting\NvramFileRequestHandler.cs" />
         <Compile Include="WebScripting\RequestHandler.cs" />
         <Compile Include="WebScripting\SecureRequestAttribute.cs" />
+        <Compile Include="WebScripting\StaticFiles\Ch5AppFileHandler.cs" />
         <Compile Include="WebScripting\StaticFiles\InternalFileHandler.cs" />
         <Compile Include="WebScripting\StaticFiles\WebAppFileHandler.cs" />
         <Compile Include="WebScripting\SystemMonitorApiHandler.cs" />
