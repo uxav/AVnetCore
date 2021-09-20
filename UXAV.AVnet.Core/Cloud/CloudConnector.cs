@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -22,6 +23,7 @@ namespace UXAV.AVnet.Core.Cloud
         private static string _instanceId;
         private static string _applicationName;
         private static string _version;
+        private static string _productVersion;
         private static bool _init;
         private static EventWaitHandle _waitHandle;
         private static Uri _checkinUri;
@@ -87,6 +89,7 @@ namespace UXAV.AVnet.Core.Cloud
             }
 
             _version = assembly.GetName().Version.ToString();
+            _productVersion = FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
             _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
             Task.Run(CheckInProcess);
@@ -128,6 +131,7 @@ namespace UXAV.AVnet.Core.Cloud
                     @app_number = InitialParametersClass.ApplicationNumber,
                     @logger_port = Logger.ListenPort,
                     @version = _version,
+                    @productVersion = _productVersion,
                     @device_type = CrestronEnvironment.DevicePlatform.ToString(),
                     @room_id = InitialParametersClass.RoomId,
                     @room_name = InitialParametersClass.RoomName,
