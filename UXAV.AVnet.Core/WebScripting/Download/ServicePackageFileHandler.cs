@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Crestron.SimplSharp;
+using UXAV.AVnet.Core.Cloud;
 using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
@@ -280,8 +281,11 @@ namespace UXAV.AVnet.Core.WebScripting.Download
                         Logger.Error(e);
                     }
                 }
-
-                Response.Headers.Add("Access-Control-Expose-Headers", "Content-Disposition");
+                if (!string.IsNullOrEmpty(CloudConnector.LogsUploadUrl))
+                {
+                    Response.Headers.Add("X-App-CloudUploadUrl", CloudConnector.LogsUploadUrl);
+                }
+                Response.Headers.Add("Access-Control-Expose-Headers", "Content-Disposition, X-App-CloudUploadUrl");
                 Response.Headers.Add("Content-Disposition",
                     $"attachment; filename=\"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip\"");
 

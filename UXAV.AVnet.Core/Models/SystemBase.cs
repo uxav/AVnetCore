@@ -561,9 +561,9 @@ namespace UXAV.AVnet.Core.Models
         /// </summary>
         /// <param name="assembly">The app assembly</param>
         /// <param name="baseUri">The base URI for the cloud service</param>
-        public void InitCloudConnector(Assembly assembly)
+        public void InitCloudConnector(Assembly assembly, string host, string token)
         {
-            CloudConnector.Init(assembly);
+            CloudConnector.Init(assembly, host, token);
         }
 
         public void RebootAppliance()

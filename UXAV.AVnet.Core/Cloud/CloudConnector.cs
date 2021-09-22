@@ -28,6 +28,8 @@ namespace UXAV.AVnet.Core.Cloud
         private static EventWaitHandle _waitHandle;
         private static Uri _checkinUri;
         private static bool _suppressWarning;
+        private static string _token = "";
+        private static string _host;
 
         static CloudConnector()
         {
@@ -40,13 +42,14 @@ namespace UXAV.AVnet.Core.Cloud
             {
                 if (_checkinUri == null)
                 {
-                    _checkinUri = new Uri($"https://avnet.io/api/checkin/v1/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}");
+                    _checkinUri = new Uri(
+                        $"https://{_host}/api/checkin/v2" +
+                        $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={_token}");
                 }
 
                 return _checkinUri;
             }
         }
-
 
         internal static string InstanceId
         {
@@ -63,10 +66,24 @@ namespace UXAV.AVnet.Core.Cloud
             }
         }
 
-        internal static void Init(Assembly assembly)
+        public static string Token => _token;
+
+        public static string LogsUploadUrl
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_host) || string.IsNullOrEmpty(_token)) return null;
+                return $"https://{_host}/api/uploadlogs/v1" +
+                       $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={_token}";
+            }
+        }
+
+        internal static void Init(Assembly assembly, string host, string token)
         {
             if (_init) return;
             _init = true;
+            _host = host;
+            _token = token;
             _applicationName = assembly.GetName().Name;
             var types = assembly.GetTypes();
             foreach (var type in types)
