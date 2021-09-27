@@ -19,6 +19,7 @@ using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.AVnet.Core.Models.Diagnostics;
 using UXAV.AVnet.Core.UI;
+using UXAV.AVnet.Core.UI.Ch5;
 using UXAV.AVnet.Core.WebScripting;
 using UXAV.AVnet.Core.WebScripting.Download;
 using UXAV.AVnet.Core.WebScripting.InternalApi;
@@ -600,6 +601,18 @@ namespace UXAV.AVnet.Core.Models
             foreach (var device in DevicesDict.Values)
             {
                 messages.AddRange(device.GetMessages());
+            }
+
+            try
+            {
+                var handlers = Ch5ApiHandlerBase.ConnectedHandlers;
+                messages.AddRange(handlers.Select(handler => new DiagnosticMessage(MessageLevel.Info,
+                    "Websocket connected", handler.Connection.RemoteIpAddress.ToString(), handler.GetType().Name,
+                    handler.Connection.ID)));
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
             }
 
             try
