@@ -34,7 +34,7 @@ namespace UXAV.AVnet.Core.UI
             new Dictionary<DeviceExtender, string>();
 
         protected Core3ControllerBase(SystemBase system, uint roomId, string typeName, uint ipId, string description,
-            string pathOfVtzForXPanel = "", string sgdPathOverride = "")
+            string pathOfVtz = "", string sgdPathOverride = "")
         {
             _roomId = roomId;
             System = system;
@@ -44,7 +44,7 @@ namespace UXAV.AVnet.Core.UI
             if (typeName == typeof(XpanelForSmartGraphics).FullName)
             {
                 Device = (BasicTriListWithSmartObject) CipDevices.CreateXPanelForSmartGraphics(ipId, description,
-                    pathOfVtzForXPanel);
+                    pathOfVtz);
             }
             else
             {

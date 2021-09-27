@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -22,10 +23,13 @@ namespace UXAV.AVnet.Core.Cloud
         private static string _instanceId;
         private static string _applicationName;
         private static string _version;
+        private static string _productVersion;
         private static bool _init;
         private static EventWaitHandle _waitHandle;
         private static Uri _checkinUri;
         private static bool _suppressWarning;
+        private static string _token = "";
+        private static string _host;
 
         static CloudConnector()
         {
@@ -38,13 +42,14 @@ namespace UXAV.AVnet.Core.Cloud
             {
                 if (_checkinUri == null)
                 {
-                    _checkinUri = new Uri($"https://avnet.io/api/checkin/v1/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}");
+                    _checkinUri = new Uri(
+                        $"https://{_host}/api/checkin/v2" +
+                        $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={_token}");
                 }
 
                 return _checkinUri;
             }
         }
-
 
         internal static string InstanceId
         {
@@ -61,10 +66,24 @@ namespace UXAV.AVnet.Core.Cloud
             }
         }
 
-        internal static void Init(Assembly assembly)
+        public static string Token => _token;
+
+        public static string LogsUploadUrl
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_host) || string.IsNullOrEmpty(_token)) return null;
+                return $"https://{_host}/api/uploadlogs/v1" +
+                       $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={_token}";
+            }
+        }
+
+        internal static void Init(Assembly assembly, string host, string token)
         {
             if (_init) return;
             _init = true;
+            _host = host;
+            _token = token;
             _applicationName = assembly.GetName().Name;
             var types = assembly.GetTypes();
             foreach (var type in types)
@@ -87,6 +106,7 @@ namespace UXAV.AVnet.Core.Cloud
             }
 
             _version = assembly.GetName().Version.ToString();
+            _productVersion = FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
             _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
             Task.Run(CheckInProcess);
@@ -128,6 +148,7 @@ namespace UXAV.AVnet.Core.Cloud
                     @app_number = InitialParametersClass.ApplicationNumber,
                     @logger_port = Logger.ListenPort,
                     @version = _version,
+                    @productVersion = _productVersion,
                     @device_type = CrestronEnvironment.DevicePlatform.ToString(),
                     @room_id = InitialParametersClass.RoomId,
                     @room_name = InitialParametersClass.RoomName,
