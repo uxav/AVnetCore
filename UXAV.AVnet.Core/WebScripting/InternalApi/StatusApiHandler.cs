@@ -1,5 +1,6 @@
 using System;
 using Crestron.SimplSharp;
+using Crestron.SimplSharp.AutoUpdate;
 using Crestron.SimplSharp.CrestronAuthentication;
 using Crestron.SimplSharpPro;
 using Newtonsoft.Json.Linq;
@@ -62,6 +63,27 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     userPageAuth = Authentication.UserPageAuthEnabled;
                 }
 
+                object au = null;
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+                {
+                    au = new
+                    {
+                        AutoUpdate.ManifestUrl,
+                        AutoUpdate.Enabled,
+                        State = AutoUpdate.AutoUpdateState.ToString(),
+                        AutoUpdate.LastErrorReceived,
+                        AutoUpdate.UpdateInProgress,
+                        AutoUpdate.PollIntervalTime,
+                        AutoUpdate.PluginCatalogUrl,
+                        AutoUpdate.LastManifestCheckStatus,
+                        AutoUpdate.LastManifestCheckDateTime,
+                    };
+                }
+                else
+                {
+                    au = new { };
+                }
+
                 WriteResponse(JToken.FromObject(new
                 {
                     InitialParametersClass.RoomId,
@@ -96,6 +118,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         Authentication.AdministratorExist,
                         @UserPageAuthEnabled = userPageAuth,
                     },
+                    @AutoUpdate = au,
                     @Session = session,
                     @TimeZone = new
                     {
