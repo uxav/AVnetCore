@@ -234,6 +234,10 @@
           <HintPath>..\packages\UXAV.Logging.1.2.0\lib\net47\UXAV.Logging.dll</HintPath>
           <Private>True</Private>
         </Reference>
+        <Reference Include="websocket-sharp, Version=1.0.2.59611, Culture=neutral, PublicKeyToken=5660b08a1845a91e">
+          <HintPath>..\..\Ch5WebSocketTest\packages\WebSocketSharp.1.0.3-rc11\lib\websocket-sharp.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="AutoDiscovery.cs" />
@@ -293,6 +297,14 @@
         <Compile Include="SystemMonitor.cs" />
         <Compile Include="Tools.cs" />
         <Compile Include="UI\ActivityMonitor.cs" />
+        <Compile Include="UI\Ch5\Ch5ApiHandlerBase.cs" />
+        <Compile Include="UI\Ch5\Ch5ConnectionInstance.cs" />
+        <Compile Include="UI\Ch5\Ch5UIController.cs" />
+        <Compile Include="UI\Ch5\Ch5WebSocketServer.cs" />
+        <Compile Include="UI\Ch5\MessageHandling\MessageBase.cs" />
+        <Compile Include="UI\Ch5\MessageHandling\NotificationMessage.cs" />
+        <Compile Include="UI\Ch5\MessageHandling\RequestMessage.cs" />
+        <Compile Include="UI\Ch5\MessageHandling\ResponseMessage.cs" />
         <Compile Include="UI\Components\UITextField.cs" />
         <Compile Include="UI\Components\Views\UIPinCodeView.cs" />
         <Compile Include="UI\ControllerActivityMonitor.cs" />
