@@ -923,5 +923,19 @@ namespace UXAV.AVnet.Core.Models
                 }
             }
         }
+
+        internal void RunCloudActionInternal(string methodName, params string[] args)
+        {
+            switch (methodName)
+            {
+                case "restart":
+                    break;
+                case "reboot":
+                    break;
+                case "uploadLogs":
+                    CloudConnector.PublishLogsAsync();
+                    break;
+            }
+        }
     }
 }

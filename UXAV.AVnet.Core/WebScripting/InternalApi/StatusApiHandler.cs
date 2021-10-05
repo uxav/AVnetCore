@@ -1,5 +1,6 @@
 using System;
 using Crestron.SimplSharp;
+using Crestron.SimplSharp.AutoUpdate;
 using Crestron.SimplSharp.CrestronAuthentication;
 using Crestron.SimplSharpPro;
 using Newtonsoft.Json.Linq;

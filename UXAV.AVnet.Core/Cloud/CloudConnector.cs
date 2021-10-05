@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -152,6 +153,7 @@ namespace UXAV.AVnet.Core.Cloud
                     @device_type = CrestronEnvironment.DevicePlatform.ToString(),
                     @room_id = InitialParametersClass.RoomId,
                     @room_name = InitialParametersClass.RoomName,
+                    @system_name = SystemBase.SystemName,
                     @program_id_tag = InitialParametersClass.ProgramIDTag,
                     @program_directory = InitialParametersClass.ProgramDirectory.ToString(),
                     @diagnostics = UxEnvironment.System.GenerateDiagnosticMessagesInternal(),
@@ -185,10 +187,34 @@ namespace UXAV.AVnet.Core.Cloud
                     Logger.Debug($"Cloud checkin URL is {CheckinUri}");
                     var result = await HttpClient.PostAsync(CheckinUri, content);
                     Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
-#if DEBUG
                     var contents = await result.Content.ReadAsStringAsync();
                     Logger.Debug($"Cloud Rx:\r\n{contents}");
-#endif
+                    var responseData = JToken.Parse(contents);
+                    if (responseData["actions"] != null)
+                    {
+                        foreach (var action in responseData["actions"])
+                        {
+                            try
+                            {
+                                Logger.Warn($"Received cloud action: {action}");
+                                var methodName = (action["method"] ?? "").Value<string>();
+                                if (action["args"] != null)
+                                {
+                                    var args = action["args"].Value<string[]>();
+                                    UxEnvironment.System.RunCloudActionInternal(methodName, args);
+                                }
+                                else
+                                {
+                                    UxEnvironment.System.RunCloudActionInternal(methodName);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.Error(e);
+                            }
+                        }
+                    }
+
                     result.Dispose();
                     _suppressWarning = false;
                 }
@@ -202,6 +228,27 @@ namespace UXAV.AVnet.Core.Cloud
             catch (Exception e)
             {
                 Logger.Error(e);
+            }
+        }
+
+        public static async void PublishLogsAsync()
+        {
+            Logger.Highlight("Publishing logs to cloud...");
+            var zipStream = await DiagnosticsArchiveTool.CreateArchiveAsync();
+            using (var content = new MultipartFormDataContent())
+            {
+                zipStream.Position = 0;
+                var fileContent = new StreamContent(zipStream);
+                fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(MimeMapping.GetMimeMapping(".zip"));
+                content.Add(fileContent, "logs",$"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip");
+                Logger.Debug($"Content Headers:\r\n{fileContent.Headers}");
+                Logger.Debug($"Request Headers:\r\n{content.Headers}");
+                var result = HttpClient.PostAsync(LogsUploadUrl, content).Result;
+                result.EnsureSuccessStatusCode();
+                Logger.Highlight($"Logs submitted. Result = {result.StatusCode}");
+                var response = await result.Content.ReadAsStringAsync();
+                Logger.Debug($"Response: {response}");
+                result.Dispose();
             }
         }
     }
