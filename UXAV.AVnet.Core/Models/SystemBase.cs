@@ -928,6 +928,10 @@ namespace UXAV.AVnet.Core.Models
         {
             switch (methodName)
             {
+                case "restart":
+                    break;
+                case "reboot":
+                    break;
                 case "uploadLogs":
                     CloudConnector.PublishLogsAsync();
                     break;

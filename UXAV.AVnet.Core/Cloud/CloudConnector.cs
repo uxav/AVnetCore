@@ -153,6 +153,7 @@ namespace UXAV.AVnet.Core.Cloud
                     @device_type = CrestronEnvironment.DevicePlatform.ToString(),
                     @room_id = InitialParametersClass.RoomId,
                     @room_name = InitialParametersClass.RoomName,
+                    @system_name = SystemBase.SystemName,
                     @program_id_tag = InitialParametersClass.ProgramIDTag,
                     @program_directory = InitialParametersClass.ProgramDirectory.ToString(),
                     @diagnostics = UxEnvironment.System.GenerateDiagnosticMessagesInternal(),
