@@ -166,6 +166,8 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("ControlSystem.SupportsBACNet = {0}", ControlSystem.SupportsBACNet);
             Logger.Log("ControlSystem.SupportsInternalRFGateway = {0}", ControlSystem.SupportsInternalRFGateway);
             Logger.Log("ControlSystem.SupportsInternalAirMedia = {0}", ControlSystem.SupportsInternalAirMedia);
+            Logger.Log("ControlSystem.SupportsSystemMonitor = {0}", ControlSystem.SupportsSystemMonitor);
+            Logger.Log("ControlSystem.SupportsCresnet = {0}", ControlSystem.SupportsCresnet);
 
             var resources = Assembly.GetExecutingAssembly().GetManifestResourceNames();
             foreach (var resource in resources)
@@ -567,6 +569,14 @@ namespace UXAV.AVnet.Core.Models
             CloudConnector.Init(assembly, host, token);
         }
 
+        public string RestartApp()
+        {
+            var response = "";
+            CrestronConsole.SendControlSystemCommand($"progres -P:{InitialParametersClass.ApplicationNumber}",
+                ref  response);
+            return response;
+        }
+
         public void RebootAppliance()
         {
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
@@ -929,8 +939,12 @@ namespace UXAV.AVnet.Core.Models
             switch (methodName)
             {
                 case "restart":
+                    Logger.Warn("Remote restart requested from cloud service");
+                    UxEnvironment.System.RestartApp();
                     break;
                 case "reboot":
+                    Logger.Warn("Remote reboot requested from cloud service");
+                    UxEnvironment.System.RebootAppliance();
                     break;
                 case "uploadLogs":
                     CloudConnector.PublishLogsAsync();

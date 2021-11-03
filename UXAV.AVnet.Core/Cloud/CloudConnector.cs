@@ -31,6 +31,9 @@ namespace UXAV.AVnet.Core.Cloud
         private static bool _suppressWarning;
         private static string _token = "";
         private static string _host;
+        private static Uri _configUploadUri;
+        private static bool _uploadConfig = true;
+        private static bool _programStopping;
 
         static CloudConnector()
         {
@@ -45,10 +48,28 @@ namespace UXAV.AVnet.Core.Cloud
                 {
                     _checkinUri = new Uri(
                         $"https://{_host}/api/checkin/v2" +
-                        $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={_token}");
+                        $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
                 }
 
                 return _checkinUri;
+            }
+        }
+
+        private static Uri ConfigUploadUri
+        {
+            get
+            {
+                /*return new Uri(
+                    "http://172.16.100.200:5001/avnet-cloud/us-central1/appInstanceConfigs/api/configs/v1/submit" +
+                    $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");*/
+                if (_configUploadUri == null)
+                {
+                    _configUploadUri = new Uri(
+                        $"https://{_host}/api/configs/v1/submit" +
+                        $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
+                }
+
+                return _configUploadUri;
             }
         }
 
@@ -73,10 +94,16 @@ namespace UXAV.AVnet.Core.Cloud
         {
             get
             {
-                if (string.IsNullOrEmpty(_host) || string.IsNullOrEmpty(_token)) return null;
+                if (string.IsNullOrEmpty(_host) || string.IsNullOrEmpty(Token)) return null;
                 return $"https://{_host}/api/uploadlogs/v1" +
-                       $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={_token}";
+                       $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}";
             }
+        }
+
+        internal static void MarkConfigForUpload()
+        {
+            _uploadConfig = true;
+            _waitHandle.Set();
         }
 
         internal static void Init(Assembly assembly, string host, string token)
@@ -115,11 +142,28 @@ namespace UXAV.AVnet.Core.Cloud
 
         private static async void CheckInProcess()
         {
+            _waitHandle.WaitOne(TimeSpan.FromSeconds(10));
+            if(_programStopping) return;
+
             while (true)
             {
                 Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
                 await CheckInAsync();
-                if (!_waitHandle.WaitOne(TimeSpan.FromMinutes(1))) continue;
+                if (_uploadConfig)
+                {
+                    try
+                    {
+                        await UploadConfigAsync();
+                        _uploadConfig = false;
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error(e);
+                    }
+                }
+
+                _waitHandle.WaitOne(TimeSpan.FromMinutes(1));
+                if (!_programStopping) continue;
                 Logger.Warn($"{nameof(CloudConnector)} leaving checkin process!");
                 return;
             }
@@ -128,11 +172,25 @@ namespace UXAV.AVnet.Core.Cloud
         private static void CrestronEnvironmentOnProgramStatusEventHandler(eProgramStatusEventType programEventType)
         {
             if (programEventType != eProgramStatusEventType.Stopping) return;
+            _programStopping = true;
             _waitHandle.Set();
         }
 
         private static async Task CheckInAsync()
         {
+            object sysmon = null;
+            if (SystemMonitor.Available)
+            {
+                sysmon = new
+                {
+                    SystemMonitor.CpuUtilization,
+                    SystemMonitor.MaximumCpuUtilization,
+                    SystemMonitor.RamFree,
+                    SystemMonitor.RamFreeMinimum,
+                    SystemMonitor.TotalRamSize,
+                };
+            }
+
             try
             {
                 var data = new
@@ -143,6 +201,7 @@ namespace UXAV.AVnet.Core.Cloud
                     @dhcp = SystemBase.DhcpStatus,
                     @mac_address = SystemBase.MacAddress,
                     @up_time = SystemBase.UpTime,
+                    @system_monitor = sysmon,
                     @firmware_version = CrestronEnvironment.OSVersion.Firmware,
                     @model = InitialParametersClass.ControllerPromptName,
                     @serial_number = CrestronEnvironment.SystemInfo.SerialNumber,
@@ -184,11 +243,18 @@ namespace UXAV.AVnet.Core.Cloud
                 var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
                 try
                 {
+#if DEBUG
                     Logger.Debug($"Cloud checkin URL is {CheckinUri}");
+#endif
                     var result = await HttpClient.PostAsync(CheckinUri, content);
+#if DEBUG
                     Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
+#endif
+                    result.EnsureSuccessStatusCode();
                     var contents = await result.Content.ReadAsStringAsync();
+#if DEBUG
                     Logger.Debug($"Cloud Rx:\r\n{contents}");
+#endif
                     var responseData = JToken.Parse(contents);
                     if (responseData["actions"] != null)
                     {
@@ -220,7 +286,7 @@ namespace UXAV.AVnet.Core.Cloud
                 }
                 catch (Exception e)
                 {
-                    if(_suppressWarning) return;
+                    if (_suppressWarning) return;
                     Logger.Warn($"Could not checkin to cloud, {e.Message}");
                     _suppressWarning = true;
                 }
@@ -229,6 +295,31 @@ namespace UXAV.AVnet.Core.Cloud
             {
                 Logger.Error(e);
             }
+        }
+
+        private static async Task UploadConfigAsync()
+        {
+            var data = new
+            {
+                configPath = ConfigManager.ConfigPath,
+                revisionDate = ConfigManager.LastRevisionTime.ToUniversalTime(),
+                config = ConfigManager.JConfig
+            };
+            var json = JToken.FromObject(data);
+            var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
+#if DEBUG
+            Logger.Debug($"Cloud config upload URL is {ConfigUploadUri}");
+#endif
+            var result = await HttpClient.PostAsync(ConfigUploadUri, content);
+#if DEBUG
+            Logger.Debug($"{nameof(CloudConnector)}.{nameof(UploadConfigAsync)}() result = {result.StatusCode}");
+#endif
+            result.EnsureSuccessStatusCode();
+            var contents = await result.Content.ReadAsStringAsync();
+#if DEBUG
+            Logger.Debug($"Cloud Rx:\r\n{contents}");
+#endif
+            result.Dispose();
         }
 
         public static async void PublishLogsAsync()
@@ -240,7 +331,8 @@ namespace UXAV.AVnet.Core.Cloud
                 zipStream.Position = 0;
                 var fileContent = new StreamContent(zipStream);
                 fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(MimeMapping.GetMimeMapping(".zip"));
-                content.Add(fileContent, "logs",$"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip");
+                content.Add(fileContent, "logs",
+                    $"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip");
                 Logger.Debug($"Content Headers:\r\n{fileContent.Headers}");
                 Logger.Debug($"Request Headers:\r\n{content.Headers}");
                 var result = HttpClient.PostAsync(LogsUploadUrl, content).Result;

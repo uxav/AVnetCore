@@ -18,6 +18,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Schema.Generation;
+using UXAV.AVnet.Core.Cloud;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 using UXAV.Logging.Console;
@@ -521,6 +522,7 @@ namespace UXAV.AVnet.Core.Config
             if (_config == null) return;
             ConfigData = _config.ToString(Formatting.Indented);
             _config = null;
+            CloudConnector.MarkConfigForUpload();
         }
 
         private static string[] GetPasswordKeyValues()
