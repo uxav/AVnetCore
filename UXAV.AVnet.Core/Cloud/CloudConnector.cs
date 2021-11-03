@@ -198,11 +198,18 @@ namespace UXAV.AVnet.Core.Cloud
                 var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
                 try
                 {
+#if DEBUG
                     Logger.Debug($"Cloud checkin URL is {CheckinUri}");
+#endif
                     var result = await HttpClient.PostAsync(CheckinUri, content);
+#if DEBUG
                     Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
+#endif
+                    result.EnsureSuccessStatusCode();
                     var contents = await result.Content.ReadAsStringAsync();
+#if DEBUG
                     Logger.Debug($"Cloud Rx:\r\n{contents}");
+#endif
                     var responseData = JToken.Parse(contents);
                     if (responseData["actions"] != null)
                     {
@@ -234,7 +241,7 @@ namespace UXAV.AVnet.Core.Cloud
                 }
                 catch (Exception e)
                 {
-                    if(_suppressWarning) return;
+                    if (_suppressWarning) return;
                     Logger.Warn($"Could not checkin to cloud, {e.Message}");
                     _suppressWarning = true;
                 }
