@@ -24,9 +24,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             {
                 case "restart":
                     Logger.Warn("Remote restart requested from {0}", Request.UserHostAddress);
-                    CrestronConsole.SendControlSystemCommand($"progres -P:{InitialParametersClass.ApplicationNumber}",
-                        ref response);
-                    WriteResponse(response);
+                    WriteResponse(System.RestartApp());
                     return;
                 case "reboot":
                     Logger.Warn("Remote reboot requested from {0}", Request.UserHostAddress);
