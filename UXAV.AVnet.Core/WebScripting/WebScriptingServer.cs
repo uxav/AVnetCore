@@ -205,9 +205,12 @@ namespace UXAV.AVnet.Core.WebScripting
                     }
                 }
 
-                if (processed) return;
-                Logger.Warn(Logger.LoggerLevel.Debug, "No handler found for request");
-                HandleError(request, 404, "Not Found", "No handler found on this path to deal with the request");
+                if (!processed)
+                {
+                    Logger.Warn(Logger.LoggerLevel.Debug, "No handler found for request");
+                    HandleError(request, 404, "Not Found", "No handler found on this path to deal with the request");
+                }
+                request.Response.End();
             }
             catch (Exception e)
             {
