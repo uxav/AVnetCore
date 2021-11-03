@@ -147,7 +147,9 @@ namespace UXAV.AVnet.Core.Cloud
 
             while (true)
             {
+#if DEBUG
                 Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
+#endif
                 await CheckInAsync();
                 if (_uploadConfig)
                 {
