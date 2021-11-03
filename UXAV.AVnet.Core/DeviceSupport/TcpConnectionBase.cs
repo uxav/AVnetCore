@@ -83,7 +83,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 Logger.Debug(
                     $"{GetType().Name} {Address} Tx: {Tools.GetBytesAsReadableString(bytes, index, count, true)}");
             }
-            _stream.WriteAsync(bytes, index, count);
+            _stream.Write(bytes, index, count);
         }
 
         private async Task ConnectionProcess()
