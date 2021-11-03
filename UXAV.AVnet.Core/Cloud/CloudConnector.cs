@@ -133,6 +133,19 @@ namespace UXAV.AVnet.Core.Cloud
 
         private static async Task CheckInAsync()
         {
+            object sysmon = null;
+            if (SystemMonitor.Available)
+            {
+                sysmon = new
+                {
+                    SystemMonitor.CpuUtilization,
+                    SystemMonitor.MaximumCpuUtilization,
+                    SystemMonitor.RamFree,
+                    SystemMonitor.RamFreeMinimum,
+                    SystemMonitor.TotalRamSize,
+                };
+            }
+
             try
             {
                 var data = new
@@ -143,6 +156,7 @@ namespace UXAV.AVnet.Core.Cloud
                     @dhcp = SystemBase.DhcpStatus,
                     @mac_address = SystemBase.MacAddress,
                     @up_time = SystemBase.UpTime,
+                    @system_monitor = sysmon,
                     @firmware_version = CrestronEnvironment.OSVersion.Firmware,
                     @model = InitialParametersClass.ControllerPromptName,
                     @serial_number = CrestronEnvironment.SystemInfo.SerialNumber,

@@ -34,6 +34,8 @@ namespace UXAV.AVnet.Core
         public static ushort MaximumNumberOfRunningProcesses =>
             Crestron.SimplSharpPro.Diagnostics.SystemMonitor.MaximumNumberOfRunningProcesses;
 
+        public static bool Available => CrestronEnvironment.DevicePlatform != eDevicePlatform.Server && _init;
+
         internal static void Init()
         {
             if (_init) return;
@@ -67,7 +69,7 @@ namespace UXAV.AVnet.Core
             lock (StatHistory)
             {
                 StatHistory.Enqueue(stat);
-                while (StatHistory.Count > 360)
+                while (StatHistory.Count > 2000)
                 {
                     StatHistory.TryDequeue(out var oldMemStat);
                     //Logger.Debug($"Removed old memory stat with time: {oldMemStat.Time:u}");
