@@ -86,11 +86,24 @@ namespace UXAV.AVnet.Core.DeviceSupport
                     "Could not find ctor in the form of (uint, CrestronControlSystem)");
             }
 
-            var device = (GenericDevice) ctor.Invoke(new object[] {ipId, ControlSystem});
-            device.Description = description;
-            Devices[device.ID] = device;
-            device.OnlineStatusChange += DeviceOnOnlineStatusChange;
-            return device;
+            try
+            {
+                var device = (GenericDevice) ctor.Invoke(new object[] {ipId, ControlSystem});
+                device.Description = description;
+                Devices[device.ID] = device;
+                device.OnlineStatusChange += DeviceOnOnlineStatusChange;
+                return device;
+            }
+            catch (TargetInvocationException e)
+            {
+                if (e.InnerException != null)
+                {
+                    throw e.InnerException;
+                }
+
+                // ReSharper disable once PossibleIntendedRethrow
+                throw e;
+            }
         }
 
         public static GenericDevice CreateXPanelForSmartGraphics(uint ipId, string description, string pathOfVtzFile)
@@ -121,10 +134,24 @@ namespace UXAV.AVnet.Core.DeviceSupport
                     "Could not find ctor in the form of (uint, string, CrestronControlSystem)");
             }
 
-            var device = (GenericDevice) ctor.Invoke(new object[] {ipId, ipAddressOrHostname, ControlSystem});
-            device.Description = description;
-            Devices[device.ID] = device;
-            return device;
+            try
+            {
+                var device = (GenericDevice)ctor.Invoke(new object[] { ipId, ipAddressOrHostname, ControlSystem });
+
+                device.Description = description;
+                Devices[device.ID] = device;
+                return device;
+            }
+            catch (TargetInvocationException e)
+            {
+                if (e.InnerException != null)
+                {
+                    throw e.InnerException;
+                }
+
+                // ReSharper disable once PossibleIntendedRethrow
+                throw e;
+            }
         }
 
         internal static FusionRoom CreateFusionRoom(uint ipId, string roomName, string description)

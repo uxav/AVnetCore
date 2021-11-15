@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,6 +21,8 @@ namespace UXAV.AVnet.Core.DeviceSupport
         private Task _connectTask;
         private readonly int _port;
         private int _failConnectCount;
+        private BlockingCollection<byte[]> _sendQueue;
+        private Task _sendProcess;
         public bool Connected => _client != null && _client.Connected;
         public string Address { get; }
         public bool DebugEnabled { get; set; }
@@ -77,13 +80,58 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         public virtual void Send(byte[] bytes, int index, int count)
         {
-            if (_stream == null || !Connected) return;
-            if (DebugEnabled)
+            SendEnqueue(bytes, index, count);
+        }
+        
+        private void SendEnqueue(byte[] bytes, int index, int count)
+        {
+            if (_stream == null || !Connected)
             {
-                Logger.Debug(
-                    $"{GetType().Name} {Address} Tx: {Tools.GetBytesAsReadableString(bytes, index, count, true)}");
+                Logger.Warn(1, "Cannot send, socket is disconnected!");
+                return;
             }
-            _stream.Write(bytes, index, count);
+
+            if (_sendQueue == null || _sendQueue.IsCompleted)
+            {
+                _sendQueue = new BlockingCollection<byte[]>();
+            }
+
+            var copiedBytes = new byte[count];
+            Array.Copy(bytes, index, copiedBytes, 0, count);
+            _sendQueue.Add(copiedBytes);
+
+            if (_sendProcess == null || _sendProcess.Status != TaskStatus.Running)
+            {
+                _sendProcess = Task.Run(() =>
+                {
+                    Logger.Debug("Starting Send Process...");
+                    while (_stream != null && _stream.CanWrite)
+                    {
+                        try
+                        {
+                            var bytesToSend = _sendQueue.Take();
+                            if (DebugEnabled)
+                            {
+                                Logger.Debug(
+                                    $"{GetType().Name} {Address} Tx: {Tools.GetBytesAsReadableString(bytesToSend, 0, bytesToSend.Length, true)}");
+                            }
+
+                            _stream.Write(bytesToSend, 0, bytesToSend.Length);
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            Logger.Debug("Exiting send process as send queue is now marked as complete.");
+                            return;
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error(e);
+                        }
+                    }
+
+                    _sendProcess = null;
+                });
+            }
         }
 
         private async Task ConnectionProcess()
@@ -188,6 +236,11 @@ namespace UXAV.AVnet.Core.DeviceSupport
                         Logger.Error(e);
                         break;
                     }
+                }
+
+                if (_sendQueue != null && !_sendQueue.IsCompleted)
+                {
+                    _sendQueue.CompleteAdding();
                 }
 
                 if (_client != null && _client.Connected)
