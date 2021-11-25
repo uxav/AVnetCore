@@ -143,7 +143,7 @@ namespace UXAV.AVnet.Core.Cloud
         private static async void CheckInProcess()
         {
             _waitHandle.WaitOne(TimeSpan.FromSeconds(10));
-            if(_programStopping) return;
+            if (_programStopping) return;
 
             while (true)
             {
@@ -160,7 +160,10 @@ namespace UXAV.AVnet.Core.Cloud
                     }
                     catch (Exception e)
                     {
-                        Logger.Error(e);
+                        if (!_suppressWarning)
+                        {
+                            Logger.Error(e);
+                        }
                     }
                 }
 
