@@ -62,6 +62,7 @@ namespace UXAV.AVnet.Core.Models
             CrestronEnvironment.ProgramStatusEventHandler += OnProgramStatusEventHandler;
 
             RoomClock.Start();
+            Scheduler.Init();
             UpdateBootStatus(EBootStatus.Booting, "System is booting", 0);
 
             try
