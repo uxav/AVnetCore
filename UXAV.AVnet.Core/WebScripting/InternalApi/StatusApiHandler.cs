@@ -63,6 +63,19 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     userPageAuth = Authentication.UserPageAuthEnabled;
                 }
 
+                object bacNet = null;
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+                {
+                    bacNet = new
+                    {
+                        Supported = System.ControlSystem.SupportsBACNet,
+                        Registered = System.ControlSystem.ControllerBACnetDevice.Registered,
+                        System.ControlSystem.ControllerBACnetDevice.EndpointsLimit,
+                        System.ControlSystem.ControllerBACnetDevice.BACnetDiscoveryEnabled,
+                        BACnet.IsLicensed
+                    };
+                }
+
                 WriteResponse(JToken.FromObject(new
                 {
                     InitialParametersClass.RoomId,
@@ -126,14 +139,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         RoomClock.Time,
                         RoomClock.Formatted
                     },
-                    @BACnet = new
-                    {
-                        Supported = System.ControlSystem.SupportsBACNet,
-                        Registered = System.ControlSystem.ControllerBACnetDevice.Registered,
-                        System.ControlSystem.ControllerBACnetDevice.EndpointsLimit,
-                        System.ControlSystem.ControllerBACnetDevice.BACnetDiscoveryEnabled,
-                        BACnet.IsLicensed
-                    }
+                    @BACnet = bacNet
                 }));
             }
             catch(Exception e)
