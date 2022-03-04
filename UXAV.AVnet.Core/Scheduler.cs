@@ -29,9 +29,10 @@ namespace UXAV.AVnet.Core
                         //Logger.Debug($"Checking for schedules matching {now:T} ...");
                         Task.Run(() => CheckSchedules(now));
                     }
+
                     //Logger.Debug($"TOD: {now.TimeOfDay:g} / {now.TimeOfDay.Hours:D2}:{now.TimeOfDay.Minutes:D2}");
                     var nextMin = now.AddMinutes(1);
-                    var next = DateTime.Parse($"{nextMin.Hour:D2}:{nextMin.Minute}:00");
+                    var next = DateTime.Parse($"{nextMin.Date:d} {nextMin.Hour:D2}:{nextMin.Minute}:00");
                     var ms = (next - now);
                     //Logger.Debug($"Waiting {ms}");
                     _ready = true;
