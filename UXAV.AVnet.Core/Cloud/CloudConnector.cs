@@ -29,7 +29,6 @@ namespace UXAV.AVnet.Core.Cloud
         private static EventWaitHandle _waitHandle;
         private static Uri _checkinUri;
         private static bool _suppressWarning;
-        private static string _token = "";
         private static string _host;
         private static Uri _configUploadUri;
         private static bool _uploadConfig = true;
@@ -45,11 +44,9 @@ namespace UXAV.AVnet.Core.Cloud
             get
             {
                 if (_checkinUri == null)
-                {
                     _checkinUri = new Uri(
                         $"https://{_host}/api/checkin/v2" +
                         $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
-                }
 
                 return _checkinUri;
             }
@@ -63,11 +60,9 @@ namespace UXAV.AVnet.Core.Cloud
                     "http://172.16.100.200:5001/avnet-cloud/us-central1/appInstanceConfigs/api/configs/v1/submit" +
                     $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");*/
                 if (_configUploadUri == null)
-                {
                     _configUploadUri = new Uri(
                         $"https://{_host}/api/configs/v1/submit" +
                         $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
-                }
 
                 return _configUploadUri;
             }
@@ -88,7 +83,7 @@ namespace UXAV.AVnet.Core.Cloud
             }
         }
 
-        public static string Token => _token;
+        public static string Token { get; private set; } = "";
 
         public static string LogsUploadUrl
         {
@@ -111,11 +106,10 @@ namespace UXAV.AVnet.Core.Cloud
             if (_init) return;
             _init = true;
             _host = host;
-            _token = token;
+            Token = token;
             _applicationName = assembly.GetName().Name;
             var types = assembly.GetTypes();
             foreach (var type in types)
-            {
                 try
                 {
                     if (!type.IsClass || type.IsNotPublic) continue;
@@ -131,7 +125,6 @@ namespace UXAV.AVnet.Core.Cloud
                     Logger.Warn(
                         $"Error looking at {type}, {e.GetType().Name}: {e.Message}");
                 }
-            }
 
             _version = assembly.GetName().Version.ToString();
             _productVersion = FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
@@ -152,7 +145,6 @@ namespace UXAV.AVnet.Core.Cloud
 #endif
                 await CheckInAsync();
                 if (_uploadConfig)
-                {
                     try
                     {
                         await UploadConfigAsync();
@@ -160,12 +152,8 @@ namespace UXAV.AVnet.Core.Cloud
                     }
                     catch (Exception e)
                     {
-                        if (!_suppressWarning)
-                        {
-                            Logger.Error(e);
-                        }
+                        if (!_suppressWarning) Logger.Error(e);
                     }
-                }
 
                 _waitHandle.WaitOne(TimeSpan.FromMinutes(1));
                 if (!_programStopping) continue;
@@ -185,63 +173,61 @@ namespace UXAV.AVnet.Core.Cloud
         {
             object sysmon = null;
             if (SystemMonitor.Available)
-            {
                 sysmon = new
                 {
                     SystemMonitor.CpuUtilization,
                     SystemMonitor.MaximumCpuUtilization,
                     SystemMonitor.RamFree,
                     SystemMonitor.RamFreeMinimum,
-                    SystemMonitor.TotalRamSize,
+                    SystemMonitor.TotalRamSize
                 };
-            }
 
             try
             {
                 var data = new
                 {
-                    @local_ip = SystemBase.IpAddress,
-                    @host_name = SystemBase.HostName,
-                    @domain_name = SystemBase.DomainName,
-                    @dhcp = SystemBase.DhcpStatus,
-                    @mac_address = SystemBase.MacAddress,
-                    @up_time = SystemBase.UpTime,
-                    @system_monitor = sysmon,
-                    @firmware_version = CrestronEnvironment.OSVersion.Firmware,
-                    @model = InitialParametersClass.ControllerPromptName,
-                    @serial_number = CrestronEnvironment.SystemInfo.SerialNumber,
-                    @app_number = InitialParametersClass.ApplicationNumber,
-                    @logger_port = Logger.ListenPort,
-                    @version = _version,
-                    @productVersion = _productVersion,
-                    @device_type = CrestronEnvironment.DevicePlatform.ToString(),
-                    @room_id = InitialParametersClass.RoomId,
-                    @room_name = InitialParametersClass.RoomName,
-                    @system_name = SystemBase.SystemName,
-                    @program_id_tag = InitialParametersClass.ProgramIDTag,
-                    @program_directory = InitialParametersClass.ProgramDirectory.ToString(),
-                    @diagnostics = UxEnvironment.System.GenerateDiagnosticMessagesInternal(),
-                    @app_rooms = UxEnvironment.GetRooms().Select(r => new
+                    local_ip = SystemBase.IpAddress,
+                    host_name = SystemBase.HostName,
+                    domain_name = SystemBase.DomainName,
+                    dhcp = SystemBase.DhcpStatus,
+                    mac_address = SystemBase.MacAddress,
+                    up_time = SystemBase.UpTime,
+                    system_monitor = sysmon,
+                    firmware_version = CrestronEnvironment.OSVersion.Firmware,
+                    model = InitialParametersClass.ControllerPromptName,
+                    serial_number = CrestronEnvironment.SystemInfo.SerialNumber,
+                    app_number = InitialParametersClass.ApplicationNumber,
+                    logger_port = Logger.ListenPort,
+                    version = _version,
+                    productVersion = _productVersion,
+                    device_type = CrestronEnvironment.DevicePlatform.ToString(),
+                    room_id = InitialParametersClass.RoomId,
+                    room_name = InitialParametersClass.RoomName,
+                    system_name = SystemBase.SystemName,
+                    program_id_tag = InitialParametersClass.ProgramIDTag,
+                    program_directory = InitialParametersClass.ProgramDirectory.ToString(),
+                    diagnostics = UxEnvironment.System.GenerateDiagnosticMessagesInternal(),
+                    app_rooms = UxEnvironment.GetRooms().Select(r => new
                     {
-                        @id = r.Id,
-                        @name = r.Name,
-                        @screen_name = r.ScreenName,
-                        @description = r.Description,
+                        id = r.Id,
+                        name = r.Name,
+                        screen_name = r.ScreenName,
+                        description = r.Description
                     }),
                     ConfigManager.ConfigPath,
-                    @ConfigRevisionTime = ConfigManager.LastRevisionTime,
-                    @location = new
+                    ConfigRevisionTime = ConfigManager.LastRevisionTime,
+                    location = new
                     {
-                        @local_time = DateTime.Now.ToLocalTime().ToString("s"),
-                        @time_zone = new
+                        local_time = DateTime.Now.ToLocalTime().ToString("s"),
+                        time_zone = new
                         {
-                            @name = CrestronEnvironment.GetTimeZone().Name,
-                            @offset = CrestronEnvironment.GetTimeZone().NumericOffset,
-                            @formatted = CrestronEnvironment.GetTimeZone().Formatted,
-                            @dst = CrestronEnvironment.GetTimeZone().InDayLightSavings,
+                            name = CrestronEnvironment.GetTimeZone().Name,
+                            offset = CrestronEnvironment.GetTimeZone().NumericOffset,
+                            formatted = CrestronEnvironment.GetTimeZone().Formatted,
+                            dst = CrestronEnvironment.GetTimeZone().InDayLightSavings
                         },
-                        @longitude = CrestronEnvironment.Longitude,
-                        @latitude = CrestronEnvironment.Latitude
+                        longitude = CrestronEnvironment.Longitude,
+                        latitude = CrestronEnvironment.Latitude
                     }
                 };
                 var json = JToken.FromObject(data);
@@ -262,9 +248,7 @@ namespace UXAV.AVnet.Core.Cloud
 #endif
                     var responseData = JToken.Parse(contents);
                     if (responseData["actions"] != null)
-                    {
                         foreach (var action in responseData["actions"])
-                        {
                             try
                             {
                                 Logger.Warn($"Received cloud action: {action}");
@@ -283,8 +267,6 @@ namespace UXAV.AVnet.Core.Cloud
                             {
                                 Logger.Error(e);
                             }
-                        }
-                    }
 
                     result.Dispose();
                     _suppressWarning = false;

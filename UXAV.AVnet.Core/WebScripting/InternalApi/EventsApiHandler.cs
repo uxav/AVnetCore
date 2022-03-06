@@ -17,7 +17,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         public EventsApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request, true)
         {
-            if(_cleanupTask != null) return;
+            if (_cleanupTask != null) return;
             CrestronEnvironment.ProgramStatusEventHandler += OnCrestronEnvironmentOnProgramStatusEventHandler;
             _cleanupTask = Task.Run(SessionCleanupProcess);
         }
@@ -30,13 +30,13 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 case "start":
                     WriteResponse(new
                     {
-                        @SessionId = Start()
+                        SessionId = Start()
                     });
                     return;
                 case "poll":
                     if (!Request.RoutePatternArgs.ContainsKey("id"))
                     {
-                        HandleError(400, "Bad Request", $"No session id specified");
+                        HandleError(400, "Bad Request", "No session id specified");
                         return;
                     }
 
@@ -45,7 +45,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     {
                         if (!Sessions.ContainsKey(id))
                         {
-                            HandleError(400, "Bad Request", $"No sessions for this id value");
+                            HandleError(400, "Bad Request", "No sessions for this id value");
                             return;
                         }
                     }
@@ -68,7 +68,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         //CrestronConsole.PrintLine("ThreadAbortException for session " + id);
                         return;
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         Logger.Log($"Error in {GetType().FullName}, ${e.Message}");
                         return;
@@ -130,9 +130,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         }
 
                         foreach (var id in expiredSessionIds)
-                        {
                             Logger.Debug($"Disposed and removed session event handler with ID {id}");
-                        }
                     }
                 }
             }

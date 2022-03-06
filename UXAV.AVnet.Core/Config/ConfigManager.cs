@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -32,10 +31,9 @@ namespace UXAV.AVnet.Core.Config
         private static JToken _config;
         private static Timer _saveTimer;
         private static readonly object LockWrite = new object();
-        private static JSchema _schema;
         private static string _filePath;
         private static HttpClient _client;
-        private static Mutex _passwordMutex = new Mutex();
+        private static readonly Mutex PasswordMutex = new Mutex();
 
         static ConfigManager()
         {
@@ -53,9 +51,7 @@ namespace UXAV.AVnet.Core.Config
             get
             {
                 if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                {
                     return SystemBase.ProgramUserDirectory;
-                }
 
                 return SystemBase.ProgramNvramAppInstanceDirectory;
             }
@@ -68,10 +64,7 @@ namespace UXAV.AVnet.Core.Config
             get
             {
                 var path = ConfigDirectory + "/";
-                if (!string.IsNullOrEmpty(ConfigNameSpace))
-                {
-                    path = path + ConfigNameSpace + ".";
-                }
+                if (!string.IsNullOrEmpty(ConfigNameSpace)) path = path + ConfigNameSpace + ".";
 
                 path += "config.json";
                 return path;
@@ -81,7 +74,7 @@ namespace UXAV.AVnet.Core.Config
         private static Regex FilePattern => new Regex($"(?:(\\w+)\\.)?{ConfigNameSpace}\\.config\\.json");
 
         /// <summary>
-        /// The config path for the json formatted config file
+        ///     The config path for the json formatted config file
         /// </summary>
         public static string ConfigPath
         {
@@ -101,7 +94,7 @@ namespace UXAV.AVnet.Core.Config
                         if (Regex.IsMatch(_filePath, @"\/(?:\w+\.)?" + ConfigNameSpace.ToLower() + @"\."))
                         {
                             Logger.Warn(
-                                $"Old style info file found with relevant namespace content, will convert and remove");
+                                "Old style info file found with relevant namespace content, will convert and remove");
                             File.Delete(ConfigDirectory + "/configfile.info");
                         }
                     }
@@ -139,7 +132,7 @@ namespace UXAV.AVnet.Core.Config
         }
 
         /// <summary>
-        /// Config file contents as string
+        ///     Config file contents as string
         /// </summary>
         private static string ConfigData
         {
@@ -172,16 +165,13 @@ namespace UXAV.AVnet.Core.Config
         }
 
         /// <summary>
-        /// Get or set the current config data
+        ///     Get or set the current config data
         /// </summary>
         internal static JToken JConfig
         {
             get
             {
-                if (_config != null)
-                {
-                    return _config;
-                }
+                if (_config != null) return _config;
 
                 var configString = ConfigData;
 
@@ -218,13 +208,32 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        public static JSchema Schema { get; private set; }
+
+        private static JObject PropertyList
+        {
+            get
+            {
+                if (JConfig["PropertyList"] != null) return JConfig["PropertyList"] as JObject;
+                Logger.Warn("PropertyList does not exist. Creating one");
+                JConfig["PropertyList"] = new JObject();
+                return (JObject)JConfig["PropertyList"];
+            }
+        }
+
+        /// <summary>
+        ///     Last revision (write time) of the current config file specified by <seealso cref="ConfigPath" />
+        /// </summary>
+        public static DateTime LastRevisionTime =>
+            File.Exists(ConfigPath) ? File.GetLastWriteTime(ConfigPath) : new DateTime();
+
         public static T GetConfig<T>() where T : ConfigBase, new()
         {
-            if (_schema == null)
+            if (Schema == null)
             {
                 var generator = new JSchemaGenerator { DefaultRequired = Required.DisallowNull };
                 generator.GenerationProviders.Add(new StringEnumGenerationProvider());
-                _schema = generator.Generate(typeof(T));
+                Schema = generator.Generate(typeof(T));
             }
 
             var data = JConfig;
@@ -269,18 +278,12 @@ namespace UXAV.AVnet.Core.Config
                 }
             }
 
-            if (filePath == ConfigPath)
-            {
-                _config = null;
-            }
+            if (filePath == ConfigPath) _config = null;
         }
 
         public static void WriteCurrentConfigToDefaultPath()
         {
-            if (_filePath == DefaultConfigPath)
-            {
-                throw new Exception("Cannot write from default config");
-            }
+            if (_filePath == DefaultConfigPath) throw new Exception("Cannot write from default config");
             Logger.Highlight($"Writing config from {_filePath} to default path {DefaultConfigPath}");
             lock (LockWrite)
             {
@@ -295,25 +298,6 @@ namespace UXAV.AVnet.Core.Config
                 }
             }
         }
-
-        public static JSchema Schema => _schema;
-
-        private static JObject PropertyList
-        {
-            get
-            {
-                if (JConfig["PropertyList"] != null) return JConfig["PropertyList"] as JObject;
-                Logger.Warn("PropertyList does not exist. Creating one");
-                JConfig["PropertyList"] = new JObject();
-                return (JObject)JConfig["PropertyList"];
-            }
-        }
-
-        /// <summary>
-        /// Last revision (write time) of the current config file specified by <seealso cref="ConfigPath"/>
-        /// </summary>
-        public static DateTime LastRevisionTime =>
-            File.Exists(ConfigPath) ? File.GetLastWriteTime(ConfigPath) : new DateTime();
 
         public static ConfigFileDetails[] GetFileDetails()
         {
@@ -376,7 +360,7 @@ namespace UXAV.AVnet.Core.Config
         }
 
         /// <summary>
-        /// Get the config file as a stream
+        ///     Get the config file as a stream
         /// </summary>
         /// <returns>The stream of the current config file</returns>
         internal static Stream GetConfigStream()
@@ -385,7 +369,7 @@ namespace UXAV.AVnet.Core.Config
         }
 
         /// <summary>
-        /// Get a PList item object from the current config defined by a string key name
+        ///     Get a PList item object from the current config defined by a string key name
         /// </summary>
         /// <param name="key">Unique key name for the item</param>
         /// <returns>The object defined by the key</returns>
@@ -398,10 +382,8 @@ namespace UXAV.AVnet.Core.Config
         public static T GetOrCreatePropertyListItem<T>(string key, T defaultValue)
         {
             if (PropertyList.ContainsKey(key))
-            {
                 // ReSharper disable once PossibleNullReferenceException
                 return PropertyList[key].ToObject<T>();
-            }
 
             PropertyList[key] = new JValue(defaultValue);
             SaveAuto(2);
@@ -409,7 +391,7 @@ namespace UXAV.AVnet.Core.Config
         }
 
         /// <summary>
-        /// Get a PList item object from the current config defined by a string key name
+        ///     Get a PList item object from the current config defined by a string key name
         /// </summary>
         /// <param name="key">Unique key name for the item</param>
         /// <returns>The object defined by the key</returns>
@@ -445,10 +427,7 @@ namespace UXAV.AVnet.Core.Config
         public static async Task<IEnumerable<dynamic>> GetCloudCsvDataAsync(string url)
         {
             Logger.Debug($"Getting cloud template data from: {url}");
-            if (_client == null)
-            {
-                _client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-            }
+            if (_client == null) _client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
 
             var stream = await _client.GetStreamAsync(url);
             var reader = new StreamReader(stream);
@@ -474,7 +453,7 @@ namespace UXAV.AVnet.Core.Config
         }
 
         /// <summary>
-        /// Add or set an object in the Config PList by a key name
+        ///     Add or set an object in the Config PList by a key name
         /// </summary>
         /// <param name="key">Unique key name for the item</param>
         /// <param name="item">The object to be defined by the key</param>
@@ -490,7 +469,7 @@ namespace UXAV.AVnet.Core.Config
         }
 
         /// <summary>
-        /// Check if the PList contains anything by a key value
+        ///     Check if the PList contains anything by a key value
         /// </summary>
         /// <param name="key">Unique key name for the item</param>
         /// <returns>True if the PList contains item defined by key</returns>
@@ -502,19 +481,17 @@ namespace UXAV.AVnet.Core.Config
         private static void SaveAuto(int seconds)
         {
             if (_saveTimer == null)
-            {
                 _saveTimer = new Timer(state =>
                 {
                     Logger.Highlight(1, "Config Plist save timer now saving file");
                     Save();
                 });
-            }
 
             _saveTimer.Change(TimeSpan.FromSeconds(seconds), TimeSpan.Zero);
         }
 
         /// <summary>
-        /// Save the current config to file
+        ///     Save the current config to file
         /// </summary>
         private static void Save()
         {
@@ -556,11 +533,10 @@ namespace UXAV.AVnet.Core.Config
         {
             try
             {
-                _passwordMutex.WaitOne();
+                PasswordMutex.WaitOne();
                 var results = new Dictionary<string, string>();
                 var keys = GetPasswordKeyValues();
                 foreach (var key in keys)
-                {
                     try
                     {
                         results[key] = PasswordGet(key);
@@ -569,13 +545,12 @@ namespace UXAV.AVnet.Core.Config
                     {
                         RemovePasswordKeyValue(key);
                     }
-                }
 
                 return new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(results);
             }
             finally
             {
-                _passwordMutex.ReleaseMutex();
+                PasswordMutex.ReleaseMutex();
             }
         }
 
@@ -589,24 +564,20 @@ namespace UXAV.AVnet.Core.Config
 
             try
             {
-                _passwordMutex.WaitOne();
+                PasswordMutex.WaitOne();
 
                 var getResult = CrestronSecureStorage.Retrieve(passwordKey, false, null, out var password);
                 if (getResult == eCrestronSecureStorageStatus.RetrieveFailure)
-                {
                     throw new KeyNotFoundException($"No password stored with key \"{passwordKey}\"");
-                }
 
                 if (getResult != eCrestronSecureStorageStatus.Ok)
-                {
                     throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
-                }
 
                 return Encoding.UTF8.GetString(password, 0, password.Length);
             }
             finally
             {
-                _passwordMutex.ReleaseMutex();
+                PasswordMutex.ReleaseMutex();
             }
         }
 
@@ -620,33 +591,29 @@ namespace UXAV.AVnet.Core.Config
 
             try
             {
-                _passwordMutex.WaitOne();
+                PasswordMutex.WaitOne();
                 var getResult = CrestronSecureStorage.Retrieve(passwordKey, false, null, out var password);
                 if (getResult == eCrestronSecureStorageStatus.RetrieveFailure && password == null)
                 {
                     var storeResult =
                         CrestronSecureStorage.Store(passwordKey, false, Encoding.UTF8.GetBytes(defaultValue), null);
                     if (storeResult != eCrestronSecureStorageStatus.Ok)
-                    {
                         throw new Exception(
                             $"Could not store value to {nameof(CrestronSecureStorage)}, result = {storeResult}");
-                    }
 
                     AddPasswordKeyValue(passwordKey);
                     return defaultValue;
                 }
 
                 if (getResult != eCrestronSecureStorageStatus.Ok)
-                {
                     throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
-                }
 
                 AddPasswordKeyValue(passwordKey);
                 return Encoding.UTF8.GetString(password, 0, password.Length);
             }
             finally
             {
-                _passwordMutex.ReleaseMutex();
+                PasswordMutex.ReleaseMutex();
             }
         }
 
@@ -661,24 +628,23 @@ namespace UXAV.AVnet.Core.Config
 
             try
             {
-                _passwordMutex.WaitOne();
+                PasswordMutex.WaitOne();
 
                 AddPasswordKeyValue(passwordKey);
                 //Logger.Debug($"Trying to set password with key: {passwordKey}, and value: {value}");
 
+                // ReSharper disable once UnusedVariable
                 var deleteResult = CrestronSecureStorage.Delete(passwordKey, false);
                 //Logger.Debug($"Delete result = {deleteResult}");
                 var setResult = CrestronSecureStorage.Store(passwordKey, false, Encoding.UTF8.GetBytes(value), null);
                 //Logger.Debug($"Set result = {setResult}");
                 if (setResult != eCrestronSecureStorageStatus.Ok)
-                {
                     throw new Exception(
                         $"Could not store value to {nameof(CrestronSecureStorage)}, result = {setResult}");
-                }
             }
             finally
             {
-                _passwordMutex.ReleaseMutex();
+                PasswordMutex.ReleaseMutex();
             }
         }
 
@@ -709,14 +675,6 @@ namespace UXAV.AVnet.Core.Config
 
     public class ConfigFileDetails
     {
-        public string Name { get; }
-        public string Filepath { get; }
-        public bool IsDefault { get; }
-        public DateTime CreationDate { get; }
-        public DateTime ModifiedDate { get; }
-
-        public bool ActiveFile => Filepath == ConfigManager.ConfigPath;
-
         internal ConfigFileDetails(string name, string filepath, bool isDefault, DateTime creationDate,
             DateTime modifiedDate)
         {
@@ -726,5 +684,13 @@ namespace UXAV.AVnet.Core.Config
             CreationDate = creationDate;
             ModifiedDate = modifiedDate;
         }
+
+        public string Name { get; }
+        public string Filepath { get; }
+        public bool IsDefault { get; }
+        public DateTime CreationDate { get; }
+        public DateTime ModifiedDate { get; }
+
+        public bool ActiveFile => Filepath == ConfigManager.ConfigPath;
     }
 }

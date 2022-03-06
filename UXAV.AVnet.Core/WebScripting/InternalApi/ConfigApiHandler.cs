@@ -21,7 +21,6 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             try
             {
                 if (Request.RoutePatternArgs.ContainsKey("function"))
-                {
                     switch (Request.RoutePatternArgs["function"])
                     {
                         case "plist":
@@ -33,10 +32,8 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
 
                             var key = Request.RoutePatternArgs["key"];
                             if (!ConfigManager.PropertyListContainsKey(key))
-                            {
                                 throw new KeyNotFoundException(
                                     $"PropertyList does not contain key with name \"{key}\"");
-                            }
 
                             WriteResponse(ConfigManager.GetPropertyListItemWithKey(key));
                             return;
@@ -44,7 +41,6 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                             HandleNotFound();
                             return;
                     }
-                }
 
                 var restartRequired = Server.System.ConfigCheckIfRestartIsRequired(ConfigManager.JConfig.ToString());
                 var files = ConfigManager.GetFileDetails();
@@ -52,10 +48,10 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 WriteResponse(new
                 {
                     ConfigManager.ConfigPath,
-                    @LastRevisionTime = ConfigManager.LastRevisionTime.ToUniversalTime(),
-                    @RestartRequired = restartRequired,
-                    @AvailableFiles = files,
-                    @IsDefault = ConfigManager.ConfigIsDefaultFile,
+                    LastRevisionTime = ConfigManager.LastRevisionTime.ToUniversalTime(),
+                    RestartRequired = restartRequired,
+                    AvailableFiles = files,
+                    IsDefault = ConfigManager.ConfigIsDefaultFile,
                     Config = ConfigManager.JConfig,
                     ConfigManager.Schema
                 });
@@ -100,20 +96,16 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 StreamReader reader;
 
                 if (Request.RoutePatternArgs.ContainsKey("function"))
-                {
                     switch (Request.RoutePatternArgs["function"])
                     {
                         case "plist":
                             reader = new StreamReader(Request.InputStream);
                             var list = JObject.Parse(reader.ReadToEnd()).ToObject<Dictionary<string, object>>();
-                            foreach (var item in list)
-                            {
-                                ConfigManager.SetPropertyListItemWithKey(item.Key, item.Value);
-                            }
+                            foreach (var item in list) ConfigManager.SetPropertyListItemWithKey(item.Key, item.Value);
 
                             WriteResponse(new
                             {
-                                @UpdatedValues = list
+                                UpdatedValues = list
                             });
                             return;
                         case "new":
@@ -130,7 +122,6 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                             HandleNotFound();
                             return;
                     }
-                }
 
                 try
                 {

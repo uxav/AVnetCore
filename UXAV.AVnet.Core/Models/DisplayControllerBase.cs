@@ -9,65 +9,23 @@ namespace UXAV.AVnet.Core.Models
 {
     public abstract class DisplayControllerBase : ISourceTarget
     {
-        private readonly DisplayDeviceBase _device;
-        private readonly string _name;
-        private SourceBase _source;
-        private bool _enabled = true;
-
         /// <summary>
-        /// Only used if device is null
+        ///     Only used if device is null
         /// </summary>
         private RoomBase _allocatedRoom;
 
+        private bool _enabled = true;
+        private SourceBase _source;
+
         protected DisplayControllerBase(DisplayDeviceBase displayDevice, string name)
         {
-            _device = displayDevice;
-            _name = name;
+            Device = displayDevice;
+            Name = name;
         }
 
-        public SourceBase GetCurrentSource(uint forIndex = 1)
-        {
-            return _source;
-        }
-
-        public async Task<bool> SelectSourceAsync(SourceBase source, uint forIndex = 1)
-        {
-            if (_source == source && source != null && Enabled && _device != null && _device.Power == false)
-            {
-                _device.Power = true;
-                Logger.Debug($"{Name} source already set to {_source}, but powered off so setting power to on!");
-                return true;
-            }
-
-            if (_source == source) return false;
-            _source = source;
-            var name = _source != null ? _source.ToString() : "none";
-            Logger.Debug($"Display {Name} set source to {name}");
-
-            if (!Enabled) return false;
-            await Task.Run(() =>
-            {
-                try
-                {
-                    OnSourceChange(_source);
-                    if (_device != null && _source != null)
-                    {
-                        _device.Power = true;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e);
-                }
-            });
-            return true;
-        }
-
-        public DisplayDeviceBase Device => _device;
+        public DisplayDeviceBase Device { get; }
 
         public SourceCollection<SourceBase> Sources => UxEnvironment.GetSources().SourcesForDisplay(this);
-
-        public string Name => _name;
 
         public virtual bool Enabled
         {
@@ -85,18 +43,12 @@ namespace UXAV.AVnet.Core.Models
                         if (_enabled)
                         {
                             SetSourceOnEnableDisable(_source);
-                            if (_device != null && _source != null)
-                            {
-                                SetPowerOnEnableDisable(true);
-                            }
+                            if (Device != null && _source != null) SetPowerOnEnableDisable(true);
                         }
                         else
                         {
                             SetSourceOnEnableDisable(null);
-                            if (_device != null)
-                            {
-                                SetPowerOnEnableDisable(false);
-                            }
+                            if (Device != null) SetPowerOnEnableDisable(false);
                         }
                     }
                     catch (Exception e)
@@ -107,36 +59,70 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
-        protected virtual void SetPowerOnEnableDisable(bool powerRequest)
-        {
-            if (_device != null)
-            {
-                _device.Power = powerRequest;
-            }
-        }
-
-        protected virtual void SetSourceOnEnableDisable(SourceBase source)
-        {
-            OnSourceChange(source);
-        }
-
         public virtual RoomBase Room
         {
             get
             {
-                if (_device == null) return _allocatedRoom;
-                return _device.AllocatedRoom;
+                if (Device == null) return _allocatedRoom;
+                return Device.AllocatedRoom;
             }
             set
             {
-                if (_device != null)
+                if (Device != null)
                 {
-                    _device.AllocateRoom(value);
+                    Device.AllocateRoom(value);
                     return;
                 }
 
                 _allocatedRoom = value;
             }
+        }
+
+        public SourceBase GetCurrentSource(uint forIndex = 1)
+        {
+            return _source;
+        }
+
+        public async Task<bool> SelectSourceAsync(SourceBase source, uint forIndex = 1)
+        {
+            if (_source == source && source != null && Enabled && Device != null && Device.Power == false)
+            {
+                Device.Power = true;
+                Logger.Debug($"{Name} source already set to {_source}, but powered off so setting power to on!");
+                return true;
+            }
+
+            if (_source == source) return false;
+            _source = source;
+            var name = _source != null ? _source.ToString() : "none";
+            Logger.Debug($"Display {Name} set source to {name}");
+
+            if (!Enabled) return false;
+            await Task.Run(() =>
+            {
+                try
+                {
+                    OnSourceChange(_source);
+                    if (Device != null && _source != null) Device.Power = true;
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+            });
+            return true;
+        }
+
+        public string Name { get; }
+
+        protected virtual void SetPowerOnEnableDisable(bool powerRequest)
+        {
+            if (Device != null) Device.Power = powerRequest;
+        }
+
+        protected virtual void SetSourceOnEnableDisable(SourceBase source)
+        {
+            OnSourceChange(source);
         }
 
         protected abstract void OnSourceChange(SourceBase source);

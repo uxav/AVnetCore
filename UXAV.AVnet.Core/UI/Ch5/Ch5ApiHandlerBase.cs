@@ -13,11 +13,10 @@ namespace UXAV.AVnet.Core.UI.Ch5
 {
     public abstract class Ch5ApiHandlerBase
     {
-        private readonly Core3ControllerBase _deviceController;
-        private Ch5ConnectionInstance _connection;
-
         private static readonly Dictionary<string, Ch5ApiHandlerBase> Handlers =
             new Dictionary<string, Ch5ApiHandlerBase>();
+
+        private readonly Core3ControllerBase _deviceController;
 
         protected Ch5ApiHandlerBase()
         {
@@ -33,9 +32,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
         internal static IEnumerable<Ch5ApiHandlerBase> ConnectedHandlers =>
             new ReadOnlyCollectionBuilder<Ch5ApiHandlerBase>(Handlers.Values).ToReadOnlyCollection();
 
-        public event SendEventHandler SendEvent;
+        public Ch5ConnectionInstance Connection { get; private set; }
 
-        public Ch5ConnectionInstance Connection => _connection;
+        public event SendEventHandler SendEvent;
 
         private void Send(string data)
         {
@@ -44,17 +43,15 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         internal void OnConnectInternal(Ch5ConnectionInstance connection)
         {
-            _connection = connection;
+            Connection = connection;
             Handlers.Add(connection.ID, this);
             var rooms = new List<object>();
             foreach (var room in UxEnvironment.GetRooms())
-            {
                 rooms.Add(new
                 {
                     room.Id,
                     room.Name
                 });
-            }
 
             SendNotification("hello", new
             {
@@ -109,7 +106,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private ResponseMessage ProcessResponse(RequestMessage message)
         {
-            var methods = this.GetType().GetMethods();
+            var methods = GetType().GetMethods();
             foreach (var method in methods)
             {
                 var attribute = method.GetCustomAttribute<ApiTargetMethodAttribute>();

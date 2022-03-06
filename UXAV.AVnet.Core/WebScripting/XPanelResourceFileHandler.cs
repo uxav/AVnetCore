@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Crestron.SimplSharp.CrestronIO;
 using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.Logging;
+using FileInfo = System.IO.FileInfo;
 
 namespace UXAV.AVnet.Core.WebScripting
 {
@@ -48,7 +49,7 @@ namespace UXAV.AVnet.Core.WebScripting
                     Logger.Debug("InvalidDirectoryLocationException, Looking for full path...");
                     if (global::System.IO.File.Exists(path))
                     {
-                        var info = new global::System.IO.FileInfo(path);
+                        var info = new FileInfo(path);
                         path = info.FullName;
                     }
 

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Crestron.SimplSharp;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core
@@ -14,10 +15,17 @@ namespace UXAV.AVnet.Core
         private static bool _ready;
         private static int _nextId;
         private static readonly Dictionary<int, ScheduleItem> Schedules = new Dictionary<int, ScheduleItem>();
+        private static readonly AutoResetEvent ScheduleWait = new AutoResetEvent(false);
 
         internal static void Init()
         {
             if (_timer != null) return;
+
+            CrestronEnvironment.ProgramStatusEventHandler += type =>
+            {
+                if(type == eProgramStatusEventType.Stopping)
+                    ScheduleWait.Set();
+            };
 
             _timer = Task.Run(() =>
             {
@@ -25,18 +33,17 @@ namespace UXAV.AVnet.Core
                 {
                     var now = DateTime.Now;
                     if (_ready)
-                    {
                         //Logger.Debug($"Checking for schedules matching {now:T} ...");
                         Task.Run(() => CheckSchedules(now));
-                    }
 
                     //Logger.Debug($"TOD: {now.TimeOfDay:g} / {now.TimeOfDay.Hours:D2}:{now.TimeOfDay.Minutes:D2}");
                     var nextMin = now.AddMinutes(1);
                     var next = DateTime.Parse($"{nextMin.Date:d} {nextMin.Hour:D2}:{nextMin.Minute}:00");
-                    var ms = (next - now);
+                    var ms = next - now;
                     //Logger.Debug($"Waiting {ms}");
                     _ready = true;
-                    Thread.Sleep(ms);
+                    var shouldExit = ScheduleWait.WaitOne(ms);
+                    if (shouldExit) return;
                 }
             });
 
@@ -45,9 +52,7 @@ namespace UXAV.AVnet.Core
                 lock (Schedules)
                 {
                     foreach (var valuePair in Schedules)
-                    {
                         respond($"{valuePair.Value.Time} -- {valuePair.Value.Callback.Method}\r\n");
-                    }
                 }
             }, "SchedulesList", "List schedules in scheduler");
         }
@@ -55,9 +60,7 @@ namespace UXAV.AVnet.Core
         public static int AddSchedule(string time, Action callback)
         {
             if (!Regex.IsMatch(time, @"\d{2}\:\d{2}"))
-            {
                 throw new ArgumentException("Time should be specified as HH:mm", nameof(time));
-            }
 
             try
             {
@@ -69,10 +72,7 @@ namespace UXAV.AVnet.Core
                 throw new ArgumentException($"Time could not be parsed, {e.Message}", nameof(time));
             }
 
-            if (callback == null)
-            {
-                throw new ArgumentException("callback cannot be null", nameof(callback));
-            }
+            if (callback == null) throw new ArgumentException("callback cannot be null", nameof(callback));
 
             lock (Schedules)
             {
@@ -84,15 +84,10 @@ namespace UXAV.AVnet.Core
 
         public static void EditSchedule(int scheduleId, string time)
         {
-            if (!Schedules.ContainsKey(scheduleId))
-            {
-                throw new KeyNotFoundException($"No schedule with ID {scheduleId}");
-            }
+            if (!Schedules.ContainsKey(scheduleId)) throw new KeyNotFoundException($"No schedule with ID {scheduleId}");
 
             if (!Regex.IsMatch(time, @"\d{2}\:\d{2}"))
-            {
                 throw new ArgumentException("Time should be specified as HH:mm", nameof(time));
-            }
 
             try
             {
@@ -116,7 +111,6 @@ namespace UXAV.AVnet.Core
             lock (Schedules)
             {
                 foreach (var item in Schedules.Values.Where(i => i.Time == timeString))
-                {
                     try
                     {
                         Task.Run(item.Callback);
@@ -125,26 +119,23 @@ namespace UXAV.AVnet.Core
                     {
                         Logger.Error(e);
                     }
-                }
             }
         }
     }
 
     internal class ScheduleItem
     {
-        private readonly int _id;
-        private readonly Action _callback;
-
         internal ScheduleItem(int id, string time, Action callback)
         {
-            _id = id;
+            Id = id;
             Time = time;
-            _callback = callback;
+            Callback = callback;
         }
 
-        public int Id => _id;
+        public int Id { get; }
+
         public string Time { get; set; }
 
-        public Action Callback => _callback;
+        public Action Callback { get; }
     }
 }

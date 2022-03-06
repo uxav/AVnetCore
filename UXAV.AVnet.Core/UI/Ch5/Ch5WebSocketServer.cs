@@ -16,6 +16,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
         }
 
+        public static string WebSocketBaseUrl =>
+            $"ws{(_server.IsSecure ? "s" : "")}://{SystemBase.IpAddress}:{_server.Port}";
+
         public static void Init(int port)
         {
             _server = new WebSocketServer(port, false)
@@ -31,12 +34,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
         private static void CrestronEnvironmentOnProgramStatusEventHandler(eProgramStatusEventType eventType)
         {
             if (eventType == eProgramStatusEventType.Stopping && _server.IsListening)
-            {
                 _server.Stop(1012, "Processor is restarting / stopping");
-            }
         }
 
-        internal static void AddDeviceService<THandler>(Ch5UIController<THandler> controller) where THandler : Ch5ApiHandlerBase
+        internal static void AddDeviceService<THandler>(Ch5UIController<THandler> controller)
+            where THandler : Ch5ApiHandlerBase
         {
             var path = $"/ui/{controller.Device.ID:x2}";
             _server.AddWebSocketService(path, () =>
@@ -62,9 +64,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 return new Ch5ConnectionInstance(handler);
             });
         }
-
-        public static string WebSocketBaseUrl =>
-            $"ws{(_server.IsSecure ? "s" : "")}://{SystemBase.IpAddress}:{_server.Port}";
 
         public static void Start()
         {

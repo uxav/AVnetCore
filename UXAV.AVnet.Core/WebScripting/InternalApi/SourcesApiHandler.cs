@@ -11,7 +11,6 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         public SourcesApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)
         {
-
         }
 
         [SecureRequest]
@@ -22,7 +21,6 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             var sources = UxEnvironment.GetSources();
 
             if (!string.IsNullOrEmpty(Request.Query["room"]))
-            {
                 try
                 {
                     var id = uint.Parse(Request.Query["room"]);
@@ -33,10 +31,8 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     HandleError(e);
                     return;
                 }
-            }
 
             foreach (var source in sources)
-            {
                 result.Add(new
                 {
                     source.Id,
@@ -45,12 +41,11 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     source.Type,
                     source.IconName,
                     source.Priority,
-                    @AssignedRooms = source.AssignedRooms.Keys,
-                    @ActiveRooms = UxEnvironment.GetRooms()
+                    AssignedRooms = source.AssignedRooms.Keys,
+                    ActiveRooms = UxEnvironment.GetRooms()
                         .Where(r => r.GetCurrentSource() != null && r.GetCurrentSource().Id == source.Id)
                         .Select(r => r.Id)
                 });
-            }
 
             WriteResponse(result);
         }

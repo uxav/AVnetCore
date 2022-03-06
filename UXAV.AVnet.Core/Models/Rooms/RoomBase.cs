@@ -5,20 +5,24 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UXAV.AVnet.Core.DeviceSupport;
-using UXAV.AVnet.Core.Models.Sources;
 using UXAV.AVnet.Core.Fusion;
+using UXAV.AVnet.Core.Models.Sources;
 using UXAV.AVnet.Core.UI;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.Models.Rooms
 {
     /// <summary>
-    /// The base class of all room models in the program
+    ///     The base class of all room models in the program
     /// </summary>
     public abstract class RoomBase : IGenericItem, ISourceTarget
     {
-        private RoomBase _parentRoom;
-        private bool _power;
+        public enum PowerOffRequestType
+        {
+            UserRequested,
+            FusionRequested,
+            Scheduled
+        }
 
         private readonly ConcurrentDictionary<uint, SourceBase> _currentSource =
             new ConcurrentDictionary<uint, SourceBase>();
@@ -27,27 +31,23 @@ namespace UXAV.AVnet.Core.Models.Rooms
             new ConcurrentDictionary<uint, bool>();
 
         private SourceBase _lastMainSource;
+        private RoomBase _parentRoom;
+        private bool _power;
 
         protected RoomBase(uint id, string name, string screenName)
         {
             if (UxEnvironment.GetRooms().Any(r => r.Id == id))
-            {
                 throw new ArgumentException($"Room with ID {id} already defined");
-            }
 
             Id = id;
             Name = name;
             if (string.IsNullOrEmpty(name))
-            {
                 throw new ArgumentOutOfRangeException(nameof(name), "cannot be null or empty");
-            }
 
             ScreenName = string.IsNullOrEmpty(screenName) ? Name : screenName;
             UxEnvironment.AddRoom(this);
         }
 
-        public uint Id { get; }
-        public string Name { get; }
         public string ScreenName { get; }
         public abstract string Description { get; }
         public abstract bool HasBookingFacility { get; }
@@ -87,16 +87,23 @@ namespace UXAV.AVnet.Core.Models.Rooms
 
         public SystemBase System => UxEnvironment.System;
 
-        public event SourceChangedEventHandler SourceChanged;
+        public virtual SourceBase DefaultSource => _lastMainSource ?? Sources.FirstOrDefault();
+
+        public virtual SourceCollection<SourceBase> Sources => UxEnvironment.GetSources().SourcesForRoomOrGlobal(this);
+
+        public abstract IVolumeControl VolumeControl { get; }
+
+        public abstract IMuteControl MicMute { get; }
+
+        public virtual bool Power => _power;
+
+        public uint Id { get; }
+        public string Name { get; }
 
         public virtual SourceBase GetCurrentSource(uint forIndex = 1)
         {
             return !_currentSource.ContainsKey(forIndex) ? null : _currentSource[forIndex];
         }
-
-        public virtual SourceBase DefaultSource => _lastMainSource ?? Sources.FirstOrDefault();
-
-        public virtual SourceCollection<SourceBase> Sources => UxEnvironment.GetSources().SourcesForRoomOrGlobal(this);
 
         public virtual async Task<bool> SelectSourceAsync(SourceBase newSource, uint forIndex = 1)
         {
@@ -104,10 +111,8 @@ namespace UXAV.AVnet.Core.Models.Rooms
                        $"Source = \"{newSource?.ToString() ?? "none"}\" requested for index: {forIndex}");
 
             if (_sourceSelectBusy.ContainsKey(forIndex) && _sourceSelectBusy[forIndex])
-            {
                 throw new InvalidOperationException(
                     $"Source selection failed for index {forIndex}, as busy selecting other source");
-            }
 
             var currentSource = _currentSource.ContainsKey(forIndex) ? _currentSource[forIndex] : null;
 
@@ -123,24 +128,18 @@ namespace UXAV.AVnet.Core.Models.Rooms
 
                 Logger.Debug("Creating source selection task..");
                 var previousSource = currentSource;
-                if (previousSource != null)
-                {
-                    previousSource.ActiveUseCount--;
-                }
+                if (previousSource != null) previousSource.ActiveUseCount--;
 
                 _currentSource[forIndex] = newSource;
                 if (newSource != null)
                 {
-                    if (forIndex == 1)
-                    {
-                        _lastMainSource = newSource;
-                    }
+                    if (forIndex == 1) _lastMainSource = newSource;
 
                     newSource.ActiveUseCount++;
                 }
 
                 Logger.Highlight($"Room {Id} Source changed to \"{newSource?.ToString() ?? "null"}\", loading..");
-                OnSourceChanged(this, new SourceChangedEventArgs()
+                OnSourceChanged(this, new SourceChangedEventArgs
                 {
                     Type = SourceChangedEventArgs.EventType.Pending,
                     Source = newSource,
@@ -160,11 +159,7 @@ namespace UXAV.AVnet.Core.Models.Rooms
             return true;
         }
 
-        public abstract IVolumeControl VolumeControl { get; }
-
-        public abstract IMuteControl MicMute { get; }
-
-        public virtual bool Power => _power;
+        public event SourceChangedEventHandler SourceChanged;
 
         public virtual void FusionRequestedPowerOn()
         {
@@ -180,9 +175,7 @@ namespace UXAV.AVnet.Core.Models.Rooms
         {
             if (Power) return;
             if (_sourceSelectBusy.Values.Any(busy => busy))
-            {
                 throw new InvalidOperationException("Source selection is busy");
-            }
 
             _power = true;
             Logger.Highlight($"Room \"{ScreenName}\", Power set to {_power}");
@@ -193,13 +186,6 @@ namespace UXAV.AVnet.Core.Models.Rooms
                 Room = Id,
                 Power = _power
             });
-        }
-
-        public enum PowerOffRequestType
-        {
-            UserRequested,
-            FusionRequested,
-            Scheduled,
         }
 
         public void PowerOff(PowerOffRequestType type = PowerOffRequestType.UserRequested)
@@ -221,13 +207,9 @@ namespace UXAV.AVnet.Core.Models.Rooms
         {
             if (_sourceSelectBusy.Values.Any(busy => busy) || _power == roomPower) return false;
             if (roomPower)
-            {
                 PowerOn();
-            }
             else
-            {
-                PowerOff(PowerOffRequestType.UserRequested);
-            }
+                PowerOff();
 
             return true;
         }
@@ -248,10 +230,7 @@ namespace UXAV.AVnet.Core.Models.Rooms
                 break;
             }
 
-            foreach (var controller in this.GetCore3Controllers())
-            {
-                controller.RoomPoweringOff();
-            }
+            foreach (var controller in this.GetCore3Controllers()) controller.RoomPoweringOff();
 
             RoomPowerOffProcess(requestType);
         }
@@ -295,22 +274,20 @@ namespace UXAV.AVnet.Core.Models.Rooms
                 Logger.Success($"Source selection complete, Room {Id} source (forIndex = {forIndex})" +
                                $" from \"{previousSource?.ToString() ?? "None"}\" to \"{newSource?.ToString() ?? "None"}\"");
                 if (previousSource != newSource)
-                {
-                    OnSourceChanged(this, new SourceChangedEventArgs()
+                    OnSourceChanged(this, new SourceChangedEventArgs
                     {
                         Type = SourceChangedEventArgs.EventType.Complete,
                         Source = newSource,
                         RoomSourceIndex = forIndex
                     });
-                }
             }
             catch (Exception e)
             {
-                OnSourceChanged(this, new SourceChangedEventArgs()
+                OnSourceChanged(this, new SourceChangedEventArgs
                 {
                     Type = SourceChangedEventArgs.EventType.Failed,
                     Source = newSource,
-                    RoomSourceIndex = forIndex,
+                    RoomSourceIndex = forIndex
                 });
 
                 Logger.Error(e);
@@ -348,7 +325,7 @@ namespace UXAV.AVnet.Core.Models.Rooms
         }
 
         /// <summary>
-        /// Get a display device registered to the room
+        ///     Get a display device registered to the room
         /// </summary>
         /// <param name="index">0 based index of display</param>
         /// <returns>DisplayDeviceBase</returns>
@@ -391,7 +368,7 @@ namespace UXAV.AVnet.Core.Models.Rooms
         public SourceBase Source { get; internal set; }
 
         /// <summary>
-        /// Index of the source in the room. 1 is usually main source, others are aux sources;
+        ///     Index of the source in the room. 1 is usually main source, others are aux sources;
         /// </summary>
         public uint RoomSourceIndex { get; internal set; }
     }

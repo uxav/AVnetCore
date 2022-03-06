@@ -3,19 +3,19 @@
 namespace UXAV.AVnet.Core.UI.Components
 {
     /// <summary>
-    /// A UI item which can be enabled or disabled by a digital enable join
+    ///     A UI item which can be enabled or disabled by a digital enable join
     /// </summary>
     public interface IEnableItem : ISigProvider
     {
         #region Properties
 
         /// <summary>
-        /// The UI item enable digital join
+        ///     The UI item enable digital join
         /// </summary>
         uint EnableJoinNumber { get; }
 
         /// <summary>
-        /// True if enabled
+        ///     True if enabled
         /// </summary>
         bool Enabled { get; set; }
 
@@ -24,12 +24,12 @@ namespace UXAV.AVnet.Core.UI.Components
         #region Methods
 
         /// <summary>
-        /// Enable the UI item
+        ///     Enable the UI item
         /// </summary>
         void Enable();
 
         /// <summary>
-        /// Disable the UI item
+        ///     Disable the UI item
         /// </summary>
         void Disable();
 

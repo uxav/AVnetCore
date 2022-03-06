@@ -25,10 +25,7 @@ namespace UXAV.AVnet.Core
 
         private static void CrestronEnvironmentOnProgramStatusEventHandler(eProgramStatusEventType eventType)
         {
-            if (eventType == eProgramStatusEventType.Stopping)
-            {
-                Timer?.Dispose();
-            }
+            if (eventType == eProgramStatusEventType.Stopping) Timer?.Dispose();
         }
 
         private static double GetSleepTime()

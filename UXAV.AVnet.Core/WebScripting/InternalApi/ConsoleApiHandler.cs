@@ -43,6 +43,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     //Logger.Debug($"Received response for \"{cmd}\":\r\n{r}");
                     response.Add(r);
                 }
+
                 WriteResponse(response);
             }
             catch (Exception e)

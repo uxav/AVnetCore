@@ -35,6 +35,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         {
                             HandleError(e);
                         }
+
                         break;
                     case "login":
                         try
@@ -55,7 +56,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                                 Expires = session.ExpiryTime.ToUniversalTime(),
                                 Path = "/",
                                 HttpOnly = true,
-                                Secure = false,
+                                Secure = false
                             });
                             WriteResponse(session);
                         }
@@ -67,6 +68,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         {
                             HandleError(401, "Unauthorized", e.Message);
                         }
+
                         break;
                     case "logout":
                         var token = Request.Cookies.Get("sessionId").Value;
@@ -75,7 +77,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         {
                             Value = string.Empty,
                             Expires = new DateTime(),
-                            Path = "/",
+                            Path = "/"
                         });
                         WriteResponse(null);
                         break;

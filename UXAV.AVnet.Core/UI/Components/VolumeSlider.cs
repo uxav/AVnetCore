@@ -28,10 +28,7 @@ namespace UXAV.AVnet.Core.UI.Components
             {
                 if (_volumeControl == value) return;
 
-                if (_volumeControl != null)
-                {
-                    _volumeControl.VolumeLevelChange -= VolumeControlOnVolumeLevelChange;
-                }
+                if (_volumeControl != null) _volumeControl.VolumeLevelChange -= VolumeControlOnVolumeLevelChange;
 
                 _volumeControl = value;
 
@@ -45,16 +42,16 @@ namespace UXAV.AVnet.Core.UI.Components
 
         private void VolumeControlOnVolumeLevelChange(ushort level)
         {
-            SetValue((ushort) Tools.ScaleRange(level, 0, 100, MinValue, MaxValue));
+            SetValue((ushort)Tools.ScaleRange(level, 0, 100, MinValue, MaxValue));
         }
 
         private void OnThisValueChanged(UISlider slider, ushort newValue)
         {
-            if(_volumeControl == null) return;
+            if (_volumeControl == null) return;
 
             try
             {
-                _volumeControl.VolumeLevel = (ushort) Tools.ScaleRange(newValue, MinValue, MaxValue, 0, 100);
+                _volumeControl.VolumeLevel = (ushort)Tools.ScaleRange(newValue, MinValue, MaxValue, 0, 100);
             }
             catch (Exception e)
             {

@@ -6,28 +6,22 @@ using UXAV.Logging;
 namespace UXAV.AVnet.Core.Models.Sources
 {
     /// <summary>
-    /// The base class of all AV source items
+    ///     The base class of all AV source items
     /// </summary>
     public abstract class SourceBase : IGenericItem
     {
         private readonly string _groupName;
         private readonly string _iconName;
         private readonly string _name;
-        private DisplayControllerBase _assignedDisplay;
         private int _activeUseCount;
         private bool _hasActiveVideo;
 
         protected SourceBase(uint id, SourceType type, string name, string groupName, string iconName)
         {
-            if (id == 0)
-            {
-                throw new ArgumentException("id cannot be 0", nameof(id));
-            }
+            if (id == 0) throw new ArgumentException("id cannot be 0", nameof(id));
 
             if (UxEnvironment.SourcesContainSourceWithId(id))
-            {
                 throw new ArgumentException("value already exists", nameof(id));
-            }
 
             Id = id;
             Type = type;
@@ -38,71 +32,28 @@ namespace UXAV.AVnet.Core.Models.Sources
         }
 
         /// <summary>
-        /// Unique Id for the source within the system
-        /// </summary>
-        /// <remarks>Note this is not done by room and is global throughout the program</remarks>
-        public uint Id { get; }
-
-        public string Name
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_name))
-                {
-                    return "Source " + Id;
-                }
-
-                return _name;
-            }
-        }
-
-        /// <summary>
-        /// A group name for the source
+        ///     A group name for the source
         /// </summary>
         public string GroupName => _groupName ?? string.Empty;
 
         /// <summary>
-        /// Icon name for UI
+        ///     Icon name for UI
         /// </summary>
         public string IconName => _iconName ?? string.Empty;
 
         /// <summary>
-        /// The <see cref="SourceType"/> of the source
+        ///     The <see cref="SourceType" /> of the source
         /// </summary>
         public SourceType Type { get; }
 
         /// <summary>
-        /// Used to organize priority order of sources in a collection
+        ///     Used to organize priority order of sources in a collection
         /// </summary>
         public uint Priority { get; set; }
 
         public RoomCollection<RoomBase> AssignedRooms { get; } = new RoomCollection<RoomBase>();
 
-        public void AssignRoom(RoomBase room)
-        {
-            if (room == null) throw new ArgumentException("room cannot be null");
-
-            if (AssignedRooms.Contains(room.Id)) return;
-
-            AssignedRooms.Add(room);
-        }
-
-        public void UnassignRoom(RoomBase room)
-        {
-            if (room == null) throw new ArgumentException("room cannot be null");
-
-            if (AssignedRooms.Contains(room.Id))
-            {
-                AssignedRooms.Remove(room);
-            }
-        }
-
         public bool IsAssignedToRoom => AssignedRooms.Any();
-
-        public void AssignToDisplay(DisplayControllerBase display)
-        {
-            _assignedDisplay = display ?? throw new ArgumentException("display cannot be null");
-        }
 
         public int ActiveUseCount
         {
@@ -125,11 +76,9 @@ namespace UXAV.AVnet.Core.Models.Sources
             }
         }
 
-        protected abstract void OnActiveUseCountChange(int useCount);
+        public DisplayControllerBase AssignedDisplay { get; private set; }
 
-        public DisplayControllerBase AssignedDisplay => _assignedDisplay;
-
-        public bool IsLocalToDisplay => _assignedDisplay != null;
+        public bool IsLocalToDisplay => AssignedDisplay != null;
 
         public bool IsConferenceSource
         {
@@ -235,8 +184,6 @@ namespace UXAV.AVnet.Core.Models.Sources
             }
         }
 
-        public event SourceVideoStatusChanged HasActiveVideoChanged;
-
         public virtual bool HasActiveVideo
         {
             get => _hasActiveVideo;
@@ -247,6 +194,47 @@ namespace UXAV.AVnet.Core.Models.Sources
                 HasActiveVideoChanged?.Invoke(this, value);
             }
         }
+
+        /// <summary>
+        ///     Unique Id for the source within the system
+        /// </summary>
+        /// <remarks>Note this is not done by room and is global throughout the program</remarks>
+        public uint Id { get; }
+
+        public string Name
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_name)) return "Source " + Id;
+
+                return _name;
+            }
+        }
+
+        public void AssignRoom(RoomBase room)
+        {
+            if (room == null) throw new ArgumentException("room cannot be null");
+
+            if (AssignedRooms.Contains(room.Id)) return;
+
+            AssignedRooms.Add(room);
+        }
+
+        public void UnassignRoom(RoomBase room)
+        {
+            if (room == null) throw new ArgumentException("room cannot be null");
+
+            if (AssignedRooms.Contains(room.Id)) AssignedRooms.Remove(room);
+        }
+
+        public void AssignToDisplay(DisplayControllerBase display)
+        {
+            AssignedDisplay = display ?? throw new ArgumentException("display cannot be null");
+        }
+
+        protected abstract void OnActiveUseCountChange(int useCount);
+
+        public event SourceVideoStatusChanged HasActiveVideoChanged;
 
         public void SetVideoStatus(bool videoActiveStatus)
         {
@@ -288,9 +276,11 @@ namespace UXAV.AVnet.Core.Models.Sources
         DVD,
         BluRay,
         TV,
+        // ReSharper disable once InconsistentNaming
         IPTV,
         Satellite,
         Tuner,
+        // ReSharper disable once InconsistentNaming
         DAB,
         InternetRadio,
 
@@ -308,6 +298,7 @@ namespace UXAV.AVnet.Core.Models.Sources
         NintendoWii,
         AirMedia,
         ClickShare,
+        // ReSharper disable once InconsistentNaming
         CCTV,
         AuxInput,
         LiveStream,

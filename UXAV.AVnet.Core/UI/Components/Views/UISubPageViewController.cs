@@ -12,9 +12,7 @@ namespace UXAV.AVnet.Core.UI.Components.Views
             : base(sigProvider, visibleJoinNumber, createTimeOutWithProximity)
         {
             if (animationCompleteJoinNumber > 0)
-            {
                 AnimationCompleteFeedbackJoin = sigProvider.SigProvider.BooleanOutput[animationCompleteJoinNumber];
-            }
         }
 
         protected UISubPageViewController(UITabControllerBase tabController, uint tabButtonNumber,
@@ -22,9 +20,7 @@ namespace UXAV.AVnet.Core.UI.Components.Views
             : base(tabController, visibleJoinNumber, createTimeOutWithProximity)
         {
             if (animationCompleteJoinNumber > 0)
-            {
                 AnimationCompleteFeedbackJoin = tabController.SigProvider.BooleanOutput[animationCompleteJoinNumber];
-            }
 
             tabController.AddView(tabButtonNumber, this);
         }
@@ -57,7 +53,7 @@ namespace UXAV.AVnet.Core.UI.Components.Views
             }
 
             OnVisibilityChanged(this,
-                new VisibilityChangeEventArgs(this.RequestedVisibleState, VisibilityChangeEventType.AnimationComplete));
+                new VisibilityChangeEventArgs(RequestedVisibleState, VisibilityChangeEventType.AnimationComplete));
         }
     }
 }

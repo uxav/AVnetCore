@@ -21,7 +21,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             var results = new List<object>();
             var roomCounts = new Dictionary<uint, int>();
             foreach (var device in CipDevices.GetDevices()
-                .Where(d => d is XpanelForSmartGraphics))
+                         .Where(d => d is XpanelForSmartGraphics))
             {
                 uint roomId = 0;
                 var roomName = string.Empty;
@@ -34,13 +34,9 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     if (roomId > 0)
                     {
                         if (!roomCounts.ContainsKey(roomId))
-                        {
                             roomCounts[roomId] = 1;
-                        }
                         else
-                        {
                             roomCounts[roomId]++;
-                        }
 
                         roomCount = roomCounts[roomId];
                     }
@@ -59,9 +55,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     + $" -- overrideHost=true host={SystemBase.IpAddress} ipid={device.ID} port={port} enableSSL={ssl}"
                     + " SupportsSerialAppend=true bypasslogindialog=true";
                 if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                {
                     link += $" programInstanceId={InitialParametersClass.RoomId}";
-                }
 
                 results.Add(new
                 {

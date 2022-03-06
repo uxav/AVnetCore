@@ -10,10 +10,10 @@ namespace UXAV.AVnet.Core.DeviceSupport
 {
     public abstract class DeviceBase : IDevice
     {
-        private readonly uint _roomIdAllocated;
         private static uint _idCount;
-        private string _name;
+        private readonly uint _roomIdAllocated;
         private bool _deviceCommunicating;
+        private string _name;
 
         [Obsolete("Method is no longer used. Please use ctor without passing SystemBase.")]
         // ReSharper disable once UnusedParameter.Local
@@ -26,10 +26,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
             System.DevicesDict[Id] = this;
             CrestronEnvironment.ProgramStatusEventHandler += type =>
             {
-                if (type == eProgramStatusEventType.Stopping)
-                {
-                    OnProgramStopping();
-                }
+                if (type == eProgramStatusEventType.Stopping) OnProgramStopping();
             };
             Logger.Log($"Created device {GetType().Name} \"{Name}\" with device ID {Id}");
         }
@@ -43,10 +40,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
             System.DevicesDict[Id] = this;
             CrestronEnvironment.ProgramStatusEventHandler += type =>
             {
-                if (type == eProgramStatusEventType.Stopping)
-                {
-                    OnProgramStopping();
-                }
+                if (type == eProgramStatusEventType.Stopping) OnProgramStopping();
             };
             Logger.Log($"Created device {GetType().Name} \"{Name}\" with device ID {Id}");
         }
@@ -62,8 +56,9 @@ namespace UXAV.AVnet.Core.DeviceSupport
         {
         }
 
-        public abstract IEnumerable<DiagnosticMessage> GetMessages();
         public SystemBase System => UxEnvironment.System;
+
+        public abstract IEnumerable<DiagnosticMessage> GetMessages();
         public uint Id { get; }
 
         public string Name => string.IsNullOrEmpty(_name) ? GetType().Name : _name;
@@ -84,13 +79,9 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 if (_deviceCommunicating == value) return;
                 _deviceCommunicating = value;
                 if (_deviceCommunicating)
-                {
                     Logger.Success($"{Name} is now online.", GetType().Name, true);
-                }
                 else
-                {
                     Logger.Warn($"{Name} is offline!", GetType().Name, false);
-                }
 
                 try
                 {
@@ -103,10 +94,10 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
                 EventService.Notify(EventMessageType.DeviceConnectionChange, new
                 {
-                    @Device = Name,
-                    @Description = AllocatedRoom?.Name,
+                    Device = Name,
+                    Description = AllocatedRoom?.Name,
                     ConnectionInfo,
-                    @Online = value
+                    Online = value
                 });
             }
         }
@@ -114,9 +105,11 @@ namespace UXAV.AVnet.Core.DeviceSupport
         public virtual bool DebugEnabled { get; set; }
 
         /// <summary>
-        /// Event called if the comms status changes on the device
+        ///     Event called if the comms status changes on the device
         /// </summary>
         public event DeviceCommunicatingChangeHandler DeviceCommunicatingChange;
+
+        public abstract void Initialize();
 
         internal void AllocateRoomOnStart()
         {
@@ -141,7 +134,6 @@ namespace UXAV.AVnet.Core.DeviceSupport
             _name = name;
         }
 
-        public abstract void Initialize();
         protected abstract void OnProgramStopping();
     }
 }

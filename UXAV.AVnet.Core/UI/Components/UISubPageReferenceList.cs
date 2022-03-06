@@ -10,11 +10,12 @@ namespace UXAV.AVnet.Core.UI.Components
 {
     public abstract class UISubPageReferenceList : UIObject, IButtons, IEnumerable<UISubPageReferenceListItem>
     {
-        private uint _selectedItemIndex;
-        private ushort _count;
+        public delegate UISubPageReferenceListItem CreateItemForIndexCallBack(UISubPageReferenceList list, uint id);
 
         private readonly Dictionary<uint, UISubPageReferenceListItem> _items =
             new Dictionary<uint, UISubPageReferenceListItem>();
+
+        private uint _selectedItemIndex;
 
         protected UISubPageReferenceList(SmartObject smartObject, uint digitalJoinIncrement, uint analogJoinIncrement,
             uint serialJoinIncrement, CreateItemForIndexCallBack callBack)
@@ -36,9 +37,7 @@ namespace UXAV.AVnet.Core.UI.Components
                 {
                     var name = $"Item {count} Visible";
                     if (SigProvider.BooleanInput.Contains(name))
-                    {
                         count++;
-                    }
                     else
                         break;
                 }
@@ -48,10 +47,7 @@ namespace UXAV.AVnet.Core.UI.Components
                 Logger.Debug("{0} for SmartObject ID: {1} contains {2} items", GetType(), smartObject.ID,
                     MaxNumberOfItems);
 
-                for (uint i = 1; i <= MaxNumberOfItems; i++)
-                {
-                    _items[i] = callBack(this, i);
-                }
+                for (uint i = 1; i <= MaxNumberOfItems; i++) _items[i] = callBack(this, i);
             }
             catch (Exception e)
             {
@@ -60,15 +56,7 @@ namespace UXAV.AVnet.Core.UI.Components
             }
         }
 
-        public IEnumerable<IButton> Buttons => ButtonCollection;
-
         protected UIButtonCollection ButtonCollection { get; }
-
-        public event UISubPageReferenceListSelectedItemChangeEventHander SelectedItemChange;
-
-        public event UISubPageReferenceListIsMovingChangedEventHandler IsMovingChange;
-
-        public delegate UISubPageReferenceListItem CreateItemForIndexCallBack(UISubPageReferenceList list, uint id);
 
         public UISubPageReferenceListItem this[uint id] => _items[id];
 
@@ -76,7 +64,7 @@ namespace UXAV.AVnet.Core.UI.Components
 
         public uint MaxNumberOfItems { get; }
 
-        public uint NumberOfEmptyItems => MaxNumberOfItems - _count;
+        public uint NumberOfEmptyItems => MaxNumberOfItems - ItemsAddedCount;
 
         public bool IsMoving => SigProvider.BooleanOutput["Is Moving"].BoolValue;
 
@@ -89,7 +77,23 @@ namespace UXAV.AVnet.Core.UI.Components
         public UISubPageReferenceListItem SelectedItem =>
             _items.ContainsKey(_selectedItemIndex) ? _items[_selectedItemIndex] : null;
 
-        internal ushort ItemsAddedCount => _count;
+        internal ushort ItemsAddedCount { get; private set; }
+
+        public IEnumerable<IButton> Buttons => ButtonCollection;
+
+        public IEnumerator<UISubPageReferenceListItem> GetEnumerator()
+        {
+            return _items.Values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public event UISubPageReferenceListSelectedItemChangeEventHander SelectedItemChange;
+
+        public event UISubPageReferenceListIsMovingChangedEventHandler IsMovingChange;
 
         public virtual void ScrollToItem(ushort item)
         {
@@ -102,21 +106,11 @@ namespace UXAV.AVnet.Core.UI.Components
             Logger.Debug($"{GetType().Name} NumberOfItems: {NumberOfItems}");
         }
 
-        public IEnumerator<UISubPageReferenceListItem> GetEnumerator()
-        {
-            return _items.Values.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
         public void ClearList(bool justByResettingTheCount)
         {
             _selectedItemIndex = 0;
 
-            _count = 0;
+            ItemsAddedCount = 0;
 
             if (!justByResettingTheCount)
             {
@@ -126,7 +120,7 @@ namespace UXAV.AVnet.Core.UI.Components
                     item.SetFeedbackInternal(false);
                 }
 
-                SetNumberOfItems(_count);
+                SetNumberOfItems(ItemsAddedCount);
             }
 
             OnSelectedItemChange(this);
@@ -147,25 +141,25 @@ namespace UXAV.AVnet.Core.UI.Components
 
         public virtual uint AddItem(object linkedObject, bool holdOffSettingListSize)
         {
-            if (_count == MaxNumberOfItems)
+            if (ItemsAddedCount == MaxNumberOfItems)
             {
                 Logger.Error("Cannot add item to {0}, No more items available!, count = {1}, max = {2}",
-                    GetType().Name, _count, MaxNumberOfItems);
+                    GetType().Name, ItemsAddedCount, MaxNumberOfItems);
                 return 0;
             }
 
-            _count++;
+            ItemsAddedCount++;
 
-            var item = this[_count];
+            var item = this[ItemsAddedCount];
 
             item.Show();
             item.Enable();
             item.LinkedObject = linkedObject;
 
             if (!holdOffSettingListSize)
-                SetNumberOfItems(_count);
+                SetNumberOfItems(ItemsAddedCount);
 
-            return _count;
+            return ItemsAddedCount;
         }
 
         public virtual uint AddItem(object linkedObject)
@@ -176,16 +170,15 @@ namespace UXAV.AVnet.Core.UI.Components
         public bool ContainsLinkedObject(object linkedObject)
         {
             for (uint i = 1; i <= NumberOfItems; i++)
-            {
-                if (_items[i].LinkedObject == linkedObject) return true;
-            }
+                if (_items[i].LinkedObject == linkedObject)
+                    return true;
 
             return false;
         }
 
         public void SetListSizeToItemCount()
         {
-            SetNumberOfItems(_count);
+            SetNumberOfItems(ItemsAddedCount);
         }
 
         public void SetSelectedItem(object linkedObject)
@@ -211,10 +204,7 @@ namespace UXAV.AVnet.Core.UI.Components
 
         public void SetSelectedItem(UISubPageReferenceListItem item)
         {
-            foreach (var listItem in this.Where(i => i != item))
-            {
-                listItem.SetFeedbackInternal(false);
-            }
+            foreach (var listItem in this.Where(i => i != item)) listItem.SetFeedbackInternal(false);
 
             if (item != null)
             {
@@ -231,10 +221,7 @@ namespace UXAV.AVnet.Core.UI.Components
 
         public void ClearSelectedItems()
         {
-            foreach (var listItem in this)
-            {
-                listItem.SetFeedbackInternal(false);
-            }
+            foreach (var listItem in this) listItem.SetFeedbackInternal(false);
 
             _selectedItemIndex = 0;
             OnSelectedItemChange(this);
@@ -253,9 +240,7 @@ namespace UXAV.AVnet.Core.UI.Components
         private void OnSigChange(SigProviderDevice sigProvider, SigEventArgs args)
         {
             if (args.Sig.Name == "Is Moving" && args.Sig.Type == eSigType.Bool)
-            {
                 OnIsMovingChange(this, args.Sig.BoolValue);
-            }
         }
     }
 

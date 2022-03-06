@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.WebScripting;
+using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 using Stopwatch = System.Diagnostics.Stopwatch;
 
@@ -15,23 +16,24 @@ namespace UXAV.AVnet.Core.WebScripting
 {
     public class WebScriptingServer
     {
-        private readonly Models.SystemBase _system;
+        private readonly HttpCwsServer _cws;
         private readonly string _directory;
         private readonly Dictionary<string, Type> _handlers = new Dictionary<string, Type>();
         private readonly Dictionary<string, List<string>> _keyNames = new Dictionary<string, List<string>>();
         private readonly Dictionary<string, string> _originalPatterns = new Dictionary<string, string>();
         private readonly Dictionary<string, string> _redirects = new Dictionary<string, string>();
-        private readonly HttpCwsServer _cws;
 
-        public WebScriptingServer(Models.SystemBase system, string directory)
+        public WebScriptingServer(SystemBase system, string directory)
         {
-            _system = system;
+            System = system;
             _directory = directory;
             _cws = new HttpCwsServer(directory);
             _cws.Register();
             _cws.ReceivedRequestEvent += CwsOnReceivedRequestEvent;
             CrestronEnvironment.ProgramStatusEventHandler += OnProgramStatusEventHandler;
         }
+
+        public SystemBase System { get; }
 
         private void OnProgramStatusEventHandler(eProgramStatusEventType programeventtype)
         {
@@ -45,22 +47,14 @@ namespace UXAV.AVnet.Core.WebScripting
             _cws.Unregister();
         }
 
-        public Models.SystemBase System => _system;
-
         public void AddRedirect(string routePattern, string redirectUrl)
         {
             var finalPattern = Regex.Replace(routePattern, @"\/([^\s<\/]+)|\/<(\w*)(?::([^\s>]+))?>|\/",
                 delegate(Match match)
                 {
-                    if (!string.IsNullOrEmpty(match.Groups[1].Value))
-                    {
-                        return @"\/" + match.Groups[1].Value;
-                    }
+                    if (!string.IsNullOrEmpty(match.Groups[1].Value)) return @"\/" + match.Groups[1].Value;
 
-                    if (!string.IsNullOrEmpty(match.Groups[3].Value))
-                    {
-                        return @"\/(" + match.Groups[3].Value + ")";
-                    }
+                    if (!string.IsNullOrEmpty(match.Groups[3].Value)) return @"\/(" + match.Groups[3].Value + ")";
 
                     return !string.IsNullOrEmpty(match.Groups[2].Value) ? @"\/(\w+)" : @"\/";
                 });
@@ -82,15 +76,9 @@ namespace UXAV.AVnet.Core.WebScripting
             var finalPattern = Regex.Replace(routePattern, @"\/([^\s<\/]+)|\/<(\w*)(?::([^\s>]+))?>|\/",
                 delegate(Match match)
                 {
-                    if (!string.IsNullOrEmpty(match.Groups[1].Value))
-                    {
-                        return @"\/" + match.Groups[1].Value;
-                    }
+                    if (!string.IsNullOrEmpty(match.Groups[1].Value)) return @"\/" + match.Groups[1].Value;
 
-                    if (!string.IsNullOrEmpty(match.Groups[3].Value))
-                    {
-                        return @"\/(" + match.Groups[3].Value + ")";
-                    }
+                    if (!string.IsNullOrEmpty(match.Groups[3].Value)) return @"\/(" + match.Groups[3].Value + ")";
 
                     return !string.IsNullOrEmpty(match.Groups[2].Value) ? @"\/(\w+)" : @"\/";
                 });
@@ -127,10 +115,10 @@ namespace UXAV.AVnet.Core.WebScripting
                 //Logger.Debug("Headers:" + headerContents);
 
                 foreach (var redirect in from redirect in _redirects
-                    let pattern = redirect.Key
-                    let match = Regex.Match(decodedPath, pattern)
-                    where match.Success
-                    select redirect)
+                         let pattern = redirect.Key
+                         let match = Regex.Match(decodedPath, pattern)
+                         where match.Success
+                         select redirect)
                 {
                     try
                     {
@@ -165,10 +153,7 @@ namespace UXAV.AVnet.Core.WebScripting
                         var index = 0;
                         foreach (var keyName in keyNames)
                         {
-                            if (keyName.Length > 0)
-                            {
-                                request.RoutePatternArgs[keyName] = match.Groups[index + 1].Value;
-                            }
+                            if (keyName.Length > 0) request.RoutePatternArgs[keyName] = match.Groups[index + 1].Value;
 
                             index++;
                         }
@@ -176,7 +161,7 @@ namespace UXAV.AVnet.Core.WebScripting
                         var requestType = keyValuePair.Value;
 
                         var ctor = requestType.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null,
-                            new[] {typeof(WebScriptingServer), typeof(WebScriptingRequest)}, null);
+                            new[] { typeof(WebScriptingServer), typeof(WebScriptingRequest) }, null);
 
                         if (ctor == null)
                         {
@@ -186,7 +171,7 @@ namespace UXAV.AVnet.Core.WebScripting
                         }
 
                         var instance = ctor.Invoke(BindingFlags.Public | BindingFlags.Instance, null,
-                            new object[] {this, request}, CultureInfo.InvariantCulture) as RequestHandler;
+                            new object[] { this, request }, CultureInfo.InvariantCulture) as RequestHandler;
 
                         if (instance == null)
                         {
@@ -210,6 +195,7 @@ namespace UXAV.AVnet.Core.WebScripting
                     Logger.Warn(Logger.LoggerLevel.Debug, "No handler found for request");
                     HandleError(request, 404, "Not Found", "No handler found on this path to deal with the request");
                 }
+
                 request.Response.End();
             }
             catch (Exception e)
@@ -233,7 +219,7 @@ namespace UXAV.AVnet.Core.WebScripting
             }
             catch (Exception e2)
             {
-                ErrorLog.Exception($"Error responding to 500 error", e2);
+                ErrorLog.Exception("Error responding to 500 error", e2);
             }
         }
 
