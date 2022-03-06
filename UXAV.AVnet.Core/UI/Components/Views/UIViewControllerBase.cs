@@ -7,60 +7,51 @@ using UXAV.Logging;
 namespace UXAV.AVnet.Core.UI.Components.Views
 {
     /// <summary>
-    /// Base view controller class
+    ///     Base view controller class
     /// </summary>
     public abstract class UIViewControllerBase : UIObject, IVisibleItem, IGenericItem
     {
         private readonly Mutex _mutex = new Mutex();
-        private ActivityTimeOut _timeOut;
 
         /// <summary>
-        /// 
         /// </summary>
-        internal UIViewControllerBase(ISigProvider sigProvider, uint visibleJoinNumber, bool createTimeOutWithProximity = false)
+        internal UIViewControllerBase(ISigProvider sigProvider, uint visibleJoinNumber,
+            bool createTimeOutWithProximity = false)
             : base(sigProvider)
         {
             VisibleJoinNumber = visibleJoinNumber;
             Parent = sigProvider as IVisibleItem;
-            if (Parent != null)
-            {
-                Parent.VisibilityChanged += ParentVisibilityChanged;
-            }
+            if (Parent != null) Parent.VisibilityChanged += ParentVisibilityChanged;
 
             Logger.Debug($"Created {GetType().Name} with join {VisibleJoinNumber}");
             if (Parent != null)
-            {
                 Logger.Debug($"View has parent: {Parent.GetType().Name} with join {Parent.VisibleJoinNumber}");
-            }
 
-            if (createTimeOutWithProximity)
-            {
-                CreateTimeOut(TimeSpan.Zero, true);
-            }
+            if (createTimeOutWithProximity) CreateTimeOut(TimeSpan.Zero, true);
         }
-
-        /// <summary>
-        /// Triggered when the visibility changes on the view
-        /// </summary>
-        public event VisibilityChangeEventHandler VisibilityChanged;
 
         public Core3ControllerBase Core3Controller => Core3Controllers.Get(SigProvider.Device.ID);
 
         /// <summary>
-        /// Parent visible item which this follows on hide
+        ///     Parent visible item which this follows on hide
         /// </summary>
         public IVisibleItem Parent { get; }
 
-        public uint VisibleJoinNumber { get; }
+        public ActivityTimeOut TimeOut { get; private set; }
 
         public uint Id => VisibleJoinNumber;
-
-        public ActivityTimeOut TimeOut => _timeOut;
 
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// True if currently visible
+        ///     Triggered when the visibility changes on the view
+        /// </summary>
+        public event VisibilityChangeEventHandler VisibilityChanged;
+
+        public uint VisibleJoinNumber { get; }
+
+        /// <summary>
+        ///     True if currently visible
         /// </summary>
         public virtual bool Visible
         {
@@ -94,62 +85,53 @@ namespace UXAV.AVnet.Core.UI.Components.Views
         public bool RequestedVisibleState { get; protected set; }
 
         /// <summary>
-        /// Show the view. Also cancels a timeout if active.
+        ///     Show the view. Also cancels a timeout if active.
         /// </summary>
         public virtual void Show()
         {
-            _timeOut?.Reset(TimeSpan.Zero);
+            TimeOut?.Reset(TimeSpan.Zero);
             Visible = true;
         }
 
         /// <summary>
-        /// Show the view with a timeout. Call again to reset the timeout.
+        ///     Hide the view
+        /// </summary>
+        public void Hide()
+        {
+            Visible = false;
+        }
+
+        /// <summary>
+        ///     Show the view with a timeout. Call again to reset the timeout.
         /// </summary>
         /// <param name="time">TimeSpan duration to timeout</param>
         public virtual void Show(TimeSpan time)
         {
             Logger.Debug($"{this} {nameof(Show)} with Timeout: {time}");
-            if (_timeOut == null && time > TimeSpan.Zero)
-            {
+            if (TimeOut == null && time > TimeSpan.Zero)
                 CreateTimeOut(time);
-            }
             else
-            {
-                _timeOut?.Reset(time);
-            }
+                TimeOut?.Reset(time);
 
             Visible = true;
         }
 
         /// <summary>
-        /// Set the timeout if the page is already showing. Resets timer each time it set.
+        ///     Set the timeout if the page is already showing. Resets timer each time it set.
         /// </summary>
         /// <param name="time">TimeSpan duration to timeout</param>
         protected void SetTimeOut(TimeSpan time)
         {
             Logger.Debug($"{this} {nameof(SetTimeOut)}(time = {time})");
-            if (_timeOut == null && time > TimeSpan.Zero)
-            {
+            if (TimeOut == null && time > TimeSpan.Zero)
                 CreateTimeOut(time);
-            }
-            else if(_timeOut != null)
-            {
-                _timeOut.TimeOut = time;
-            }
+            else if (TimeOut != null) TimeOut.TimeOut = time;
         }
 
         private void CreateTimeOut(TimeSpan time, bool useProximity = false)
         {
-            _timeOut = ActivityMonitor.CreateTimeOut(this, time, useProximity);
-            _timeOut.TimedOut += OnTimedOut;
-        }
-
-        /// <summary>
-        /// Hide the view
-        /// </summary>
-        public void Hide()
-        {
-            Visible = false;
+            TimeOut = ActivityMonitor.CreateTimeOut(this, time, useProximity);
+            TimeOut.TimedOut += OnTimedOut;
         }
 
         protected void OnVisibilityChanged(IVisibleItem item, VisibilityChangeEventArgs args)
@@ -195,12 +177,13 @@ namespace UXAV.AVnet.Core.UI.Components.Views
                     try
                     {
                         DidHide();
-                        _timeOut?.Cancel();
+                        TimeOut?.Cancel();
                     }
                     catch (Exception e)
                     {
                         Logger.Error(e);
                     }
+
                     break;
             }
 
@@ -230,10 +213,8 @@ namespace UXAV.AVnet.Core.UI.Components.Views
         protected override void Dispose(bool disposing)
         {
             if (disposing)
-            {
                 if (Parent != null)
                     Parent.VisibilityChanged -= ParentVisibilityChanged;
-            }
 
             base.Dispose(disposing);
         }

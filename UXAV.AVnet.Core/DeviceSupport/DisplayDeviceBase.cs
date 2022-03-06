@@ -8,13 +8,13 @@ namespace UXAV.AVnet.Core.DeviceSupport
 {
     public abstract class DisplayDeviceBase : DeviceBase, IPowerDevice, IFusionAsset
     {
-        private DevicePowerStatus _powerStatus;
-        private ushort _displayUsage;
-        private IHoistControl _screenHoist;
         private IHoistControl _deviceHoist;
+        private ushort _displayUsage;
+        private DevicePowerStatus _powerStatus;
+        private IHoistControl _screenHoist;
 
         /// <summary>
-        /// The default Constructor.
+        ///     The default Constructor.
         /// </summary>
         [Obsolete("Please use ctor without passing SystemBase.")]
         protected DisplayDeviceBase(SystemBase system, string name, uint roomAllocatedId = 0)
@@ -27,21 +27,47 @@ namespace UXAV.AVnet.Core.DeviceSupport
             : base(name, room.Id)
         {
         }
-         
+
         protected DisplayDeviceBase(string name, uint roomAllocatedId = 0)
             : base(name, roomAllocatedId)
         {
         }
 
         /// <summary>
-        /// Power status has changed
+        ///     The current input for the display
         /// </summary>
-        public event DevicePowerStatusEventHandler PowerStatusChange;
+        public abstract DisplayDeviceInput CurrentInput { get; }
 
         /// <summary>
-        /// DisplayUsage value has changed
+        ///     Get a list of available supported inputs
         /// </summary>
-        public event DisplayUsageChangeEventHandler DisplayUsageChange;
+        public abstract IEnumerable<DisplayDeviceInput> AvailableInputs { get; }
+
+        /// <summary>
+        ///     True if the display uses DisplayUsage
+        /// </summary>
+        public abstract bool SupportsDisplayUsage { get; }
+
+        /// <summary>
+        ///     Get the display usage value as a ushort, use for a analog guage.
+        /// </summary>
+        public ushort DisplayUsage
+        {
+            get => _displayUsage;
+            protected set
+            {
+                if (_displayUsage == value) return;
+                _displayUsage = value;
+                OnDisplayUsageChange(this);
+            }
+        }
+
+        public FusionAssetType FusionAssetType => FusionAssetType.Display;
+
+        /// <summary>
+        ///     Power status has changed
+        /// </summary>
+        public event DevicePowerStatusEventHandler PowerStatusChange;
 
         public virtual bool Power
         {
@@ -71,33 +97,9 @@ namespace UXAV.AVnet.Core.DeviceSupport
         }
 
         /// <summary>
-        /// The current input for the display
+        ///     DisplayUsage value has changed
         /// </summary>
-        public abstract DisplayDeviceInput CurrentInput { get; }
-
-        /// <summary>
-        /// Get a list of available supported inputs
-        /// </summary>
-        public abstract IEnumerable<DisplayDeviceInput> AvailableInputs { get; }
-
-        /// <summary>
-        /// True if the display uses DisplayUsage
-        /// </summary>
-        public abstract bool SupportsDisplayUsage { get; }
-
-        /// <summary>
-        /// Get the display usage value as a ushort, use for a analog guage.
-        /// </summary>
-        public ushort DisplayUsage
-        {
-            get => _displayUsage;
-            protected set
-            {
-                if (_displayUsage == value) return;
-                _displayUsage = value;
-                OnDisplayUsageChange(this);
-            }
-        }
+        public event DisplayUsageChangeEventHandler DisplayUsageChange;
 
         public void AssignScreenHoistDevice(IHoistControl hoistDevice)
         {
@@ -114,7 +116,6 @@ namespace UXAV.AVnet.Core.DeviceSupport
         protected virtual void OnPowerStatusChange(IPowerDevice device, DevicePowerStatusEventArgs args)
         {
             if (_deviceHoist != null)
-            {
                 try
                 {
                     switch (args.NewPowerStatus)
@@ -134,10 +135,8 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 {
                     Logger.Error(e);
                 }
-            }
 
             if (_screenHoist != null)
-            {
                 try
                 {
                     switch (args.NewPowerStatus)
@@ -158,7 +157,6 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 {
                     Logger.Error(e);
                 }
-            }
 
             var handler = PowerStatusChange;
             if (handler == null) return;
@@ -187,20 +185,21 @@ namespace UXAV.AVnet.Core.DeviceSupport
         }
 
         /// <summary>
-        /// Call this when receiving power status feedback from device.
-        /// PowerStatus = newPowerState;
+        ///     Call this when receiving power status feedback from device.
+        ///     PowerStatus = newPowerState;
         /// </summary>
         /// <param name="newPowerState"></param>
         protected abstract void SetPowerFeedback(DevicePowerStatus newPowerState);
 
         /// <summary>
-        /// This is called when the power is set by the API. Make necessary arrangements to make sure the device follows the request
+        ///     This is called when the power is set by the API. Make necessary arrangements to make sure the device follows the
+        ///     request
         /// </summary>
         /// <param name="powerRequest"></param>
         protected abstract void ActionPowerRequest(bool powerRequest);
 
         /// <summary>
-        /// Set the input on the display
+        ///     Set the input on the display
         /// </summary>
         /// <param name="input"></param>
         public abstract void SetInput(DisplayDeviceInput input);
@@ -209,12 +208,10 @@ namespace UXAV.AVnet.Core.DeviceSupport
         {
             return $"{GetType().Name} \"{Name}\"";
         }
-
-        public FusionAssetType FusionAssetType => FusionAssetType.Display;
     }
 
     /// <summary>
-    /// Event handler for a display when the value changes
+    ///     Event handler for a display when the value changes
     /// </summary>
     /// <param name="display">The display which calls the event</param>
     public delegate void DisplayUsageChangeEventHandler(DisplayDeviceBase display);
@@ -242,6 +239,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
         Wireless,
         AirPlay,
         SDI,
+        // ReSharper disable once InconsistentNaming
         USB
     }
 }

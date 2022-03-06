@@ -51,7 +51,7 @@ namespace UXAV.AVnet.Core.UI.Components.Views
 
         private void ViewOnVisibilityChanged(IVisibleItem item, VisibilityChangeEventArgs args)
         {
-            if(args.EventType != VisibilityChangeEventType.WillShow) return;
+            if (args.EventType != VisibilityChangeEventType.WillShow) return;
             foreach (var kvp in _viewsForTabButtons.Where(kvp => kvp.Value == item.VisibleJoinNumber))
             {
                 _tabBar.SetInterlockedFeedback(kvp.Key);
@@ -61,11 +61,9 @@ namespace UXAV.AVnet.Core.UI.Components.Views
 
         protected void OnTabBarButtonEvent(IButton button, ButtonEventArgs args)
         {
-            if(args.EventType != ButtonEventType.Released) return;
+            if (args.EventType != ButtonEventType.Released) return;
             if (_viewsForTabButtons.ContainsKey(args.CollectionKey))
-            {
                 _views.ShowOnly(_viewsForTabButtons[args.CollectionKey]);
-            }
         }
     }
 }

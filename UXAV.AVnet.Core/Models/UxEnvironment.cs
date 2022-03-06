@@ -10,7 +10,7 @@ using UXAV.Logging;
 namespace UXAV.AVnet.Core.Models
 {
     /// <summary>
-    /// Static method to gain access to all Sources in the program
+    ///     Static method to gain access to all Sources in the program
     /// </summary>
     public static class UxEnvironment
     {
@@ -25,21 +25,32 @@ namespace UXAV.AVnet.Core.Models
             AssemblyVersion = assembly.GetName().Version;
         }
 
+        public static SystemBase System { get; internal set; }
+        public static CrestronControlSystem ControlSystem { get; internal set; }
+        public static string Name { get; }
+        public static Version AssemblyVersion { get; }
+
+        public static Version Version
+        {
+            get
+            {
+                if (_version != null) return _version;
+                var assembly = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
+                _version = new Version(assembly.FileVersion);
+
+                return _version;
+            }
+        }
+
         internal static void InitConsoleCommands()
         {
             Logger.AddCommand((argString, args, connection, respond) =>
             {
-                foreach (var room in GetRooms())
-                {
-                    respond(room + "\r\n");
-                }
+                foreach (var room in GetRooms()) respond(room + "\r\n");
             }, "ListRooms", "List all rooms");
             Logger.AddCommand((argString, args, connection, respond) =>
             {
-                foreach (var source in GetSources())
-                {
-                    respond(source + "\r\n");
-                }
+                foreach (var source in GetSources()) respond(source + "\r\n");
             }, "ListSources", "List all sources");
             Logger.AddCommand(async (argString, args, connection, respond) =>
             {
@@ -77,23 +88,6 @@ namespace UXAV.AVnet.Core.Models
         {
             SourceCollection.Add(source);
             Logger.Log($"Added source {source.Id} to collection");
-        }
-
-        public static SystemBase System { get; internal set; }
-        public static CrestronControlSystem ControlSystem { get; internal set; }
-        public static string Name { get; }
-        public static Version AssemblyVersion { get; }
-
-        public static Version Version
-        {
-            get
-            {
-                if (_version != null) return _version;
-                var assembly = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
-                _version = new Version(assembly.FileVersion);
-
-                return _version;
-            }
         }
 
         public static bool RoomWithIdExists(uint id)

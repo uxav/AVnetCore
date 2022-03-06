@@ -9,20 +9,21 @@ namespace UXAV.AVnet.Core.UI.Components
 {
     public class UIButton : UIObject, IButton, IVisibleItem, IEnableItem
     {
-        private int _subscribeCount;
-        private ButtonEventHandler _buttonEvent;
-        private bool _sigChangesRegistered;
-        private readonly Stopwatch _stopwatch = new Stopwatch();
-        private TimeSpan _holdTime = TimeSpan.FromSeconds(1);
-        private TimeSpan _repeatTime = TimeSpan.Zero;
-        private readonly Timer _holdTimer;
-        private readonly Timer _holdRepeatTimer;
-        private bool _held;
         private readonly string _feedbackJoinName;
-        private string _name;
+        private readonly Timer _holdRepeatTimer;
+        private readonly Timer _holdTimer;
+        private readonly Stopwatch _stopwatch = new Stopwatch();
+        private ButtonEventHandler _buttonEvent;
+        private bool _held;
+        private TimeSpan _holdTime = TimeSpan.FromSeconds(1);
         private uint? _id;
+        private string _name;
+        private TimeSpan _repeatTime = TimeSpan.Zero;
+        private bool _sigChangesRegistered;
+        private int _subscribeCount;
 
-        public UIButton(ISigProvider sigProvider, uint digitalJoinNumber, uint enableJoinNumber = 0, uint visibleJoinNumber = 0, uint id = 0)
+        public UIButton(ISigProvider sigProvider, uint digitalJoinNumber, uint enableJoinNumber = 0,
+            uint visibleJoinNumber = 0, uint id = 0)
             : base(sigProvider)
         {
             DigitalJoinNumber = digitalJoinNumber;
@@ -34,10 +35,7 @@ namespace UXAV.AVnet.Core.UI.Components
             _holdRepeatTimer.AutoReset = true;
             EnableJoinNumber = enableJoinNumber;
             VisibleJoinNumber = visibleJoinNumber;
-            if (id > 0)
-            {
-                _id = id;
-            }
+            if (id > 0) _id = id;
         }
 
         public UIButton(ISigProvider sigProvider, string pressJoinName, string feedbackJoinName, uint id = 0)
@@ -51,10 +49,7 @@ namespace UXAV.AVnet.Core.UI.Components
             _holdRepeatTimer = new Timer();
             _holdRepeatTimer.Elapsed += HoldTimerOnElapsed;
             _holdRepeatTimer.AutoReset = true;
-            if (id > 0)
-            {
-                _id = id;
-            }
+            if (id > 0) _id = id;
         }
 
         public UIButton(ISigProvider sigProvider, string pressJoinName, string feedbackJoinName, string enableJoinName,
@@ -63,10 +58,7 @@ namespace UXAV.AVnet.Core.UI.Components
         {
             EnableJoinNumber = SigProvider.BooleanInput[enableJoinName].Number;
             VisibleJoinNumber = SigProvider.BooleanInput[visibleJoinName].Number;
-            if (id > 0)
-            {
-                _id = id;
-            }
+            if (id > 0) _id = id;
         }
 
         public uint DigitalJoinNumber { get; }
@@ -78,7 +70,7 @@ namespace UXAV.AVnet.Core.UI.Components
             get
             {
                 if (_id == null) return 0;
-                return (uint) _id;
+                return (uint)_id;
             }
         }
 
@@ -88,10 +80,7 @@ namespace UXAV.AVnet.Core.UI.Components
             {
                 if (string.IsNullOrEmpty(_name))
                 {
-                    if (_id != null)
-                    {
-                        return $"Button {_id}";
-                    }
+                    if (_id != null) return $"Button {_id}";
 
                     return $"Button with join {DigitalJoinNumber}";
                 }
@@ -108,9 +97,7 @@ namespace UXAV.AVnet.Core.UI.Components
             get
             {
                 if (string.IsNullOrEmpty(_feedbackJoinName))
-                {
                     return SigProvider.BooleanInput[DigitalJoinNumber].BoolValue;
-                }
 
                 return SigProvider.BooleanInput[_feedbackJoinName].BoolValue;
             }
@@ -125,44 +112,6 @@ namespace UXAV.AVnet.Core.UI.Components
                 SigProvider.BooleanInput[_feedbackJoinName].BoolValue = value;
             }
         }
-
-        /// <summary>
-        /// True if the item is visible
-        /// </summary>
-        public virtual bool Visible
-        {
-            get => VisibleJoinNumber == 0 || SigProvider.BooleanInput[VisibleJoinNumber].BoolValue;
-            set
-            {
-                if (VisibleJoinNumber == 0 || SigProvider.BooleanInput[VisibleJoinNumber].BoolValue == value) return;
-
-                RequestedVisibleState = value;
-
-                OnVisibilityChanged(this,
-                    new VisibilityChangeEventArgs(value, value
-                        ? VisibilityChangeEventType.WillShow
-                        : VisibilityChangeEventType.WillHide));
-
-                SigProvider.BooleanInput[VisibleJoinNumber].BoolValue = value;
-
-                OnVisibilityChanged(this,
-                    new VisibilityChangeEventArgs(value, value
-                        ? VisibilityChangeEventType.DidShow
-                        : VisibilityChangeEventType.DidHide));
-            }
-        }
-
-        public virtual bool Enabled
-        {
-            get => EnableJoinNumber == 0 || SigProvider.BooleanInput[EnableJoinNumber].BoolValue;
-            set
-            {
-                if (EnableJoinNumber == 0) return;
-                SigProvider.BooleanInput[EnableJoinNumber].BoolValue = value;
-            }
-        }
-
-        public bool RequestedVisibleState { get; protected set; }
 
         public TimeSpan HoldTime
         {
@@ -197,17 +146,9 @@ namespace UXAV.AVnet.Core.UI.Components
                 _subscribeCount--;
                 // ReSharper disable once DelegateSubtraction
                 _buttonEvent -= value;
-                if (_subscribeCount == 0)
-                {
-                    UnregisterToSigChanges();
-                }
+                if (_subscribeCount == 0) UnregisterToSigChanges();
             }
         }
-
-        /// <summary>
-        /// Subscribe to visibility change events
-        /// </summary>
-        public event VisibilityChangeEventHandler VisibilityChanged;
 
         public void SetFeedback(bool value)
         {
@@ -218,6 +159,74 @@ namespace UXAV.AVnet.Core.UI.Components
             }
 
             SigProvider.BooleanInput[_feedbackJoinName].BoolValue = value;
+        }
+
+        public void SetId(uint id)
+        {
+            _id = id;
+        }
+
+        public virtual bool Enabled
+        {
+            get => EnableJoinNumber == 0 || SigProvider.BooleanInput[EnableJoinNumber].BoolValue;
+            set
+            {
+                if (EnableJoinNumber == 0) return;
+                SigProvider.BooleanInput[EnableJoinNumber].BoolValue = value;
+            }
+        }
+
+        public void Enable()
+        {
+            Enabled = true;
+        }
+
+        public void Disable()
+        {
+            Enabled = false;
+        }
+
+        /// <summary>
+        ///     True if the item is visible
+        /// </summary>
+        public virtual bool Visible
+        {
+            get => VisibleJoinNumber == 0 || SigProvider.BooleanInput[VisibleJoinNumber].BoolValue;
+            set
+            {
+                if (VisibleJoinNumber == 0 || SigProvider.BooleanInput[VisibleJoinNumber].BoolValue == value) return;
+
+                RequestedVisibleState = value;
+
+                OnVisibilityChanged(this,
+                    new VisibilityChangeEventArgs(value, value
+                        ? VisibilityChangeEventType.WillShow
+                        : VisibilityChangeEventType.WillHide));
+
+                SigProvider.BooleanInput[VisibleJoinNumber].BoolValue = value;
+
+                OnVisibilityChanged(this,
+                    new VisibilityChangeEventArgs(value, value
+                        ? VisibilityChangeEventType.DidShow
+                        : VisibilityChangeEventType.DidHide));
+            }
+        }
+
+        public bool RequestedVisibleState { get; protected set; }
+
+        /// <summary>
+        ///     Subscribe to visibility change events
+        /// </summary>
+        public event VisibilityChangeEventHandler VisibilityChanged;
+
+        public void Show()
+        {
+            Visible = true;
+        }
+
+        public void Hide()
+        {
+            Visible = false;
         }
 
         private void RegisterToSigChanges()
@@ -232,31 +241,6 @@ namespace UXAV.AVnet.Core.UI.Components
             if (!_sigChangesRegistered) return;
             SigProvider.SigChange -= OnSigChange;
             _sigChangesRegistered = false;
-        }
-
-        public void Show()
-        {
-            Visible = true;
-        }
-
-        public void Hide()
-        {
-            Visible = false;
-        }
-
-        public void Enable()
-        {
-            Enabled = true;
-        }
-
-        public void Disable()
-        {
-            Enabled = false;
-        }
-
-        public void SetId(uint id)
-        {
-            _id = id;
         }
 
         public void SetEnableJoin(uint join)
@@ -289,10 +273,7 @@ namespace UXAV.AVnet.Core.UI.Components
                 _holdTimer.Stop();
                 _holdRepeatTimer.Stop();
                 _stopwatch.Stop();
-                if (!_held)
-                {
-                    OnButtonEvent(this, new ButtonEventArgs(ButtonEventType.Tapped, _stopwatch.Elapsed));
-                }
+                if (!_held) OnButtonEvent(this, new ButtonEventArgs(ButtonEventType.Tapped, _stopwatch.Elapsed));
 
                 _held = false;
                 OnButtonEvent(this, new ButtonEventArgs(ButtonEventType.Released, _stopwatch.Elapsed));
@@ -359,14 +340,14 @@ namespace UXAV.AVnet.Core.UI.Components
     }
 
     /// <summary>
-    /// A handler delegate for a button event
+    ///     A handler delegate for a button event
     /// </summary>
     /// <param name="button">The button which triggered the event</param>
     /// <param name="args">Information about the event</param>
     public delegate void ButtonEventHandler(IButton button, ButtonEventArgs args);
 
     /// <summary>
-    /// Args for a button event
+    ///     Args for a button event
     /// </summary>
     public class ButtonEventArgs : EventArgs
     {
@@ -387,58 +368,58 @@ namespace UXAV.AVnet.Core.UI.Components
         }
 
         /// <summary>
-        /// The button event type occuring for this event
+        ///     The button event type occuring for this event
         /// </summary>
         public ButtonEventType EventType { get; }
 
         /// <summary>
-        /// The time the button has been held since a press occured
+        ///     The time the button has been held since a press occured
         /// </summary>
         public TimeSpan HoldTime { get; }
 
         /// <summary>
-        /// True if the event was called from a button collection
+        ///     True if the event was called from a button collection
         /// </summary>
         public bool CalledFromCollection { get; }
 
         /// <summary>
-        /// Returns a collection if the event is called from a collection
+        ///     Returns a collection if the event is called from a collection
         /// </summary>
         public UIButtonCollection Collection { get; }
 
         /// <summary>
-        /// The key value of the button in the collection
+        ///     The key value of the button in the collection
         /// </summary>
         public uint CollectionKey { get; }
     }
 
     /// <summary>
-    /// Describes the type of button event occuring
+    ///     Describes the type of button event occuring
     /// </summary>
     public enum ButtonEventType
     {
         /// <summary>
-        /// The button was pressed
+        ///     The button was pressed
         /// </summary>
         Pressed,
 
         /// <summary>
-        /// The button was pressed and immediately released before a hold
+        ///     The button was pressed and immediately released before a hold
         /// </summary>
         Tapped,
 
         /// <summary>
-        /// The button was held
+        ///     The button was held
         /// </summary>
         Held,
 
         /// <summary>
-        /// The button is being held and a repeat event was triggered
+        ///     The button is being held and a repeat event was triggered
         /// </summary>
         HoldRepeat,
 
         /// <summary>
-        /// The button was released
+        ///     The button was released
         /// </summary>
         Released
     }

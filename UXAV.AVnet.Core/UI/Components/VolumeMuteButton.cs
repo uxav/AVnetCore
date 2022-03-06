@@ -4,8 +4,8 @@ namespace UXAV.AVnet.Core.UI.Components
 {
     public class VolumeMuteButton : UIButton
     {
-        private IVolumeControl _volumeControl;
         private readonly bool _mutedState;
+        private IVolumeControl _volumeControl;
 
         public VolumeMuteButton(ISigProvider sigProvider, uint digitalJoinNumber, uint enableJoinNumber = 0,
             uint visibleJoinNumber = 0, uint id = 0, bool mutedState = true)

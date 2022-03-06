@@ -24,10 +24,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
         {
             get
             {
-                if (IsSmartObject)
-                {
-                    return SmartObject.Device as BasicTriList;
-                }
+                if (IsSmartObject) return SmartObject.Device as BasicTriList;
 
                 return _basicTriList;
             }
@@ -55,6 +52,12 @@ namespace UXAV.AVnet.Core.DeviceSupport
         public DeviceUShortOutputCollection UShortOutput =>
             SmartObject != null ? SmartObject.UShortOutput : _basicTriList.UShortOutput;
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         public event SigChangeEventHandler SigChange;
 
         private void BasicTriListOnSigChange(BasicTriList currentDevice, SigEventArgs args)
@@ -71,19 +74,9 @@ namespace UXAV.AVnet.Core.DeviceSupport
         {
             if (!disposing) return;
             if (SmartObject != null)
-            {
                 SmartObject.SigChange -= SmartObjectOnSigChange;
-            }
             else
-            {
                 _basicTriList.SigChange -= BasicTriListOnSigChange;
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         ~SigProviderDevice()

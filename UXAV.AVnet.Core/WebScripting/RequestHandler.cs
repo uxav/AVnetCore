@@ -4,6 +4,7 @@ using System.Threading;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
 using Crestron.SimplSharp.WebScripting;
+using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting
@@ -16,16 +17,14 @@ namespace UXAV.AVnet.Core.WebScripting
             Request = request;
             try
             {
-                if (!SuppressLogging)
-                {
-                    Logger.Debug(ToString());
-                }
+                if (!SuppressLogging) Logger.Debug(ToString());
             }
             catch (Exception e)
             {
                 Logger.Error(e);
             }
         }
+
         protected RequestHandler(WebScriptingServer server, WebScriptingRequest request, bool suppressLogging)
         {
             Server = server;
@@ -33,10 +32,7 @@ namespace UXAV.AVnet.Core.WebScripting
             SuppressLogging = suppressLogging;
             try
             {
-                if (!SuppressLogging)
-                {
-                    Logger.Debug(ToString());
-                }
+                if (!SuppressLogging) Logger.Debug(ToString());
             }
             catch (Exception e)
             {
@@ -46,7 +42,7 @@ namespace UXAV.AVnet.Core.WebScripting
 
         public WebScriptingServer Server { get; }
 
-        public Models.SystemBase System => Server.System;
+        public SystemBase System => Server.System;
 
         public WebScriptingRequest Request { get; }
 
@@ -57,10 +53,7 @@ namespace UXAV.AVnet.Core.WebScripting
         protected Session ValidateSession(bool renew)
         {
             var cookie = Request.Cookies["sessionId"];
-            if (cookie == null)
-            {
-                return null;
-            }
+            if (cookie == null) return null;
             var session = AppAuthentication.ValidateSession(cookie.Value, renew);
             if (session == null || session.ExpiryTime < DateTime.Now)
             {
@@ -68,7 +61,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 {
                     Value = string.Empty,
                     Expires = new DateTime().ToUniversalTime(),
-                    Path = "/",
+                    Path = "/"
                 });
                 return null;
             }
@@ -79,7 +72,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 Expires = session.ExpiryTime.ToUniversalTime(),
                 Path = "/",
                 HttpOnly = true,
-                Secure = false,
+                Secure = false
             });
 
             return session;
@@ -106,10 +99,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 var secure = method.GetCustomAttribute<SecureRequestAttribute>();
                 if (secure != null && Authentication.Enabled)
                 {
-                    if (!SuppressLogging)
-                    {
-                        Logger.Debug("Method is secure... validating");
-                    }
+                    if (!SuppressLogging) Logger.Debug("Method is secure... validating");
                     var session = ValidateSession(true);
                     switch (session)
                     {
@@ -120,10 +110,8 @@ namespace UXAV.AVnet.Core.WebScripting
                             HandleError(401, "Unauthorized", "No session valid. Please login.");
                             return;
                     }
-                    if (!SuppressLogging)
-                    {
-                        Logger.Debug("Session ok!");
-                    }
+
+                    if (!SuppressLogging) Logger.Debug("Session ok!");
                 }
 
                 try

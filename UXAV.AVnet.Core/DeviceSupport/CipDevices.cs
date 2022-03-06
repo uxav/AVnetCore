@@ -22,12 +22,12 @@ namespace UXAV.AVnet.Core.DeviceSupport
         private static readonly ConcurrentDictionary<uint, string> XPanelFilePaths =
             new ConcurrentDictionary<uint, string>();
 
+        public static CrestronControlSystem ControlSystem { get; private set; }
+
         public static void Init(CrestronControlSystem controlSystem)
         {
             ControlSystem = controlSystem;
         }
-
-        public static CrestronControlSystem ControlSystem { get; private set; }
 
         public static uint GetNextAvailableIpId()
         {
@@ -36,12 +36,13 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         public static uint GetNextAvailableIpId(uint ipId)
         {
-            if(ipId < 0x03) throw new IndexOutOfRangeException("id must be greater than 0x03");
+            if (ipId < 0x03) throw new IndexOutOfRangeException("id must be greater than 0x03");
             for (var id = ipId; id <= 0xFE; id++)
             {
-                if(ContainsDevice(id)) continue;
+                if (ContainsDevice(id)) continue;
                 return id;
             }
+
             throw new InvalidOperationException("No more ID's available");
         }
 
@@ -52,10 +53,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         public static GenericDevice GetOrCreateDevice(string typeName, uint ipId, string description)
         {
-            if (Devices.ContainsKey(ipId))
-            {
-                return GetDevice(ipId);
-            }
+            if (Devices.ContainsKey(ipId)) return GetDevice(ipId);
 
             return CreateDevice(typeName, ipId, description);
         }
@@ -63,10 +61,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
         public static GenericDevice GetOrCreateDevice(string typeName, uint ipId, string ipAddressOrHostname,
             string description)
         {
-            if (Devices.ContainsKey(ipId))
-            {
-                return GetDevice(ipId);
-            }
+            if (Devices.ContainsKey(ipId)) return GetDevice(ipId);
 
             return CreateDevice(typeName, ipId, ipAddressOrHostname, description);
         }
@@ -74,21 +69,17 @@ namespace UXAV.AVnet.Core.DeviceSupport
         public static GenericDevice CreateDevice(string typeName, uint ipId, string description)
         {
             if (Devices.ContainsKey(ipId))
-            {
                 throw new ArgumentException($"Device with ID {ipId:X2} already exists", nameof(ipId));
-            }
 
             var type = GetType(typeName);
-            var ctor = type.GetConstructor(new[] {typeof(uint), typeof(CrestronControlSystem)});
+            var ctor = type.GetConstructor(new[] { typeof(uint), typeof(CrestronControlSystem) });
             if (ctor == null)
-            {
                 throw new Exception(
                     "Could not find ctor in the form of (uint, CrestronControlSystem)");
-            }
 
             try
             {
-                var device = (GenericDevice) ctor.Invoke(new object[] {ipId, ControlSystem});
+                var device = (GenericDevice)ctor.Invoke(new object[] { ipId, ControlSystem });
                 device.Description = description;
                 Devices[device.ID] = device;
                 device.OnlineStatusChange += DeviceOnOnlineStatusChange;
@@ -96,10 +87,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
             }
             catch (TargetInvocationException e)
             {
-                if (e.InnerException != null)
-                {
-                    throw e.InnerException;
-                }
+                if (e.InnerException != null) throw e.InnerException;
 
                 // ReSharper disable once PossibleIntendedRethrow
                 throw e;
@@ -117,9 +105,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
             string description)
         {
             if (Devices.ContainsKey(ipId))
-            {
                 throw new ArgumentException($"Device with ID {ipId:X2} already exists", nameof(ipId));
-            }
 
             var type = GetType(typeName);
             var ctor = type.GetConstructor(new[]
@@ -129,10 +115,8 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 typeof(CrestronControlSystem)
             });
             if (ctor == null)
-            {
                 throw new Exception(
                     "Could not find ctor in the form of (uint, string, CrestronControlSystem)");
-            }
 
             try
             {
@@ -144,10 +128,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
             }
             catch (TargetInvocationException e)
             {
-                if (e.InnerException != null)
-                {
-                    throw e.InnerException;
-                }
+                if (e.InnerException != null) throw e.InnerException;
 
                 // ReSharper disable once PossibleIntendedRethrow
                 throw e;
@@ -157,9 +138,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
         internal static FusionRoom CreateFusionRoom(uint ipId, string roomName, string description)
         {
             if (Devices.ContainsKey(ipId))
-            {
                 throw new ArgumentException($"Device with ID {ipId:X2} already exists", nameof(ipId));
-            }
 
             var room = new FusionRoom(ipId, ControlSystem, roomName, Guid.NewGuid().ToString())
             {
@@ -173,10 +152,10 @@ namespace UXAV.AVnet.Core.DeviceSupport
         {
             EventService.Notify(EventMessageType.DeviceConnectionChange, new
             {
-                @Device = currentdevice.Name,
-                @Description = currentdevice.Description,
-                @ConnectionInfo = $"IP ID: {currentdevice.ID:X2}",
-                @Online = args.DeviceOnLine
+                Device = currentdevice.Name,
+                currentdevice.Description,
+                ConnectionInfo = $"IP ID: {currentdevice.ID:X2}",
+                Online = args.DeviceOnLine
             });
         }
 
@@ -263,9 +242,8 @@ namespace UXAV.AVnet.Core.DeviceSupport
         internal static void RegisterDevices()
         {
             foreach (var device in Devices.Values
-                .Where(d => !(d is FusionRoom))
-                .Where(d => !d.Registered))
-            {
+                         .Where(d => !(d is FusionRoom))
+                         .Where(d => !d.Registered))
                 try
                 {
                     var result = device.Register();
@@ -281,16 +259,14 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 {
                     Logger.Error(e);
                 }
-            }
         }
 
         internal static void RegisterFusionRooms()
         {
             Logger.Highlight("Registering Fusion Room instances now");
             foreach (var device in Devices.Values
-                .Where(d => d is FusionRoom)
-                .Where(d => !d.Registered))
-            {
+                         .Where(d => d is FusionRoom)
+                         .Where(d => !d.Registered))
                 try
                 {
                     var result = device.Register();
@@ -306,7 +282,6 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 {
                     Logger.Error(e);
                 }
-            }
         }
     }
 }

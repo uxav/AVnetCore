@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 
@@ -10,10 +9,7 @@ namespace UXAV.AVnet.Core.Models
         {
             CrestronEnvironment.ProgramStatusEventHandler += type =>
             {
-                if (type == eProgramStatusEventType.Stopping)
-                {
-                    Notify(EventMessageType.ProgramStopping, null);
-                }
+                if (type == eProgramStatusEventType.Stopping) Notify(EventMessageType.ProgramStopping, null);
             };
         }
 

@@ -16,20 +16,17 @@ namespace UXAV.AVnet.Core.UI.Components
             SigProvider = new SigProviderDevice(smartObject);
         }
 
-        public SigProviderDevice SigProvider { get; }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                SigProvider?.Dispose();
-            }
-        }
-
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public SigProviderDevice SigProvider { get; }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing) SigProvider?.Dispose();
         }
 
         ~UIObject()

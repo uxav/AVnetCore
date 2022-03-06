@@ -8,13 +8,14 @@ namespace UXAV.AVnet.Core.UI.Ch5
     public abstract class Ch5UIController<THandler> : Core3ControllerBase where THandler : Ch5ApiHandlerBase
     {
         private string _webSocketUrl;
-        
-        protected Ch5UIController(SystemBase system, uint roomId, string typeName, uint ipId, string description, string pathOfVtz)
+
+        protected Ch5UIController(SystemBase system, uint roomId, string typeName, uint ipId, string description,
+            string pathOfVtz)
             : base(system, roomId, typeName, ipId, description, pathOfVtz)
         {
             try
             {
-                Ch5WebSocketServer.AddDeviceService<THandler>(this);
+                Ch5WebSocketServer.AddDeviceService(this);
             }
             catch (Exception e)
             {

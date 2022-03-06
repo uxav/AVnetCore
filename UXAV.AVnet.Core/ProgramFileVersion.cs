@@ -57,7 +57,6 @@ namespace UXAV.AVnet.Core
                         var entries = zipFile.Entries
                             .Where(e => CheckFileNameForPotentialAssembly(e.FullName));
                         foreach (var entry in entries)
-                        {
                             try
                             {
                                 Logger.Debug($"Checking \"{entry.FullName}\" ...");
@@ -66,13 +65,12 @@ namespace UXAV.AVnet.Core
                                     var tmpFilePath = SystemBase.TempFileDirectory + "/" + entry.FullName;
                                     Logger.Debug($"Writing file to temp file: {tmpFilePath}");
                                     using (var tmpFile = File.Open(tmpFilePath, FileMode.Create, FileAccess.ReadWrite,
-                                        FileShare.None))
+                                               FileShare.None))
                                     {
                                         entryStream.CopyTo(tmpFile);
                                         var assembly = Assembly.ReflectionOnlyLoadFrom(tmpFilePath);
                                         var types = assembly.GetTypes();
                                         foreach (var type in types)
-                                        {
                                             try
                                             {
                                                 if (!type.IsClass || type.IsNotPublic) continue;
@@ -91,23 +89,18 @@ namespace UXAV.AVnet.Core
                                                 Logger.Warn(
                                                     $"Error looking at {type}, {e.GetType().Name}: {e.Message}");
                                             }
-                                        }
                                     }
 
                                     Logger.Debug($"Deleting temp file: {tmpFilePath}");
                                     File.Delete(tmpFilePath);
 
-                                    if (!string.IsNullOrEmpty(result.Name))
-                                    {
-                                        break;
-                                    }
+                                    if (!string.IsNullOrEmpty(result.Name)) break;
                                 }
                             }
                             catch (Exception e)
                             {
                                 Logger.Warn($"Could not read entry: {entry.FullName}, {e.GetType().Name}");
                             }
-                        }
                     }
                 }
             }
@@ -133,7 +126,7 @@ namespace UXAV.AVnet.Core
                 @"^Crestron.", @"^System.", @"^Microsoft.", @"^SimplSharp", @"^Newtonsoft.", @"^CsvHelper.",
                 @"^CsvHelper.", @"^CsvHelper.dll$", @"^Nerdbank.Streams.dll$", @"^netstandard.dll$",
                 @"^UXAV.Cisco.dll$", @"^UXAV.AVnet.Core.dll$", @"^UXAV.Logging.dll$", @"^StreamJsonRpc.dll",
-                @"^MessagePack.Annotations.dll",
+                @"^MessagePack.Annotations.dll"
             }.All(ignorePattern => !Regex.IsMatch(fileName, ignorePattern));
         }
 

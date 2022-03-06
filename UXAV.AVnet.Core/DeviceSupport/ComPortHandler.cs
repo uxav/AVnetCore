@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpProInternal;
 using UXAV.Logging;
@@ -10,39 +9,13 @@ namespace UXAV.AVnet.Core.DeviceSupport
     {
         private readonly IComPortDevice _portDevice;
         private readonly ComPort.ComPortSpec _portSpec;
-        private bool _init;
         private bool _connected;
+        private bool _init;
 
         public ComPortHandler(IComPortDevice portDevice, ComPort.ComPortSpec portSpec)
         {
             _portDevice = portDevice;
             _portSpec = portSpec;
-        }
-
-        public void Register()
-        {
-            Logger.Log($"Attempting to register port device: {_portDevice}");
-            if (!(_portDevice is CrestronDevice port) || port.Registered)
-            {
-                Logger.Log("Port does not need to register");
-                return;
-            }
-            if (port.ParentDevice is CresnetDevice parent)
-            {
-                if (!parent.Registered)
-                {
-                    Logger.Log("Skipping device registration as parent is not registered yet");
-                    return;
-                }
-            }
-            var result = port.Register();
-            if (result == eDeviceRegistrationUnRegistrationResponse.Success)
-            {
-                Logger.Success($"Registered port device: {_portDevice} ok!");
-                return;
-            }
-
-            Logger.Error("Could not register comport {0}, {1}", _portDevice.ToString(), result);
         }
 
         public void Connect()
@@ -56,10 +29,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 var str = args.SerialData;
                 var data = new byte[str.Length];
 
-                for (var i = 0; i < str.Length; i++)
-                {
-                    data[i] = unchecked((byte)str[i]);
-                }
+                for (var i = 0; i < str.Length; i++) data[i] = unchecked((byte)str[i]);
                 OnReceivedData(this, data);
             };
             Connected = true;
@@ -92,6 +62,32 @@ namespace UXAV.AVnet.Core.DeviceSupport
         }
 
         public DeviceConnectionType ConnectionType => DeviceConnectionType.Serial;
+
+        public void Register()
+        {
+            Logger.Log($"Attempting to register port device: {_portDevice}");
+            if (!(_portDevice is CrestronDevice port) || port.Registered)
+            {
+                Logger.Log("Port does not need to register");
+                return;
+            }
+
+            if (port.ParentDevice is CresnetDevice parent)
+                if (!parent.Registered)
+                {
+                    Logger.Log("Skipping device registration as parent is not registered yet");
+                    return;
+                }
+
+            var result = port.Register();
+            if (result == eDeviceRegistrationUnRegistrationResponse.Success)
+            {
+                Logger.Success($"Registered port device: {_portDevice} ok!");
+                return;
+            }
+
+            Logger.Error("Could not register comport {0}, {1}", _portDevice.ToString(), result);
+        }
 
         protected virtual void OnReceivedData(IDeviceConnection client, byte[] bytes)
         {

@@ -21,31 +21,19 @@ namespace UXAV.AVnet.Core.UI.Components
             SigProvider.SigChange += SigProviderOnSigChange;
         }
 
-        public event UITextFieldEventHandler HasChanged;
+        public uint TextOutJoinNumber { get; }
+        public uint EnterJoinNumber { get; }
+        public uint EscapeJoinNumber { get; }
+        public uint FocusJoinNumber { get; }
 
-        private void SigProviderOnSigChange(SigProviderDevice device, SigEventArgs args)
+        public bool HasFocus
         {
-            if (args.Event == eSigEvent.StringChange && args.Sig.Number == TextOutJoinNumber)
+            set
             {
-                _text = args.Sig.StringValue;
-                OnHasChanged(this, new UITextFieldEventArgs(UITextFieldEventType.TextChanged, _text));
+                if (FocusJoinNumber == 0) return;
+                SigProvider.BooleanInput[FocusJoinNumber].BoolValue = value;
             }
-
-            if (args.Event == eSigEvent.BoolChange && EnterJoinNumber > 0 && args.Sig.Number == EnterJoinNumber && args.Sig.BoolValue)
-            {
-                OnEnter();
-            }
-
-            if (args.Event == eSigEvent.BoolChange && EscapeJoinNumber > 0 && args.Sig.Number == EscapeJoinNumber && args.Sig.BoolValue)
-            {
-                OnEscape();
-            }
-
-            if (args.Event == eSigEvent.BoolChange && FocusJoinNumber > 0 && args.Sig.Number == FocusJoinNumber)
-            {
-                HasFocus = args.Sig.BoolValue;
-                OnFocusChange(args.Sig.BoolValue);
-            }
+            get => FocusJoinNumber != 0 && SigProvider.BooleanOutput[FocusJoinNumber].BoolValue;
         }
 
         public void SetText(string text)
@@ -54,10 +42,6 @@ namespace UXAV.AVnet.Core.UI.Components
         }
 
         public uint SerialJoinNumber { get; }
-        public uint TextOutJoinNumber { get; }
-        public uint EnterJoinNumber { get; }
-        public uint EscapeJoinNumber { get; }
-        public uint FocusJoinNumber { get; }
 
         public string Text
         {
@@ -69,14 +53,27 @@ namespace UXAV.AVnet.Core.UI.Components
             }
         }
 
-        public bool HasFocus
+        public event UITextFieldEventHandler HasChanged;
+
+        private void SigProviderOnSigChange(SigProviderDevice device, SigEventArgs args)
         {
-            set
+            if (args.Event == eSigEvent.StringChange && args.Sig.Number == TextOutJoinNumber)
             {
-                if(FocusJoinNumber == 0) return;
-                SigProvider.BooleanInput[FocusJoinNumber].BoolValue = value;
+                _text = args.Sig.StringValue;
+                OnHasChanged(this, new UITextFieldEventArgs(UITextFieldEventType.TextChanged, _text));
             }
-            get => FocusJoinNumber != 0 && SigProvider.BooleanOutput[FocusJoinNumber].BoolValue;
+
+            if (args.Event == eSigEvent.BoolChange && EnterJoinNumber > 0 && args.Sig.Number == EnterJoinNumber &&
+                args.Sig.BoolValue) OnEnter();
+
+            if (args.Event == eSigEvent.BoolChange && EscapeJoinNumber > 0 && args.Sig.Number == EscapeJoinNumber &&
+                args.Sig.BoolValue) OnEscape();
+
+            if (args.Event == eSigEvent.BoolChange && FocusJoinNumber > 0 && args.Sig.Number == FocusJoinNumber)
+            {
+                HasFocus = args.Sig.BoolValue;
+                OnFocusChange(args.Sig.BoolValue);
+            }
         }
 
         protected virtual void OnEnter()
@@ -112,19 +109,19 @@ namespace UXAV.AVnet.Core.UI.Components
         TextChanged,
         DidEnter,
         DidEscape,
-        FocusChanged,
+        FocusChanged
     }
 
     public class UITextFieldEventArgs : EventArgs
     {
-        public UITextFieldEventType EventType { get; }
-        public string TextValue { get; }
-
         internal UITextFieldEventArgs(UITextFieldEventType eventType, string textValue)
         {
             EventType = eventType;
             TextValue = textValue;
         }
+
+        public UITextFieldEventType EventType { get; }
+        public string TextValue { get; }
     }
 
     public delegate void UITextFieldEventHandler(UITextField textField, UITextFieldEventArgs args);

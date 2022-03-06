@@ -22,7 +22,7 @@ namespace UXAV.AVnet.Core.UI.Components
                 if (_hardButtonExtender == null) return true;
                 var value = _hardButtonExtender.GetBoolPropertyValue($"Button{DigitalJoinNumber}BacklightOnFeedback");
                 if (value == null) return false;
-                return (bool) value;
+                return (bool)value;
             }
             set
             {
@@ -43,7 +43,7 @@ namespace UXAV.AVnet.Core.UI.Components
 
         private void DeviceOnOnlineStatusChange(GenericBase currentdevice, OnlineOfflineEventArgs args)
         {
-            if(!args.DeviceOnLine) return;
+            if (!args.DeviceOnLine) return;
             Enabled = _lastSetEnabled;
         }
     }

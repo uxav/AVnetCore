@@ -42,13 +42,10 @@ namespace UXAV.AVnet.Core.Models
             {
                 var now = DateTime.Now;
                 //Logger.Log("Time is now " + now.ToString("R"));
-                EventService.Notify(EventMessageType.TimeChanged, new {@Time = now, @Formatted = now.ToString("t")});
+                EventService.Notify(EventMessageType.TimeChanged, new { Time = now, Formatted = now.ToString("t") });
                 var timeToNextMinute = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0) +
-                                       TimeSpan.FromSeconds(60.001) - now;
-                if (timeToNextMinute == TimeSpan.Zero)
-                {
-                    timeToNextMinute += TimeSpan.FromSeconds(1);
-                }
+                    TimeSpan.FromSeconds(60.001) - now;
+                if (timeToNextMinute == TimeSpan.Zero) timeToNextMinute += TimeSpan.FromSeconds(1);
 
                 Wait.WaitOne(timeToNextMinute);
             }

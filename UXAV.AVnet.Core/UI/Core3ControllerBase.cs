@@ -17,6 +17,7 @@ using UXAV.AVnet.Core.UI.Components;
 using UXAV.AVnet.Core.UI.Components.Views;
 using UXAV.AVnet.Core.UI.ReservedJoins;
 using UXAV.Logging;
+using ButtonEventArgs = UXAV.AVnet.Core.UI.Components.ButtonEventArgs;
 using IButton = UXAV.AVnet.Core.UI.Components.IButton;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -26,12 +27,11 @@ namespace UXAV.AVnet.Core.UI
 {
     public abstract class Core3ControllerBase : ISigProvider, IGenericDeviceWrapper, IFusionAsset, IConnectedItem
     {
-        private readonly uint _roomId;
-        private RoomBase _room;
-        private RoomBase _defaultRoom;
-
         private readonly Dictionary<DeviceExtender, string> _deviceExtenderNames =
             new Dictionary<DeviceExtender, string>();
+
+        private readonly uint _roomId;
+        private RoomBase _room;
 
         protected Core3ControllerBase(SystemBase system, uint roomId, string typeName, uint ipId, string description,
             string pathOfVtz = "", string sgdPathOverride = "")
@@ -42,14 +42,10 @@ namespace UXAV.AVnet.Core.UI
                 $"Creating {GetType().FullName} with device type {typeName} with IP ID: {ipId:X2}");
 
             if (typeName == typeof(XpanelForSmartGraphics).FullName)
-            {
-                Device = (BasicTriListWithSmartObject) CipDevices.CreateXPanelForSmartGraphics(ipId, description,
+                Device = (BasicTriListWithSmartObject)CipDevices.CreateXPanelForSmartGraphics(ipId, description,
                     pathOfVtz);
-            }
             else
-            {
-                Device = (BasicTriListWithSmartObject) CipDevices.CreateDevice(typeName, ipId, description);
-            }
+                Device = (BasicTriListWithSmartObject)CipDevices.CreateDevice(typeName, ipId, description);
 
             SigProvider = new SigProviderDevice(Device);
 
@@ -92,9 +88,7 @@ namespace UXAV.AVnet.Core.UI
             ExtenderCamera = UseDeviceExtenderByName("ExtenderCameraReservedSigs");
             ExtenderEthernet = UseDeviceExtenderByName("ExtenderEthernetReservedSigs");
             if (Device is TswXX70Base)
-            {
                 ExtenderApplication = UseDeviceExtenderByName("ExtenderApplicationControlReservedSigs");
-            }
 
             ExtenderZoomRoom = UseDeviceExtenderByName("ExtenderZoomRoomAppReservedSigs");
             ExtenderHardButton = UseDeviceExtenderByName("ExtenderHardButtonReservedSigs");
@@ -124,9 +118,7 @@ namespace UXAV.AVnet.Core.UI
 
             HardButtons = new UIButtonCollection();
             for (var button = 1U; button <= 5; button++)
-            {
                 HardButtons.Add(new UIHardButton(this, button, ExtenderHardButton));
-            }
 
             HardButtons.ButtonEvent += OnHardButtonEvent;
 
@@ -174,10 +166,7 @@ namespace UXAV.AVnet.Core.UI
                     posibleFiles.AddRange(search);
                 }
 
-                foreach (var file in posibleFiles)
-                {
-                    Logger.Debug($"Possible sgd file: {file}");
-                }
+                foreach (var file in posibleFiles) Logger.Debug($"Possible sgd file: {file}");
             }
 
             foreach (var file in posibleFiles)
@@ -191,9 +180,7 @@ namespace UXAV.AVnet.Core.UI
                     }
 
                     foreach (var smartObject in Device.SmartObjects)
-                    {
                         Logger.Debug($"{this} has SmartObject ID {smartObject.Key}");
-                    }
 
                     break;
                 }
@@ -204,43 +191,7 @@ namespace UXAV.AVnet.Core.UI
             }
         }
 
-        protected DeviceExtender UseDeviceExtenderByName(string name)
-        {
-            try
-            {
-                var extender = (DeviceExtender) Device.GetType()
-                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    .FirstOrDefault(p => p.Name == name)
-                    ?.GetValue(Device, null);
-                if (extender != null && !_deviceExtenderNames.ContainsKey(extender))
-                {
-                    extender.Use();
-                    extender.DeviceExtenderSigChange += OnDeviceExtenderSigChange;
-                    Logger.Debug($"{this} has {extender.GetType().Name} \"{name}\"");
-                    _deviceExtenderNames[extender] = name;
-                    return extender;
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Warn(
-                    $"Could not get {name} Device Extender from {Device.GetType().FullName}, {e.Message}");
-            }
-
-            return null;
-        }
-
         public BasicTriListWithSmartObject Device { get; }
-
-        public GenericDevice GenericDevice => Device;
-
-        public event RoomChangeEventHandler RoomChanged;
-
-        public uint Id => Device.ID;
-
-        public string Name => Device.Description;
-
-        public SigProviderDevice SigProvider { get; }
 
         public SystemBase System { get; }
 
@@ -295,9 +246,9 @@ namespace UXAV.AVnet.Core.UI
         public DeviceExtender ExtenderSetup { get; }
 
         public DeviceExtender ExtenderToolbar { get; }
-        
+
         public DeviceExtender ExtenderLyncMeetingRoom { get; }
-        
+
         public DeviceExtender ExtenderUcEngine { get; }
 
         public DeviceExtender ExtenderPinPoint { get; }
@@ -312,6 +263,78 @@ namespace UXAV.AVnet.Core.UI
                 if (Device is CrestronAppBase device) device.ParameterProjectName.Value = value;
             }
         }
+
+        public RoomBase DefaultRoom { get; private set; }
+
+        public RoomBase Room
+        {
+            get => _room;
+            set
+            {
+                if (_room == value) return;
+                if (_room != null) _room.SourceChanged -= RoomOnSourceChangedInternal;
+
+                _room = value;
+                OnRoomChangeInternal(value);
+                if (_room != null) _room.SourceChanged += RoomOnSourceChangedInternal;
+            }
+        }
+
+        public string ConnectionInfo
+        {
+            get
+            {
+                var ipAddresses = Device.ConnectedIpList.Select(information => information.DeviceIpAddress);
+                var ipAddressString = string.Join(", ", ipAddresses);
+                return $"IP ID: {Device.ID:X2} ({ipAddressString})";
+            }
+        }
+
+        public bool DeviceCommunicating => Device.IsOnline;
+        public event DeviceCommunicatingChangeHandler DeviceCommunicatingChange;
+
+        public uint Id => Device.ID;
+
+        public string Name => Device.Description;
+
+        public string ManufacturerName => "Crestron";
+        public string ModelName => Device.Name;
+        public string SerialNumber => "Unknown";
+        public string Identity => Device.ToString();
+        public RoomBase AllocatedRoom => DefaultRoom;
+        public FusionAssetType FusionAssetType => FusionAssetType.TouchPanel;
+
+        public GenericDevice GenericDevice => Device;
+
+        public SigProviderDevice SigProvider { get; }
+
+        protected DeviceExtender UseDeviceExtenderByName(string name)
+        {
+            try
+            {
+                var extender = (DeviceExtender)Device.GetType()
+                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .FirstOrDefault(p => p.Name == name)
+                    ?.GetValue(Device, null);
+                if (extender != null && !_deviceExtenderNames.ContainsKey(extender))
+                {
+                    extender.Use();
+                    extender.DeviceExtenderSigChange += OnDeviceExtenderSigChange;
+                    Logger.Debug($"{this} has {extender.GetType().Name} \"{name}\"");
+                    _deviceExtenderNames[extender] = name;
+                    return extender;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Warn(
+                    $"Could not get {name} Device Extender from {Device.GetType().FullName}, {e.Message}");
+            }
+
+            return null;
+        }
+
+        public event RoomChangeEventHandler RoomChanged;
 
         private void OnIpInformationChange(GenericBase currentdevice, ConnectedIpEventArgs args)
         {
@@ -332,13 +355,9 @@ namespace UXAV.AVnet.Core.UI
         protected virtual void OnOnlineStatusChange(GenericBase currentDevice, OnlineOfflineEventArgs args)
         {
             if (args.DeviceOnLine)
-            {
                 Logger.Success($"{currentDevice} is now online");
-            }
             else
-            {
                 Logger.Warn($"{currentDevice} is now offline");
-            }
 
             DeviceCommunicatingChange?.Invoke(this, args.DeviceOnLine);
         }
@@ -350,10 +369,7 @@ namespace UXAV.AVnet.Core.UI
                 : extender.GetType().Name;
             var sigName = extender.GetSigPropertyName(args.Sig);
             if (string.IsNullOrEmpty(sigName)) return;
-            if (sigName != "LightSensorValueFeedback")
-            {
-                Logger.Debug($"{Device} {extenderName}.{sigName} = {args.Sig}");
-            }
+            if (sigName != "LightSensorValueFeedback") Logger.Debug($"{Device} {extenderName}.{sigName} = {args.Sig}");
 
             switch (sigName)
             {
@@ -371,28 +387,6 @@ namespace UXAV.AVnet.Core.UI
             }
         }
 
-        public RoomBase DefaultRoom => _defaultRoom;
-
-        public RoomBase Room
-        {
-            get => _room;
-            set
-            {
-                if (_room == value) return;
-                if (_room != null)
-                {
-                    _room.SourceChanged -= RoomOnSourceChangedInternal;
-                }
-
-                _room = value;
-                OnRoomChangeInternal(value);
-                if (_room != null)
-                {
-                    _room.SourceChanged += RoomOnSourceChangedInternal;
-                }
-            }
-        }
-
         private void OnRoomChangeInternal(RoomBase value)
         {
             Logger.Highlight($"{this} Room Set: {value}");
@@ -400,10 +394,7 @@ namespace UXAV.AVnet.Core.UI
             {
                 OnRoomChange(value);
                 RoomChanged?.Invoke(this, value);
-                if (value.GetCurrentSource() != null)
-                {
-                    UIShouldShowSource(value.GetCurrentSource());
-                }
+                if (value.GetCurrentSource() != null) UIShouldShowSource(value.GetCurrentSource());
             }
             catch (Exception e)
             {
@@ -416,10 +407,7 @@ namespace UXAV.AVnet.Core.UI
         private void RoomOnSourceChangedInternal(RoomBase room, SourceChangedEventArgs args)
         {
             RoomOnSourceChanged(room, args);
-            if (args.Source != null && args.RoomSourceIndex == 1)
-            {
-                ShowUIForSource(args.Source);
-            }
+            if (args.Source != null && args.RoomSourceIndex == 1) ShowUIForSource(args.Source);
         }
 
         public void ShowUIForSource(SourceBase source)
@@ -470,17 +458,14 @@ namespace UXAV.AVnet.Core.UI
             ExtenderApplication.InvokeMethod("BrowserKioskOff");
         }
 
-        protected abstract void OnHardButtonEvent(Components.IButton button, Components.ButtonEventArgs args);
+        protected abstract void OnHardButtonEvent(IButton button, ButtonEventArgs args);
 
         internal void InitializeInternal()
         {
-            if (UxEnvironment.RoomWithIdExists(_roomId))
-            {
-                _defaultRoom = UxEnvironment.GetRoom(_roomId);
-            }
+            if (UxEnvironment.RoomWithIdExists(_roomId)) DefaultRoom = UxEnvironment.GetRoom(_roomId);
 
-            OnInitialize(_defaultRoom);
-            Room = _defaultRoom;
+            OnInitialize(DefaultRoom);
+            Room = DefaultRoom;
 
             Task.Run(ShowDefaultPage);
         }
@@ -491,26 +476,6 @@ namespace UXAV.AVnet.Core.UI
         {
             return $"{Device}";
         }
-
-        public string ManufacturerName => "Crestron";
-        public string ModelName => Device.Name;
-        public string SerialNumber => "Unknown";
-        public string Identity => Device.ToString();
-        public RoomBase AllocatedRoom => DefaultRoom;
-        public FusionAssetType FusionAssetType => FusionAssetType.TouchPanel;
-
-        public string ConnectionInfo
-        {
-            get
-            {
-                var ipAddresses = Device.ConnectedIpList.Select(information => information.DeviceIpAddress);
-                var ipAddressString = string.Join(", ", ipAddresses);
-                return $"IP ID: {Device.ID:X2} ({ipAddressString})";
-            }
-        }
-
-        public bool DeviceCommunicating => Device.IsOnline;
-        public event DeviceCommunicatingChangeHandler DeviceCommunicatingChange;
     }
 
     public delegate void RoomChangeEventHandler(Core3ControllerBase controller, RoomBase newRoom);

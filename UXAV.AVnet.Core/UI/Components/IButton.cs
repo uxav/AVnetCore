@@ -11,14 +11,14 @@ namespace UXAV.AVnet.Core.UI.Components
         uint VisibleJoinNumber { get; }
         bool IsPressed { get; }
         bool Feedback { get; set; }
-        void SetId(uint id);
 
         /// <summary>
-        /// Set or get the time for the button to trigger a hold event
+        ///     Set or get the time for the button to trigger a hold event
         /// </summary>
         TimeSpan HoldTime { get; }
 
         TimeSpan RepeatTime { get; }
+        void SetId(uint id);
 
         void SetupHoldAndRepeatTimes(double holdTimeInSeconds, double repeatTimeInSeconds);
 

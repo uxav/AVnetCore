@@ -16,11 +16,6 @@ namespace UXAV.AVnet.Core.UI.Components
 
         public uint SerialJoinNumber { get; }
 
-        public void Clear()
-        {
-            SigProvider.StringInput[SerialJoinNumber].StringValue = string.Empty;
-        }
-
         public void SetText(string text)
         {
             if (text == null) return;
@@ -31,6 +26,11 @@ namespace UXAV.AVnet.Core.UI.Components
         {
             get => SigProvider.StringInput[SerialJoinNumber].StringValue;
             set => SigProvider.StringInput[SerialJoinNumber].StringValue = value;
+        }
+
+        public void Clear()
+        {
+            SigProvider.StringInput[SerialJoinNumber].StringValue = string.Empty;
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Web;
 using Crestron.SimplSharp;
 using UXAV.AVnet.Core.Cloud;
 using UXAV.AVnet.Core.Models;
@@ -20,16 +21,14 @@ namespace UXAV.AVnet.Core.WebScripting.Download
             {
                 var zipStream = DiagnosticsArchiveTool.CreateArchiveAsync().Result;
                 if (!string.IsNullOrEmpty(CloudConnector.LogsUploadUrl))
-                {
                     Response.Headers.Add("X-App-CloudUploadUrl", CloudConnector.LogsUploadUrl);
-                }
                 Response.Headers.Add("Access-Control-Expose-Headers", "Content-Disposition, X-App-CloudUploadUrl");
                 Response.Headers.Add("Content-Disposition",
                     $"attachment; filename=\"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip\"");
 
                 Logger.Log("Generated zip package, {0} bytes", zipStream.Length);
 
-                Response.ContentType = global::System.Web.MimeMapping.GetMimeMapping(".zip");
+                Response.ContentType = MimeMapping.GetMimeMapping(".zip");
                 Response.Headers.Add("Content-Length", zipStream.Length.ToString());
 
                 var headerContents = Response.Headers.Cast<string>().Aggregate(string.Empty,

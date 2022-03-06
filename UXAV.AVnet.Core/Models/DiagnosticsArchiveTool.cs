@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -152,7 +153,7 @@ namespace UXAV.AVnet.Core.Models
                                         "netstat",
                                         "threadpoolinfo",
                                         "autodiscover query tableformat",
-                                        "reportcresnet",
+                                        "reportcresnet"
                                     };
 
                                     foreach (var command in commands)
@@ -197,7 +198,7 @@ namespace UXAV.AVnet.Core.Models
                                     infoStream.WriteLine("Server Room ID: {0}", InitialParametersClass.RoomId);
                                     infoStream.WriteLine("Server Room Name: {0}", InitialParametersClass.RoomName);
                                     infoStream.WriteLine("ProcessId: {0}",
-                                        global::System.Diagnostics.Process.GetCurrentProcess().Id);
+                                        Process.GetCurrentProcess().Id);
                                     infoStream.WriteLine("ApplicationNumber: {0}",
                                         InitialParametersClass.ApplicationNumber);
                                     var tz = CrestronEnvironment.GetTimeZone();
@@ -225,10 +226,7 @@ namespace UXAV.AVnet.Core.Models
                             var loggerEntry = archive.CreateEntry("Logs/" + "logger.txt");
                             using (var stream = new StreamWriter(loggerEntry.Open()))
                             {
-                                foreach (var message in Logger.History)
-                                {
-                                    stream.WriteLine(message);
-                                }
+                                foreach (var message in Logger.History) stream.WriteLine(message);
                             }
                         }
                         catch
@@ -265,7 +263,6 @@ namespace UXAV.AVnet.Core.Models
                                     var logFolder = new DirectoryInfo("/logs");
                                     var logFiles = logFolder.EnumerateFiles("*", SearchOption.AllDirectories);
                                     foreach (var fileInfo in logFiles)
-                                    {
                                         try
                                         {
                                             Logger.Debug("Creating zip entry for " + fileInfo.FullName);
@@ -285,7 +282,6 @@ namespace UXAV.AVnet.Core.Models
                                         {
                                             Logger.Error(e);
                                         }
-                                    }
 
                                     break;
                                 }

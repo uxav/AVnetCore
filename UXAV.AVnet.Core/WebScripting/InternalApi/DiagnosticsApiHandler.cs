@@ -1,6 +1,5 @@
 using System;
 using UXAV.AVnet.Core.Models.Diagnostics;
-using UXAV.AVnet.Core.Models;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {

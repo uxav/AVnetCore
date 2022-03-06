@@ -1,5 +1,3 @@
-using System;
-using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Crestron.SimplSharp;
@@ -8,60 +6,50 @@ namespace UXAV.AVnet.Core
 {
     public class AutoDiscoveryResult
     {
-        private readonly string _ipAddress;
-        private readonly ushort _ipId;
-        private readonly string _hostname;
-        private readonly EthernetAdapterType _adapter;
-        private readonly string _detailsString;
-        private readonly string _model;
-        private readonly string _version;
-        private readonly string _macAddress;
         private readonly string _tsid;
 
         internal AutoDiscoveryResult(EthernetAutodiscovery.AutoDiscoveredDeviceElement element)
         {
-            _ipAddress = element.IPAddress;
-            _ipId = element.IPId;
-            _hostname = element.HostName;
-            _adapter = element.AdapterType;
-            _detailsString = element.DeviceIdString;
-            var details = Regex.Match(_detailsString,
+            IpAddress = element.IPAddress;
+            IpId = element.IPId;
+            Hostname = element.HostName;
+            Adapter = element.AdapterType;
+            DetailsString = element.DeviceIdString;
+            var details = Regex.Match(DetailsString,
                 @"([\w-]+).*\[(.+?)(?: \((.+)\))?, *[^\w]?(\w{8,})\]\ ?(?:@E-(\w{12}))*");
             if (details.Success)
             {
-                _model = details.Groups[1].Value;
-                _version = details.Groups[2].Value;
+                Model = details.Groups[1].Value;
+                Version = details.Groups[2].Value;
                 _tsid = details.Groups[4].Value;
-                _macAddress = details.Groups[5].Value;
-                if (!string.IsNullOrEmpty(_macAddress))
-                {
-                    _macAddress = string.Join(":", Enumerable.Range(0, 6)
-                        .Select(i => _macAddress.Substring(i * 2, 2)));
-                }
+                MacAddress = details.Groups[5].Value;
+                if (!string.IsNullOrEmpty(MacAddress))
+                    MacAddress = string.Join(":", Enumerable.Range(0, 6)
+                        .Select(i => MacAddress.Substring(i * 2, 2)));
             }
             else
             {
-                _model = "Unknown";
-                _version = string.Empty;
-                _macAddress = string.Empty;
+                Model = "Unknown";
+                Version = string.Empty;
+                MacAddress = string.Empty;
             }
         }
 
-        public string IpAddress => _ipAddress;
+        public string IpAddress { get; }
 
-        public ushort IpId => _ipId;
+        public ushort IpId { get; }
 
-        public string IpIdString => _ipId == 0 ? string.Empty : _ipId.ToString("X2");
+        public string IpIdString => IpId == 0 ? string.Empty : IpId.ToString("X2");
 
-        public string Hostname => _hostname;
+        public string Hostname { get; }
 
-        public EthernetAdapterType Adapter => _adapter;
+        public EthernetAdapterType Adapter { get; }
 
         public string AdapterString
         {
             get
             {
-                switch (_adapter)
+                switch (Adapter)
                 {
                     case EthernetAdapterType.EthernetLANAdapter:
                         return "LAN";
@@ -77,13 +65,13 @@ namespace UXAV.AVnet.Core
             }
         }
 
-        public string DetailsString => _detailsString;
+        public string DetailsString { get; }
 
-        public string Model => _model;
+        public string Model { get; }
 
-        public string Version => _version;
+        public string Version { get; }
 
-        public string MacAddress => _macAddress;
+        public string MacAddress { get; }
 
         public string SerialNumber =>
             string.IsNullOrEmpty(_tsid) ? string.Empty : CrestronEnvironment.ConvertTSIDToSerialNumber(_tsid);

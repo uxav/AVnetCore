@@ -25,7 +25,6 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         var appDirectory = new DirectoryInfo(SystemBase.ProgramApplicationDirectory);
                         var cpzFiles = appDirectory.GetFiles("*.cpz", SearchOption.TopDirectoryOnly);
                         foreach (var fileInfo in cpzFiles)
-                        {
                             try
                             {
                                 var info = ProgramFileVersion.Get(fileInfo.FullName);
@@ -40,7 +39,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                             {
                                 Logger.Error(e);
                             }
-                        }
+
                         break;
                     case "nvram":
                         var nvramDirectory = new DirectoryInfo(SystemBase.ProgramNvramAppInstanceDirectory);
@@ -73,17 +72,13 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             {
                 case "program":
                     if (File.Exists(SystemBase.ProgramApplicationDirectory + "/" + fileName))
-                    {
                         File.Delete(SystemBase.ProgramApplicationDirectory + "/" + fileName);
-                    }
 
                     WriteResponse(true);
                     return;
                 case "nvram":
                     if (File.Exists(SystemBase.ProgramNvramAppInstanceDirectory + "/" + fileName))
-                    {
                         File.Delete(SystemBase.ProgramNvramAppInstanceDirectory + "/" + fileName);
-                    }
 
                     WriteResponse(true);
                     return;

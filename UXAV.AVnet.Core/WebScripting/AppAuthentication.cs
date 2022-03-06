@@ -17,7 +17,7 @@ namespace UXAV.AVnet.Core.WebScripting
         private static readonly Hashtable Sessions;
         private static readonly EventWaitHandle WaitHandle;
         private static bool _updated;
-        private static ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private static readonly ReaderWriterLockSlim Lock = new ReaderWriterLockSlim();
 
         static AppAuthentication()
         {
@@ -28,10 +28,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 WaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
                 CrestronEnvironment.ProgramStatusEventHandler += type =>
                 {
-                    if (type == eProgramStatusEventType.Stopping)
-                    {
-                        WaitHandle.Set();
-                    }
+                    if (type == eProgramStatusEventType.Stopping) WaitHandle.Set();
                 };
                 ThreadPool.QueueUserWorkItem(ManageSessions);
             }
@@ -70,8 +67,8 @@ namespace UXAV.AVnet.Core.WebScripting
                 var now = DateTime.Now;
                 var expiredSessions =
                     (from key in keys
-                        let date = ((Session) Sessions[key]).ExpiryTime
-                        let expired = DateTime.Now > date
+                        let date = ((Session)Sessions[key]).ExpiryTime
+                        let expired = now > date
                         where expired
                         select key).ToArray();
 
@@ -92,7 +89,7 @@ namespace UXAV.AVnet.Core.WebScripting
             lock (Sessions)
             {
                 if (!Sessions.ContainsKey(sessionId)) return null;
-                session = (Session) Sessions[sessionId];
+                session = (Session)Sessions[sessionId];
             }
 
             try
@@ -130,26 +127,27 @@ namespace UXAV.AVnet.Core.WebScripting
         {
             if (!File.Exists(@"/nvram/sessions.bin")) return new Hashtable();
             Hashtable data = null;
-            _lock.EnterReadLock();
+            Lock.EnterReadLock();
             try
             {
                 var formatter = new BinaryFormatter();
                 using (var fs = File.OpenRead(@"/nvram/sessions.bin"))
                 {
-                    data = (Hashtable) formatter.Deserialize(fs);
+                    data = (Hashtable)formatter.Deserialize(fs);
                 }
             }
             catch
             {
                 data = new Hashtable();
             }
-            _lock.ExitReadLock();
+
+            Lock.ExitReadLock();
             return data;
         }
 
         private static void SaveData(Hashtable data)
         {
-            _lock.EnterWriteLock();
+            Lock.EnterWriteLock();
             var formatter = new BinaryFormatter();
             using (var fs = File.Create(@"/nvram/sessions.bin"))
             {
@@ -157,7 +155,7 @@ namespace UXAV.AVnet.Core.WebScripting
             }
 
             _updated = false;
-            _lock.ExitWriteLock();
+            Lock.ExitWriteLock();
         }
 
         public static Session StartSession(string username, string password, bool stayLoggedIn = false)
@@ -168,10 +166,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 .Replace("=", "")
                 .Replace("+", "");
             var expiry = DateTime.Now + TimeSpan.FromMinutes(30);
-            if (stayLoggedIn)
-            {
-                expiry = DateTime.Now + TimeSpan.FromDays(30);
-            }
+            if (stayLoggedIn) expiry = DateTime.Now + TimeSpan.FromDays(30);
             var session = new Session(sessionId, userToken.UserName, expiry);
             Logger.Log("Created new WebApp Session {0}, Expires {1}", sessionId, expiry.ToString("R"));
             lock (Sessions)
@@ -216,16 +211,16 @@ namespace UXAV.AVnet.Core.WebScripting
         public string SessionId { get; }
         public DateTime ExpiryTime { get; set; }
 
-        public override string ToString()
-        {
-            return $"Session for \"{Name}\" Expires: {ExpiryTime}";
-        }
-
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             info.AddValue(nameof(Name), Name);
             info.AddValue(nameof(SessionId), SessionId);
             info.AddValue(nameof(ExpiryTime), ExpiryTime);
+        }
+
+        public override string ToString()
+        {
+            return $"Session for \"{Name}\" Expires: {ExpiryTime}";
         }
     }
 }

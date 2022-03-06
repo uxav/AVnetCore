@@ -1,7 +1,6 @@
 using System;
 using Crestron.SimplSharp.Reflection;
 using UXAV.AVnet.Core.Models;
-using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.StaticFiles
 {
@@ -18,18 +17,13 @@ namespace UXAV.AVnet.Core.WebScripting.StaticFiles
             try
             {
                 var path = "index.html";
-                if (Request.RoutePatternArgs.ContainsKey("filepath"))
-                {
-                    path = Request.RoutePatternArgs["filepath"];
-                }
+                if (Request.RoutePatternArgs.ContainsKey("filepath")) path = Request.RoutePatternArgs["filepath"];
 
                 //Logger.Debug("Looking for file resource: {0}", path);
                 var stream = GetResourceStream(Assembly.GetExecutingAssembly(), path);
                 if (stream == null)
-                {
                     //Logger.Debug("File not found, defaulting to index.html !");
                     stream = GetResourceStream(Assembly.GetExecutingAssembly(), "index.html");
-                }
 
                 //Logger.Debug("Stream = " + stream);
                 if (stream == null)

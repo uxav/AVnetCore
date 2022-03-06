@@ -13,10 +13,7 @@ namespace UXAV.AVnet.Core.UI
         internal static void Register(Core3ControllerBase controller, DeviceExtender touchDetectionExtender,
             DeviceExtender system3Extender)
         {
-            if (Monitors.ContainsKey(controller))
-            {
-                throw new ArgumentException("Already registered", nameof(controller));
-            }
+            if (Monitors.ContainsKey(controller)) throw new ArgumentException("Already registered", nameof(controller));
 
             var monitor = new ControllerActivityMonitor(controller, touchDetectionExtender, system3Extender);
             Monitors[controller] = monitor;
