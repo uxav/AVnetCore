@@ -16,8 +16,8 @@ namespace UXAV.AVnet.Core.UI.Components
             var enumValues = Enum.GetValues(typeof(UIKeypadButtonValue)).Cast<UIKeypadButtonValue>();
             foreach (var value in enumValues)
             {
-                var btn = new UIButton(this, startJoin + (uint) value);
-                btn.SetId((uint) value);
+                var btn = new UIButton(this, startJoin + (uint)value);
+                btn.SetId((uint)value);
                 _buttons.Add(btn);
             }
         }
@@ -39,14 +39,14 @@ namespace UXAV.AVnet.Core.UI.Components
 
                 if (value >= UIKeypadButtonValue.Misc1)
                 {
-                    btn = new UIButton(this, 1 + (uint) value);
-                    btn.SetId((uint) value);
+                    btn = new UIButton(this, 1 + (uint)value);
+                    btn.SetId((uint)value);
                     _buttons.Add(btn);
                     continue;
                 }
 
-                btn = new UIButton(this, (uint) value);
-                btn.SetId((uint) value);
+                btn = new UIButton(this, (uint)value);
+                btn.SetId((uint)value);
                 _buttons.Add(btn);
             }
         }

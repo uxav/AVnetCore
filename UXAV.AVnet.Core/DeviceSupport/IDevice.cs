@@ -6,7 +6,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
     public interface IDevice : IDiagnosticItem, IInitializable, IAsset, IConnectedItem
     {
         /// <summary>
-        /// Version information string
+        ///     Version information string
         /// </summary>
         string VersionInfo { get; }
 

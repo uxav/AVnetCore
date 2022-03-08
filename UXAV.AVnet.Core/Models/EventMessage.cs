@@ -13,6 +13,7 @@ namespace UXAV.AVnet.Core.Models
 
         [JsonConverter(typeof(StringEnumConverter))]
         public EventMessageType MessageType { get; }
+
         public object Message { get; }
     }
 }

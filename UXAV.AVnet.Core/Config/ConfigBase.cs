@@ -10,11 +10,11 @@ namespace UXAV.AVnet.Core.Config
         [Description("PList for custom values as strings")]
         public ConcurrentDictionary<string, object> PropertyList { get; set; }
 
-        public abstract void CreateDefault();
-
         public string ConfigName { get; set; }
         public string SystemType { get; set; }
         public string SystemName { get; set; }
+
+        public abstract void CreateDefault();
 
         public override string ToString()
         {

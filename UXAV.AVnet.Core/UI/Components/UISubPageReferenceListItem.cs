@@ -28,8 +28,8 @@ namespace UXAV.AVnet.Core.UI.Components
                     var inputSigs = new Dictionary<uint, BoolInputSig>();
                     var outputSigs = new Dictionary<uint, BoolOutputSig>();
                     for (var i = id * list.DigitalJoinIncrement - (list.DigitalJoinIncrement - 1);
-                        i <= id * list.DigitalJoinIncrement;
-                        i++)
+                         i <= id * list.DigitalJoinIncrement;
+                         i++)
                     {
                         count++;
                         inputSigs[count] = SigProvider.BooleanInput[$"fb{i}"];
@@ -46,8 +46,8 @@ namespace UXAV.AVnet.Core.UI.Components
                     var inputSigs = new Dictionary<uint, UShortInputSig>();
                     var outputSigs = new Dictionary<uint, UShortOutputSig>();
                     for (var i = id * list.AnalogJoinIncrement - (list.AnalogJoinIncrement - 1);
-                        i <= id * list.AnalogJoinIncrement;
-                        i++)
+                         i <= id * list.AnalogJoinIncrement;
+                         i++)
                     {
                         count++;
                         inputSigs[count] = SigProvider.UShortInput[$"an_fb{i}"];
@@ -64,8 +64,8 @@ namespace UXAV.AVnet.Core.UI.Components
                     var inputSigs = new Dictionary<uint, StringInputSig>();
                     var outputSigs = new Dictionary<uint, StringOutputSig>();
                     for (var i = id * list.SerialJoinIncrement - (list.SerialJoinIncrement - 1);
-                        i <= id * list.SerialJoinIncrement;
-                        i++)
+                         i <= id * list.SerialJoinIncrement;
+                         i++)
                     {
                         count++;
                         inputSigs[count] = SigProvider.StringInput[$"text-o{i}"];
@@ -82,14 +82,6 @@ namespace UXAV.AVnet.Core.UI.Components
             }
         }
 
-
-        public event VisibilityChangeEventHandler VisibilityChanged;
-
-        protected virtual void OnVisibilityChanged(IVisibleItem item, VisibilityChangeEventArgs args)
-        {
-            VisibilityChanged?.Invoke(item, args);
-        }
-
         public UISubPageReferenceList List { get; }
 
         public ReadOnlyDictionary<uint, BoolInputSig> BoolInputSigs { get; }
@@ -104,23 +96,41 @@ namespace UXAV.AVnet.Core.UI.Components
 
         public ReadOnlyDictionary<uint, UShortOutputSig> UShortOutputSigs { get; }
 
-        public uint Id { get; }
+        public virtual object LinkedObject { get; set; }
+
+
+        public bool IsLastItem => Id == List.ItemsAddedCount;
 
         public uint EnableJoinNumber { get; }
 
-        public void SetId(uint id)
+        public bool Enabled
         {
-            throw new NotSupportedException("Cannot set Id value");
+            get => EnableJoinNumber == 0 || SigProvider.BooleanInput[EnableJoinNumber].BoolValue;
+            set
+            {
+                if (EnableJoinNumber == 0) return;
+                SigProvider.BooleanInput[EnableJoinNumber].BoolValue = value;
+            }
         }
+
+        public void Enable()
+        {
+            Enabled = true;
+        }
+
+        public void Disable()
+        {
+            Enabled = false;
+        }
+
+        public uint Id { get; }
 
         public string Name
         {
             get
             {
                 if (StringInputSigs.ContainsKey(1) && !string.IsNullOrEmpty(StringInputSigs[1].StringValue))
-                {
                     return StringInputSigs[1].StringValue;
-                }
 
                 return !string.IsNullOrEmpty(_name) ? _name : $"Item {Id}";
             }
@@ -136,15 +146,8 @@ namespace UXAV.AVnet.Core.UI.Components
             }
         }
 
-        public bool Enabled
-        {
-            get => EnableJoinNumber == 0 || SigProvider.BooleanInput[EnableJoinNumber].BoolValue;
-            set
-            {
-                if (EnableJoinNumber == 0) return;
-                SigProvider.BooleanInput[EnableJoinNumber].BoolValue = value;
-            }
-        }
+
+        public event VisibilityChangeEventHandler VisibilityChanged;
 
         public uint VisibleJoinNumber { get; }
 
@@ -173,11 +176,6 @@ namespace UXAV.AVnet.Core.UI.Components
 
         public bool RequestedVisibleState { get; private set; }
 
-        public virtual object LinkedObject { get; set; }
-
-
-        public bool IsLastItem => Id == List.ItemsAddedCount;
-
         public void Show()
         {
             Visible = true;
@@ -188,14 +186,14 @@ namespace UXAV.AVnet.Core.UI.Components
             Visible = false;
         }
 
-        public void Enable()
+        protected virtual void OnVisibilityChanged(IVisibleItem item, VisibilityChangeEventArgs args)
         {
-            Enabled = true;
+            VisibilityChanged?.Invoke(item, args);
         }
 
-        public void Disable()
+        public void SetId(uint id)
         {
-            Enabled = false;
+            throw new NotSupportedException("Cannot set Id value");
         }
 
         internal void SetFeedbackInternal(bool value)

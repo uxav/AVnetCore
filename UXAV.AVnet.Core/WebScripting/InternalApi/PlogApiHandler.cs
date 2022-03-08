@@ -48,12 +48,10 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         Logger.Debug($"Reading log file: {fileInfo.FullName}");
                         using (var reader = fileInfo.OpenText())
                         {
-                            while (!reader.EndOfStream)
-                            {
-                                contents += reader.ReadToEnd();
-                            }
+                            while (!reader.EndOfStream) contents += reader.ReadToEnd();
                         }
                     }
+
                     WriteResponse(contents);
                     return;
                 }
@@ -72,11 +70,11 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                             if (!entry.Success) continue;
                             logs.Add(new
                             {
-                                @Level = entry.Groups[1].Value,
-                                @SubSystem = entry.Groups[2].Value,
-                                @Time = entry.Groups[4].Value,
-                                @Message = entry.Groups[5].Value,
-                                @AppIndex = entry.Groups[3].Value
+                                Level = entry.Groups[1].Value,
+                                SubSystem = entry.Groups[2].Value,
+                                Time = entry.Groups[4].Value,
+                                Message = entry.Groups[5].Value,
+                                AppIndex = entry.Groups[3].Value
                             });
                         }
                     }

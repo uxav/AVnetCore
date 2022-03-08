@@ -15,6 +15,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
     {
         public static readonly Dictionary<string, Dictionary<int, MemoryStream>> UploadStreams =
             new Dictionary<string, Dictionary<int, MemoryStream>>();
+
         public static readonly Dictionary<string, long> UploadProgress = new Dictionary<string, long>();
 
         public FileUploadApiHandler(WebScriptingServer server, WebScriptingRequest request)
@@ -27,12 +28,8 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             if (chunkSequence == 0)
             {
                 if (UploadStreams.ContainsKey(path))
-                {
                     foreach (var s in UploadStreams[path].Values)
-                    {
                         s.Dispose();
-                    }
-                }
                 UploadStreams[path] = new Dictionary<int, MemoryStream>();
                 UploadProgress[path] = 0;
             }
@@ -104,11 +101,9 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                             {
                                 var chunkSequence = 0;
                                 if (Request.Query["chunked"] != null)
-                                {
                                     // name should be chunk_1 etc
                                     chunkSequence = int.Parse(name.Substring(6, name.Length - 6));
-                                    //Logger.Debug($"Received chunk {chunkSequence:D3} of {fileName}");
-                                }
+                                //Logger.Debug($"Received chunk {chunkSequence:D3} of {fileName}");
 
                                 var size = WriteFile(path, chunkSequence, httpContent.ReadAsStreamAsync().Result);
                                 results[fileName] = size;

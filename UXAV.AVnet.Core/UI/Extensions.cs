@@ -4,7 +4,7 @@ namespace UXAV.AVnet.Core.UI
 {
     public static class Extensions
     {
-        private static string FormatWithColor(string message, Color color)
+        public static string FormatWithColor(string message, Color color)
         {
             return $"<font color=\"#{color.ToArgb() & 0xFFFFFF:X6}\">{message}</font>";
         }

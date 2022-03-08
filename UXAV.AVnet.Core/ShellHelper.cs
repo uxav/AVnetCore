@@ -8,7 +8,7 @@ namespace UXAV.AVnet.Core
         {
             var escapedArgs = cmd.Replace("\"", "\\\"");
 
-            var process = new Process()
+            var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
@@ -17,7 +17,7 @@ namespace UXAV.AVnet.Core
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
-                    CreateNoWindow = true,
+                    CreateNoWindow = true
                 }
             };
 

@@ -7,10 +7,10 @@ namespace UXAV.AVnet.Core.UI.Components.Views
 {
     public class UIDialog : UISubPageViewController
     {
-        private readonly UILabel _titleLabel;
-        private readonly UILabel _subTitleLabel;
         private readonly UISubPageReferenceList _list;
         private readonly UIButtonCollection _listButtons;
+        private readonly UILabel _subTitleLabel;
+        private readonly UILabel _titleLabel;
 
         public UIDialog(ISigProvider sigProvider, uint visibleJoinNumber, uint titleJoin, uint subTitleJoin,
             UISubPageReferenceList list)
@@ -29,6 +29,10 @@ namespace UXAV.AVnet.Core.UI.Components.Views
         {
         }
 
+        protected UIDialogCallbackHandler Callback { get; private set; }
+
+        public string DialogId { get; private set; }
+
         public override void Show()
         {
             throw new NotSupportedException("Please use alternative Show method");
@@ -40,7 +44,8 @@ namespace UXAV.AVnet.Core.UI.Components.Views
             Show(callback, dialogId, title, subTitle, TimeSpan.Zero, optionTitles);
         }
 
-        public void Show(UIDialogCallbackHandler callback, string dialogId, string title, string subTitle, TimeSpan timeoutTime,
+        public void Show(UIDialogCallbackHandler callback, string dialogId, string title, string subTitle,
+            TimeSpan timeoutTime,
             params string[] optionTitles)
         {
             Callback = callback;
@@ -51,9 +56,7 @@ namespace UXAV.AVnet.Core.UI.Components.Views
                 _titleLabel.SetText(title);
                 _subTitleLabel.SetText(subTitle);
                 if (optionTitles.Length > _list.MaxNumberOfItems)
-                {
                     throw new IndexOutOfRangeException("optionTitles arg count is more than list size");
-                }
 
                 foreach (var optionTitle in optionTitles)
                 {
@@ -63,10 +66,6 @@ namespace UXAV.AVnet.Core.UI.Components.Views
             });
             base.Show(timeoutTime);
         }
-
-        protected UIDialogCallbackHandler Callback { get; private set; }
-
-        public string DialogId { get; private set; }
 
         protected override void WillShow()
         {

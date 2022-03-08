@@ -1,4 +1,3 @@
-using System;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
 using Crestron.SimplSharpPro;
@@ -29,38 +28,42 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 }
 
                 if (Request.RoutePatternArgs.ContainsKey("function"))
-                {
                     switch (Request.RoutePatternArgs["function"])
                     {
                         case "boot":
                             WriteResponse(new
                             {
-                                @BootStatus = UxEnvironment.System.BootStatus.ToString(),
-                                @Message = UxEnvironment.System.BootStatusDescription,
-                                @Percentage = UxEnvironment.System.BootProgress,
+                                BootStatus = UxEnvironment.System.BootStatus.ToString(),
+                                Message = UxEnvironment.System.BootStatusDescription,
+                                Percentage = UxEnvironment.System.BootProgress
                             });
                             return;
                         default:
                             HandleNotFound();
                             return;
                     }
-                }
 
                 var nl = string.Empty;
-                foreach (int c in Environment.NewLine)
-                {
-                    nl = nl + $"\\x{c:x2}";
-                }
+                foreach (int c in s.Environment.NewLine) nl = nl + $"\\x{c:x2}";
 
-                var process = s.Diagnostics.Process.GetCurrentProcess();
+                var process = global::System.Diagnostics.Process.GetCurrentProcess();
 
                 var session = ValidateSession(false);
 
                 var userPageAuth = false;
                 if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
-                {
                     userPageAuth = Authentication.UserPageAuthEnabled;
-                }
+
+                object bacNet = null;
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+                    bacNet = new
+                    {
+                        Supported = System.ControlSystem.SupportsBACNet,
+                        System.ControlSystem.ControllerBACnetDevice.Registered,
+                        System.ControlSystem.ControllerBACnetDevice.EndpointsLimit,
+                        System.ControlSystem.ControllerBACnetDevice.BACnetDiscoveryEnabled,
+                        BACnet.IsLicensed
+                    };
 
                 WriteResponse(JToken.FromObject(new
                 {
@@ -70,72 +73,65 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     SystemBase.IpAddress,
                     SystemBase.MacAddress,
                     CrestronEnvironment.SystemInfo.SerialNumber,
-                    @Firmware = InitialParametersClass.FirmwareVersion,
-                    @AVNetName = UxEnvironment.Name,
-                    @AVNetVersion = UxEnvironment.Version.ToString(),
-                    @AVNetAssemblyVersion = UxEnvironment.AssemblyVersion.ToString(),
-                    @CloudInstanceId = CloudConnector.InstanceId,
-                    @AppVersion = Server.System.AppVersion.ToString(),
-                    @AppAssemblyVersion = Server.System.AppAssemblyVersion.ToString(),
-                    @AppBuildTime = System.ProgramBuildTime,
-                    @Include4Dat = System.Include4DatInfo,
-                    @ProgramDirectory = InitialParametersClass.ProgramDirectory.ToString(),
-                    @BootStatus = UxEnvironment.System.BootStatus.ToString(),
+                    Firmware = InitialParametersClass.FirmwareVersion,
+                    AVNetName = UxEnvironment.Name,
+                    AVNetVersion = UxEnvironment.Version.ToString(),
+                    AVNetAssemblyVersion = UxEnvironment.AssemblyVersion.ToString(),
+                    CloudInstanceId = CloudConnector.InstanceId,
+                    AppVersion = Server.System.AppVersion.ToString(),
+                    AppAssemblyVersion = Server.System.AppAssemblyVersion.ToString(),
+                    AppBuildTime = System.ProgramBuildTime,
+                    Include4Dat = System.Include4DatInfo,
+                    ProgramDirectory = InitialParametersClass.ProgramDirectory.ToString(),
+                    BootStatus = UxEnvironment.System.BootStatus.ToString(),
                     InitialParametersClass.ApplicationNumber,
                     InitialParametersClass.ProgramIDTag,
                     SystemBase.BootTime,
                     SystemBase.UpTime,
-                    @ConsolePort = Logger.ListenPort,
-                    @ProcessId = process.Id,
-                    @CrestronSecureStorage = CrestronSecureStorage.Supported,
+                    ConsolePort = Logger.ListenPort,
+                    ProcessId = process.Id,
+                    CrestronSecureStorage = CrestronSecureStorage.Supported,
                     process.ProcessName,
-                    @Authentication = new
+                    Authentication = new
                     {
                         Authentication.Enabled,
                         Authentication.InCloudSync,
                         Authentication.AdministratorExist,
-                        @UserPageAuthEnabled = userPageAuth,
+                        UserPageAuthEnabled = userPageAuth
                     },
-                    @Session = session,
-                    @TimeZone = new
+                    Session = session,
+                    TimeZone = new
                     {
                         CrestronEnvironment.GetTimeZone().Name,
                         CrestronEnvironment.GetTimeZone().Formatted,
                         CrestronEnvironment.GetTimeZone().NumericOffset,
-                        CrestronEnvironment.GetTimeZone().InDayLightSavings,
+                        CrestronEnvironment.GetTimeZone().InDayLightSavings
                     },
-                    @DevicePlatform = CrestronEnvironment.DevicePlatform.ToString(),
+                    DevicePlatform = CrestronEnvironment.DevicePlatform.ToString(),
                     InitialParametersClass.ControllerPromptName,
-                    @Environment = new
+                    Environment = new
                     {
-                        @Version = Environment.Version.ToString(),
-                        @OSVersion = Environment.OSVersion.VersionString,
-                        Environment.MachineName,
-                        Environment.ProcessorCount,
-                        Environment.Is64BitOperatingSystem,
-                        @NewLine = nl,
+                        Version = s.Environment.Version.ToString(),
+                        OSVersion = s.Environment.OSVersion.VersionString,
+                        s.Environment.MachineName,
+                        s.Environment.ProcessorCount,
+                        s.Environment.Is64BitOperatingSystem,
+                        NewLine = nl
                     },
-                    @Location = new
+                    Location = new
                     {
                         CrestronEnvironment.Latitude,
-                        CrestronEnvironment.Longitude,
+                        CrestronEnvironment.Longitude
                     },
-                    @TimeInfo = new
+                    TimeInfo = new
                     {
                         RoomClock.Time,
                         RoomClock.Formatted
                     },
-                    @BACnet = new
-                    {
-                        Supported = System.ControlSystem.SupportsBACNet,
-                        Registered = System.ControlSystem.ControllerBACnetDevice.Registered,
-                        System.ControlSystem.ControllerBACnetDevice.EndpointsLimit,
-                        System.ControlSystem.ControllerBACnetDevice.BACnetDiscoveryEnabled,
-                        BACnet.IsLicensed
-                    }
+                    BACnet = bacNet
                 }));
             }
-            catch(Exception e)
+            catch (s.Exception e)
             {
                 HandleError(e);
             }

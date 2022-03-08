@@ -8,12 +8,11 @@ namespace UXAV.AVnet.Core.WebScripting
         protected ApiRequestHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)
         {
-
         }
+
         protected ApiRequestHandler(WebScriptingServer server, WebScriptingRequest request, bool suppressLogging)
             : base(server, request, suppressLogging)
         {
-
         }
 
         protected void WriteResponse(object response)
@@ -21,7 +20,7 @@ namespace UXAV.AVnet.Core.WebScripting
             Response.ContentType = "application/json";
             var json = JToken.FromObject(new
             {
-                @Request = new
+                Request = new
                 {
                     Request.Path,
                     Request.Method,
@@ -29,9 +28,9 @@ namespace UXAV.AVnet.Core.WebScripting
                     Request.RoutePatternArgs,
                     Request.ContentLength
                 },
-                @Handler = GetType().FullName,
-                @Code = Response.StatusCode,
-                @Response = response
+                Handler = GetType().FullName,
+                Code = Response.StatusCode,
+                Response = response
             });
             Response.Write(json.ToString(Formatting.None), true);
         }

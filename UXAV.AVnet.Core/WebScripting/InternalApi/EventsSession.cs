@@ -23,9 +23,17 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         /// <summary>
-        /// The session ID
+        ///     The session ID
         /// </summary>
         public int Id { get; }
+
+        public bool IsActive => DateTime.Now - _lastCheckedTime < TimeSpan.FromMinutes(5);
+
+        public void Dispose()
+        {
+            EventService.EventOccured -= EventHandler;
+            _queue?.Dispose();
+        }
 
         private void EventHandler(EventMessage eventObject)
         {
@@ -33,7 +41,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         /// <summary>
-        /// Blocking call to get event messages when available. Returns empty after 60 seconds if no updates.
+        ///     Blocking call to get event messages when available. Returns empty after 60 seconds if no updates.
         /// </summary>
         /// <returns></returns>
         public IEnumerable<EventMessage> GetMessages()
@@ -52,10 +60,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     while (itemValid)
                     {
                         itemValid = _queue.TryTake(out item, 20);
-                        if (itemValid)
-                        {
-                            messages.Add(item);
-                        }
+                        if (itemValid) messages.Add(item);
                     }
                 }
             }
@@ -67,14 +72,6 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             Thread.Sleep(200);
 
             return messages;
-        }
-
-        public bool IsActive => DateTime.Now - _lastCheckedTime < TimeSpan.FromMinutes(5);
-
-        public void Dispose()
-        {
-            EventService.EventOccured -= EventHandler;
-            _queue?.Dispose();
         }
     }
 }

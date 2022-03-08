@@ -4,7 +4,6 @@ using System.Web;
 using Crestron.SimplSharp.CrestronIO;
 using Crestron.SimplSharp.Reflection;
 using UXAV.Logging;
-using File = System.IO.File;
 
 namespace UXAV.AVnet.Core.WebScripting
 {
@@ -72,10 +71,7 @@ namespace UXAV.AVnet.Core.WebScripting
             if (RootFilePath.Contains("."))
             {
                 var pathMatch = Regex.Match(fileName, @"^\/?(.*(?=\/)\/)?([\/\w\.\-\[\]\(\)\x20]+)$");
-                if (!pathMatch.Success)
-                {
-                    return null;
-                }
+                if (!pathMatch.Success) return null;
 
                 var fPath = pathMatch.Groups[1].Value;
                 var fName = pathMatch.Groups[2].Value;
@@ -89,9 +85,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 try
                 {
                     foreach (var resourceName in assembly.GetManifestResourceNames())
-                    {
                         Logger.Log("Possible resource: {0}", resourceName);
-                    }
 
                     var result = assembly.GetManifestResourceStream(resourcePath);
                     if (result != null)

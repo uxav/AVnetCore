@@ -10,15 +10,16 @@ namespace UXAV.AVnet.Core.UI.Components.Views
 
     {
         private readonly UIButtonCollection _keypadButtons;
-        private readonly UILabel _titleLabel;
         private readonly UILabel _pinCodeLabel;
+        private readonly UILabel _titleLabel;
+        private Action _callback;
         private string _code;
         private string _enteredCode;
-        private Action _callback;
         private Timer _resetTimer;
 
-        public UIPinCodeView(ISigProvider sigProvider, uint visibleJoinNumber, SmartObject keypadSmartObject, uint titleJoinNumber, uint codeJoinNumber)
-            : base(sigProvider, visibleJoinNumber, createTimeOutWithProximity:false)
+        public UIPinCodeView(ISigProvider sigProvider, uint visibleJoinNumber, SmartObject keypadSmartObject,
+            uint titleJoinNumber, uint codeJoinNumber)
+            : base(sigProvider, visibleJoinNumber, createTimeOutWithProximity: false)
         {
             var keypad = new UIKeypad(keypadSmartObject);
             _keypadButtons = new UIButtonCollection(keypad.Buttons);
@@ -26,8 +27,9 @@ namespace UXAV.AVnet.Core.UI.Components.Views
             _pinCodeLabel = new UILabel(this, codeJoinNumber);
         }
 
-        public UIPinCodeView(ISigProvider sigProvider, uint visibleJoinNumber, uint keypadJoinNumber, uint titleJoinNumber, uint codeJoinNumber)
-            : base(sigProvider, visibleJoinNumber, createTimeOutWithProximity:false)
+        public UIPinCodeView(ISigProvider sigProvider, uint visibleJoinNumber, uint keypadJoinNumber,
+            uint titleJoinNumber, uint codeJoinNumber)
+            : base(sigProvider, visibleJoinNumber, createTimeOutWithProximity: false)
         {
             var keypad = new UIKeypad(this, keypadJoinNumber);
             _keypadButtons = new UIButtonCollection(keypad.Buttons);
@@ -42,10 +44,7 @@ namespace UXAV.AVnet.Core.UI.Components.Views
             {
                 _enteredCode = value;
                 var stars = string.Empty;
-                for (var i = 0; i < _enteredCode.Length; i++)
-                {
-                    stars += '*';
-                }
+                for (var i = 0; i < _enteredCode.Length; i++) stars += '*';
                 _pinCodeLabel.SetText(stars);
             }
         }
@@ -74,11 +73,9 @@ namespace UXAV.AVnet.Core.UI.Components.Views
         {
             EnteredCode = string.Empty;
             _keypadButtons.ButtonEvent += KeypadButtonsOnButtonEvent;
-            if(_resetTimer != null) return;
-            _resetTimer = new Timer(state =>
-            {
-                _pinCodeLabel.Clear();
-            }, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            if (_resetTimer != null) return;
+            _resetTimer = new Timer(state => { _pinCodeLabel.Clear(); }, null, Timeout.InfiniteTimeSpan,
+                Timeout.InfiniteTimeSpan);
         }
 
         protected override void DidShow()
@@ -96,7 +93,7 @@ namespace UXAV.AVnet.Core.UI.Components.Views
 
         private void KeypadButtonsOnButtonEvent(IButton button, ButtonEventArgs args)
         {
-            if(args.EventType != ButtonEventType.Pressed) return;
+            if (args.EventType != ButtonEventType.Pressed) return;
             _resetTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             switch (args.CollectionKey)
             {
@@ -117,16 +114,13 @@ namespace UXAV.AVnet.Core.UI.Components.Views
                         _pinCodeLabel.SetText(value);
                         _resetTimer.Change(TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
                     }
+
                     break;
                 default:
                     if (EnteredCode.Length < _code.Length)
-                    {
                         EnteredCode += args.CollectionKey.ToString();
-                    }
                     else
-                    {
                         EnteredCode = args.CollectionKey.ToString();
-                    }
                     break;
             }
         }

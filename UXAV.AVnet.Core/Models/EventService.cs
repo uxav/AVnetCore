@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Crestron.SimplSharp;
 
 namespace UXAV.AVnet.Core.Models
@@ -8,10 +9,7 @@ namespace UXAV.AVnet.Core.Models
         {
             CrestronEnvironment.ProgramStatusEventHandler += type =>
             {
-                if (type == eProgramStatusEventType.Stopping)
-                {
-                    Notify(EventMessageType.ProgramStopping, null);
-                }
+                if (type == eProgramStatusEventType.Stopping) Notify(EventMessageType.ProgramStopping, null);
             };
         }
 
@@ -24,7 +22,16 @@ namespace UXAV.AVnet.Core.Models
 
         private static void OnEventOccured(EventMessage message)
         {
-            EventOccured?.Invoke(message);
+            if (EventOccured == null) return;
+            var handlers = EventOccured.GetInvocationList();
+            Task.Factory.StartNew(() =>
+            {
+                foreach (var @delegate in handlers)
+                {
+                    var handler = (EventPostedEventHandler)@delegate;
+                    handler.Invoke(message);
+                }
+            });
         }
     }
 

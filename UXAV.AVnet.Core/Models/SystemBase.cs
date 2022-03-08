@@ -19,27 +19,39 @@ using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.AVnet.Core.Models.Diagnostics;
 using UXAV.AVnet.Core.UI;
+using UXAV.AVnet.Core.UI.Ch5;
 using UXAV.AVnet.Core.WebScripting;
 using UXAV.AVnet.Core.WebScripting.Download;
 using UXAV.AVnet.Core.WebScripting.InternalApi;
 using UXAV.AVnet.Core.WebScripting.StaticFiles;
 using UXAV.Logging;
+using Directory = Crestron.SimplSharp.CrestronIO.Directory;
 
 namespace UXAV.AVnet.Core.Models
 {
     public abstract class SystemBase
     {
+        public enum EBootStatus
+        {
+            Booting,
+            LoadingConfig,
+            Initializing,
+            Running,
+            DidNotBoot,
+            Rebooting
+        }
+
+        public enum EUnits
+        {
+            Imperial,
+            Metric
+        }
+
         private static string _programRootDirectory;
         private static string _systemName;
-        private EBootStatus _bootStatus;
-        private string _bootStatusDescription;
-        private uint _bootProgress;
-        private EUnits _localUnits = EUnits.Metric;
         private readonly string _initialConfig;
-        internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
-        private readonly string _include4DatInfo;
-        private readonly DateTime _programBuildTime;
+        internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
 
         protected SystemBase(CrestronControlSystem controlSystem)
         {
@@ -56,11 +68,12 @@ namespace UXAV.AVnet.Core.Models
 
             _initialConfig = ConfigManager.JConfig?.ToString();
 
-            DiagnosticService.RegisterSystemCallback(this, GenerateDiagnosticMessagesInternal);
+            DiagnosticService.RegisterSystemCallback(GenerateDiagnosticMessagesInternal);
 
             CrestronEnvironment.ProgramStatusEventHandler += OnProgramStatusEventHandler;
 
             RoomClock.Start();
+            Scheduler.Init();
             UpdateBootStatus(EBootStatus.Booting, "System is booting", 0);
 
             try
@@ -71,7 +84,6 @@ namespace UXAV.AVnet.Core.Models
                     var reader = new XmlTextReader(file);
                     var elementName = string.Empty;
                     while (reader.Read())
-                    {
                         switch (reader.NodeType)
                         {
                             case XmlNodeType.Element:
@@ -84,16 +96,15 @@ namespace UXAV.AVnet.Core.Models
                                 switch (elementName)
                                 {
                                     case "Include4.dat":
-                                        _include4DatInfo = reader.Value;
+                                        Include4DatInfo = reader.Value;
                                         break;
                                     case "CompiledOn":
-                                        _programBuildTime = DateTime.Parse(reader.Value).ToUniversalTime();
+                                        ProgramBuildTime = DateTime.Parse(reader.Value).ToUniversalTime();
                                         break;
                                 }
 
                                 break;
                         }
-                    }
 
                     reader.Close();
                 }
@@ -103,23 +114,16 @@ namespace UXAV.AVnet.Core.Models
                 Logger.Warn($"Could not load info from ProgramInfo.config, {e.Message}");
             }
 
-            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
-            {
-                SystemMonitor.Init();
-            }
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance) SystemMonitor.Init();
 
             try
             {
                 Logger.Highlight("Calling CrestronDataStoreStatic.InitCrestronDataStore()");
                 var response = CrestronDataStoreStatic.InitCrestronDataStore();
                 if (response == CrestronDataStore.CDS_ERROR.CDS_SUCCESS)
-                {
                     Logger.Success($"InitCrestronDataStore() = {response}");
-                }
                 else
-                {
                     Logger.Error($"CrestronDataStore Init Error: {response}");
-                }
             }
             catch (Exception e)
             {
@@ -134,7 +138,7 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("ProcessArchitecture: {0}", RuntimeInformation.ProcessArchitecture);
             Logger.Log("OSArchitecture: {0}", RuntimeInformation.OSArchitecture);
             Logger.Log("OSDescription: {0}", RuntimeInformation.OSDescription);
-            Logger.Log("Include4.dat Version: {0}", _include4DatInfo);
+            Logger.Log("Include4.dat Version: {0}", Include4DatInfo);
             Logger.Log("Local Time is {0}", DateTime.Now);
             var tz = CrestronEnvironment.GetTimeZone();
             Logger.Log("ProgramIDTag: {0}", InitialParametersClass.ProgramIDTag);
@@ -145,7 +149,7 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("{0} Version: {1}", UxEnvironment.Name, UxEnvironment.Version);
             Logger.Log("{0} Assembly Version: {1}", UxEnvironment.Name, UxEnvironment.AssemblyVersion);
             Logger.Log("Starting app version {0}", AppAssembly.GetName().Version);
-            Logger.Log($"Program Info states build time as: {_programBuildTime:R}");
+            Logger.Log($"Program Info states build time as: {ProgramBuildTime:R}");
             Logger.Log("ProcessId: {0}", Process.GetCurrentProcess().Id);
             Logger.Log("Room Name: {0}", InitialParametersClass.RoomName);
             Logger.Log("TimeZone: 🌍 {0}{1}", tz.Formatted, tz.InDayLightSavings ? " (DST)" : string.Empty);
@@ -165,12 +169,11 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("ControlSystem.SupportsBACNet = {0}", ControlSystem.SupportsBACNet);
             Logger.Log("ControlSystem.SupportsInternalRFGateway = {0}", ControlSystem.SupportsInternalRFGateway);
             Logger.Log("ControlSystem.SupportsInternalAirMedia = {0}", ControlSystem.SupportsInternalAirMedia);
+            Logger.Log("ControlSystem.SupportsSystemMonitor = {0}", ControlSystem.SupportsSystemMonitor);
+            Logger.Log("ControlSystem.SupportsCresnet = {0}", ControlSystem.SupportsCresnet);
 
             var resources = Assembly.GetExecutingAssembly().GetManifestResourceNames();
-            foreach (var resource in resources)
-            {
-                Logger.Log("Resource found: {0}", resource);
-            }
+            foreach (var resource in resources) Logger.Log("Resource found: {0}", resource);
 
             UpdateBootStatus(EBootStatus.Booting, "Checking upgrade requirements", 0);
             var appIsUpgrading = CheckIfNewVersion(AppAssembly);
@@ -321,9 +324,7 @@ namespace UXAV.AVnet.Core.Models
             get
             {
                 if (string.IsNullOrEmpty(_programRootDirectory))
-                {
-                    _programRootDirectory = Crestron.SimplSharp.CrestronIO.Directory.GetApplicationRootDirectory();
-                }
+                    _programRootDirectory = Directory.GetApplicationRootDirectory();
 
                 return _programRootDirectory;
             }
@@ -336,10 +337,7 @@ namespace UXAV.AVnet.Core.Models
             get
             {
                 var path = ProgramNvramDirectory + "/tmp";
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
+                if (!System.IO.Directory.Exists(path)) System.IO.Directory.CreateDirectory(path);
 
                 return path;
             }
@@ -350,24 +348,18 @@ namespace UXAV.AVnet.Core.Models
         public static string ProgramNvramDirectory => ProgramRootDirectory + "/nvram";
 
         /// <summary>
-        /// The app instance directory for the program e.g nvram/app_01
+        ///     The app instance directory for the program e.g nvram/app_01
         /// </summary>
         public static string ProgramNvramAppInstanceDirectory
         {
             get
             {
-                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                {
-                    return ProgramNvramDirectory;
-                }
+                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server) return ProgramNvramDirectory;
 
                 var path = ProgramNvramDirectory + "/app_" +
                            InitialParametersClass.ApplicationNumber
                                .ToString("D2");
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
+                if (!System.IO.Directory.Exists(path)) System.IO.Directory.CreateDirectory(path);
 
                 return path;
             }
@@ -380,17 +372,33 @@ namespace UXAV.AVnet.Core.Models
             get
             {
                 if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                {
                     return $"http://{IpAddress}/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws";
-                }
 
                 return $"https://{IpAddress}/cws";
             }
         }
 
-        public DateTime ProgramBuildTime => _programBuildTime;
+        public DateTime ProgramBuildTime { get; }
 
-        public string Include4DatInfo => _include4DatInfo;
+        public string Include4DatInfo { get; }
+
+        public static string CwsPath => CrestronEnvironment.DevicePlatform == eDevicePlatform.Server
+            ? $"/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws"
+            : "/cws";
+
+        /// <summary>
+        ///     Default URL for control system appliances to redirect.
+        ///     Default value returns "/cws/app" for the cws web dashboard
+        /// </summary>
+        protected virtual string ApplianceWebServerRedirect => "/cws/app";
+
+        public EBootStatus BootStatus { get; private set; }
+
+        public EUnits LocalUnits { get; } = EUnits.Metric;
+
+        public string BootStatusDescription { get; private set; }
+
+        public uint BootProgress { get; private set; }
 
         public IDevice GetDevice(uint id)
         {
@@ -407,14 +415,9 @@ namespace UXAV.AVnet.Core.Models
             return GetDevices().OfType<DisplayDeviceBase>();
         }
 
-        public static string CwsPath => CrestronEnvironment.DevicePlatform == eDevicePlatform.Server
-            ? $"/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws"
-            : "/cws";
-
         private void InitWebApp()
         {
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-            {
                 try
                 {
                     var path = ProgramApplicationDirectory + "/webapp/index.html";
@@ -435,20 +438,15 @@ namespace UXAV.AVnet.Core.Models
                 {
                     Logger.Error(e);
                 }
-            }
 
             Logger.Highlight("Loading WebApp server for Angular app");
             try
             {
                 WebAppServer = new WebScriptingServer(this, "app");
                 if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
-                {
                     WebAppServer.AddRedirect(@"/app", @"/cws/app/");
-                }
                 else
-                {
                     WebAppServer.AddRoute(@"/app", typeof(WebAppFileHandler));
-                }
 
                 WebAppServer.AddRoute(@"/app/", typeof(WebAppFileHandler));
                 WebAppServer.AddRoute(@"/app/<filepath:[~\/\w\.\-\[\]\(\)\x20]+>", typeof(WebAppFileHandler));
@@ -491,50 +489,11 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
-        /// <summary>
-        /// Default URL for control system appliances to redirect.
-        /// Default value returns "/cws/app" for the cws web dashboard
-        /// </summary>
-        protected virtual string ApplianceWebServerRedirect => "/cws/app";
-
-        public enum EBootStatus
-        {
-            Booting,
-            LoadingConfig,
-            Initializing,
-            Running,
-            DidNotBoot,
-            Rebooting
-        }
-
-        public EBootStatus BootStatus
-        {
-            get => _bootStatus;
-        }
-
-        public enum EUnits
-        {
-            Imperial,
-            Metric
-        }
-
-        public EUnits LocalUnits
-        {
-            get => _localUnits;
-        }
-
-        public string BootStatusDescription
-        {
-            get => _bootStatusDescription;
-        }
-
-        public uint BootProgress => _bootProgress;
-
         protected void UpdateBootStatus(EBootStatus status, string description, uint progress)
         {
-            _bootStatus = status;
-            _bootStatusDescription = description;
-            _bootProgress = progress;
+            BootStatus = status;
+            BootStatusDescription = description;
+            BootProgress = progress;
             Logger.Log("Boot status set to {0}, {1} ({2}%)", status, description, progress);
             EventService.Notify(EventMessageType.BootStatus, new
             {
@@ -557,21 +516,28 @@ namespace UXAV.AVnet.Core.Models
         }
 
         /// <summary>
-        /// Initialise the cloud check-in connector for monitoring
+        ///     Initialise the cloud check-in connector for monitoring
         /// </summary>
         /// <param name="assembly">The app assembly</param>
-        /// <param name="baseUri">The base URI for the cloud service</param>
-        public void InitCloudConnector(Assembly assembly)
+        /// <param name="host">The hostname for the api connection</param>
+        /// <param name="token">The token for the api connection</param>
+        public void InitCloudConnector(Assembly assembly, string host, string token)
         {
-            CloudConnector.Init(assembly);
+            CloudConnector.Init(assembly, host, token);
+        }
+
+        public string RestartApp()
+        {
+            var response = "";
+            CrestronConsole.SendControlSystemCommand($"progres -P:{InitialParametersClass.ApplicationNumber}",
+                ref response);
+            return response;
         }
 
         public void RebootAppliance()
         {
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-            {
                 throw new InvalidOperationException("Cannot reboot server!");
-            }
 
             var response = string.Empty;
             Logger.Warn("Appliance now being rebooted!");
@@ -597,9 +563,18 @@ namespace UXAV.AVnet.Core.Models
 
             messages.AddRange(CipDevices.GetDiagnosticMessages());
 
-            foreach (var device in DevicesDict.Values)
+            foreach (var device in DevicesDict.Values) messages.AddRange(device.GetMessages());
+
+            try
             {
-                messages.AddRange(device.GetMessages());
+                var handlers = Ch5ApiHandlerBase.ConnectedHandlers;
+                messages.AddRange(handlers.Select(handler => new DiagnosticMessage(MessageLevel.Info,
+                    "Websocket connected", handler.Connection.RemoteIpAddress.ToString(), handler.GetType().Name,
+                    handler.Connection.ID)));
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
             }
 
             try
@@ -642,10 +617,10 @@ namespace UXAV.AVnet.Core.Models
 
         private void InitializeTask()
         {
-            UpdateBootStatus(EBootStatus.Initializing, $"Initializing process started", 5);
+            UpdateBootStatus(EBootStatus.Initializing, "Initializing process started", 5);
             Thread.Sleep(500);
 
-            UpdateBootStatus(EBootStatus.Initializing, $"Initializing web app if installed", 7);
+            UpdateBootStatus(EBootStatus.Initializing, "Initializing web app if installed", 7);
             InitWebApp();
 
             UpdateBootStatus(EBootStatus.Initializing, "Registering CIP devices not already registered", 10);
@@ -661,10 +636,7 @@ namespace UXAV.AVnet.Core.Models
                 Logger.Error("Error registering app webscripting handlers, {0}", e.Message);
             }
 
-            foreach (var device in DevicesDict.Values.OfType<DeviceBase>())
-            {
-                device.AllocateRoomOnStart();
-            }
+            foreach (var device in DevicesDict.Values.OfType<DeviceBase>()) device.AllocateRoomOnStart();
 
             SystemShouldAddItemsToInitialize(AddItemToInitialize);
 
@@ -677,7 +649,6 @@ namespace UXAV.AVnet.Core.Models
             var itemMaxCount = items.Count;
             var itemCount = 0;
             foreach (var item in items)
-            {
                 try
                 {
                     itemCount++;
@@ -690,7 +661,6 @@ namespace UXAV.AVnet.Core.Models
                 {
                     Logger.Error(e);
                 }
-            }
 
             startPercentage = BootProgress;
             targetPercentage = 60;
@@ -804,10 +774,9 @@ namespace UXAV.AVnet.Core.Models
         }
 
         /// <summary>
-        /// Add any <c>IInitializable</c> items to the startup routine.
+        ///     Add any <c>IInitializable</c> items to the startup routine.
         /// </summary>
         /// <returns></returns>
-        ///
         protected abstract void SystemShouldAddItemsToInitialize(Action<IInitializable> addItem);
 
         protected abstract void CreateFusionRoomsAndAssets();
@@ -830,7 +799,7 @@ namespace UXAV.AVnet.Core.Models
         }
 
         /// <summary>
-        /// Register webscripting handlers specific to the room app
+        ///     Register webscripting handlers specific to the room app
         /// </summary>
         protected abstract void WebScriptingHandlersShouldRegister();
 
@@ -865,13 +834,9 @@ namespace UXAV.AVnet.Core.Models
                     var version = new Version(contents);
                     appIsNewVersion = runningVersion.CompareTo(version) != 0;
                     if (appIsNewVersion)
-                    {
                         Logger.Log("App upgraded {0} => {1}", version, runningVersion);
-                    }
                     else
-                    {
                         Logger.Log("App version remains as {0}", runningVersion.ToString());
-                    }
                 }
 
                 if (!appIsNewVersion) return false;
@@ -899,7 +864,6 @@ namespace UXAV.AVnet.Core.Models
         private void InitializeCore3Controllers()
         {
             foreach (var controller in Core3Controllers.Get())
-            {
                 try
                 {
                     controller.InitializeInternal();
@@ -908,6 +872,23 @@ namespace UXAV.AVnet.Core.Models
                 {
                     Logger.Error(e);
                 }
+        }
+
+        internal void RunCloudActionInternal(string methodName, params string[] args)
+        {
+            switch (methodName)
+            {
+                case "restart":
+                    Logger.Warn("Remote restart requested from cloud service");
+                    UxEnvironment.System.RestartApp();
+                    break;
+                case "reboot":
+                    Logger.Warn("Remote reboot requested from cloud service");
+                    UxEnvironment.System.RebootAppliance();
+                    break;
+                case "uploadLogs":
+                    CloudConnector.PublishLogsAsync();
+                    break;
             }
         }
     }

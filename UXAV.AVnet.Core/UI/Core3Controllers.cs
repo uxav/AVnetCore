@@ -15,9 +15,7 @@ namespace UXAV.AVnet.Core.UI
             lock (Controllers)
             {
                 if (Controllers.ContainsKey(id))
-                {
                     throw new ArgumentException("Collection already contains controller with ID " + id);
-                }
 
                 Controllers.Add(id, controller);
             }
@@ -62,7 +60,7 @@ namespace UXAV.AVnet.Core.UI
         {
             lock (Controllers)
             {
-                return (T) Controllers[ipId];
+                return (T)Controllers[ipId];
             }
         }
 
@@ -84,7 +82,7 @@ namespace UXAV.AVnet.Core.UI
                     select c).ToArray();
             }
         }
-        
+
         public static Core3ControllerBase[] GetDefaultCore3Controllers(this RoomBase room)
         {
             lock (Controllers)

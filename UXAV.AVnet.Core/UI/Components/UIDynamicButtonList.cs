@@ -10,12 +10,11 @@ namespace UXAV.AVnet.Core.UI.Components
 {
     public sealed class UIDynamicButtonList : UIObject, IButtons, IEnumerable<UIDynamicButtonListItem>
     {
-        private readonly uint _maxNumberOfItems;
-        private uint _selectedItemIndex;
-        private ushort _count;
-
         private readonly Dictionary<uint, UIDynamicButtonListItem> _items =
             new Dictionary<uint, UIDynamicButtonListItem>();
+
+        private ushort _count;
+        private uint _selectedItemIndex;
 
         public UIDynamicButtonList(SmartObject smartObject) :
             base(smartObject)
@@ -29,22 +28,17 @@ namespace UXAV.AVnet.Core.UI.Components
                 {
                     var name = $"Item {count} Visible";
                     if (SigProvider.BooleanInput.Contains(name))
-                    {
                         count++;
-                    }
                     else
                         break;
                 }
 
-                _maxNumberOfItems = count - 1;
+                MaxNumberOfItems = count - 1;
 
                 Logger.Debug("{0} for SmartObject ID: {1} contains {2} items", GetType(), smartObject.ID,
-                    _maxNumberOfItems);
+                    MaxNumberOfItems);
 
-                for (uint i = 1; i <= _maxNumberOfItems; i++)
-                {
-                    _items[i] = new UIDynamicButtonListItem(this, i);
-                }
+                for (uint i = 1; i <= MaxNumberOfItems; i++) _items[i] = new UIDynamicButtonListItem(this, i);
             }
             catch (Exception e)
             {
@@ -52,21 +46,11 @@ namespace UXAV.AVnet.Core.UI.Components
             }
         }
 
-
-        public event UIDynamicButtonListSelectedItemChangeEventHander SelectedItemChange;
-
-        public event UIDynamicButtonListIsMovingChangedEventHandler IsMovingChange;
-
-        public UIDynamicButtonListItem this[uint index]
-        {
-            get { return _items[index]; }
-        }
-
-        public IEnumerable<IButton> Buttons => this;
+        public UIDynamicButtonListItem this[uint index] => _items[index];
 
         public ushort NumberOfItems => SigProvider.UShortInput["Set Number of Items"].UShortValue;
 
-        public uint MaxNumberOfItems => _maxNumberOfItems;
+        public uint MaxNumberOfItems { get; }
 
         public uint NumberOfEmptyItems => MaxNumberOfItems - _count;
 
@@ -75,15 +59,7 @@ namespace UXAV.AVnet.Core.UI.Components
         public UIDynamicButtonListItem SelectedItem =>
             _items.ContainsKey(_selectedItemIndex) ? _items[_selectedItemIndex] : null;
 
-        public void ScrollToItem(ushort item)
-        {
-            SigProvider.UShortInput["Scroll To Item"].UShortValue = item;
-        }
-
-        private void SetNumberOfItems(ushort items)
-        {
-            SigProvider.UShortInput["Set Number of Items"].UShortValue = items;
-        }
+        public IEnumerable<IButton> Buttons => this;
 
         public IEnumerator<UIDynamicButtonListItem> GetEnumerator()
         {
@@ -95,6 +71,21 @@ namespace UXAV.AVnet.Core.UI.Components
             return GetEnumerator();
         }
 
+
+        public event UIDynamicButtonListSelectedItemChangeEventHander SelectedItemChange;
+
+        public event UIDynamicButtonListIsMovingChangedEventHandler IsMovingChange;
+
+        public void ScrollToItem(ushort item)
+        {
+            SigProvider.UShortInput["Scroll To Item"].UShortValue = item;
+        }
+
+        private void SetNumberOfItems(ushort items)
+        {
+            SigProvider.UShortInput["Set Number of Items"].UShortValue = items;
+        }
+
         public void ClearList(bool justByResettingTheCount)
         {
             _selectedItemIndex = 0;
@@ -103,10 +94,7 @@ namespace UXAV.AVnet.Core.UI.Components
 
             if (!justByResettingTheCount)
             {
-                foreach (var item in this)
-                {
-                    item.LinkedObject = null;
-                }
+                foreach (var item in this) item.LinkedObject = null;
 
                 SetNumberOfItems(_count);
             }
@@ -172,9 +160,8 @@ namespace UXAV.AVnet.Core.UI.Components
         public bool ContainsLinkedObject(object linkedObject)
         {
             for (uint i = 1; i <= NumberOfItems; i++)
-            {
-                if (_items[i].LinkedObject == linkedObject) return true;
-            }
+                if (_items[i].LinkedObject == linkedObject)
+                    return true;
 
             return false;
         }
@@ -207,10 +194,7 @@ namespace UXAV.AVnet.Core.UI.Components
 
         public void SetSelectedItem(UIDynamicButtonListItem item)
         {
-            foreach (var listItem in this.Where(i => i != item))
-            {
-                listItem.Feedback = false;
-            }
+            foreach (var listItem in this.Where(i => i != item)) listItem.Feedback = false;
 
             if (item != null)
             {
@@ -227,10 +211,7 @@ namespace UXAV.AVnet.Core.UI.Components
 
         public void ClearSelectedItems()
         {
-            foreach (var listItem in this)
-            {
-                listItem.Feedback = false;
-            }
+            foreach (var listItem in this) listItem.Feedback = false;
 
             _selectedItemIndex = 0;
             OnSelectedItemChange(this);

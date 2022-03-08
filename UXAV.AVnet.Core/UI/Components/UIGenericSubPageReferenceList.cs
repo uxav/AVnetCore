@@ -9,10 +9,7 @@ namespace UXAV.AVnet.Core.UI.Components
             : base(smartObject, digitalJoinIncrement, analogJoinIncrement, serialJoinIncrement,
                 (list, id) => new UIGenericSubPageReferenceListItem(list, id))
         {
-            foreach (var item in this)
-            {
-                ButtonCollection.Add(item as IButton);
-            }
+            foreach (var item in this) ButtonCollection.Add(item as IButton);
         }
     }
 }

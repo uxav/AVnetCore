@@ -6,6 +6,7 @@ namespace UXAV.AVnet.Core.UI
         public const string AudioNote = "Audio Note";
         public const string Bluray = "Blu-ray";
         public const string Bolt = "Bolt";
+        // ReSharper disable once InconsistentNaming
         public const string CD = "CD";
         public const string Check = "Check";
         public const string Climate = "Climate";
@@ -38,6 +39,7 @@ namespace UXAV.AVnet.Core.UI
         public const string Req = "Rew";
         public const string RightAlt = "Right Alt";
         public const string Right = "Right";
+        // ReSharper disable once InconsistentNaming
         public const string RSS = "RSS";
         public const string Shuffle = "Shuffle";
         public const string Stop = "Stop";
@@ -73,8 +75,11 @@ namespace UXAV.AVnet.Core.UI
         public const string Door = "Door";
         public const string Drapes = "Drapes";
         public const string Fire = "Fire";
+        // ReSharper disable once InconsistentNaming
         public const string IPad = "iPad";
+        // ReSharper disable once InconsistentNaming
         public const string IPhoneIPodTouch = "iPhone-iPod Touch";
+        // ReSharper disable once InconsistentNaming
         public const string IPod = "iPod";
         public const string MicMute = "Mic Mute";
         public const string PadlockClosed = "Padlock Closed";
@@ -161,9 +166,11 @@ namespace UXAV.AVnet.Core.UI
         public const string Pandora = "Pandora";
         public const string Rhapsody = "Rhapsody";
         public const string Sirius = "Sirius";
+        // ReSharper disable once InconsistentNaming
         public const string SiriusXM = "SiriusXM";
         public const string Spotify = "Spotify";
         public const string UserMinus = "User Minus";
+        // ReSharper disable once InconsistentNaming
         public const string XM = "XM";
         public const string UserCheck = "User Check";
         public const string Disk = "Disk";

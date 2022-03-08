@@ -5,7 +5,8 @@ namespace UXAV.AVnet.Core.UI.Components
 {
     public class UIGuage : UIObject, IAnalogItem
     {
-        public UIGuage(ISigProvider sigProvider, uint analogJoinNumber, ushort minValue = ushort.MinValue, ushort maxValue = ushort.MaxValue)
+        public UIGuage(ISigProvider sigProvider, uint analogJoinNumber, ushort minValue = ushort.MinValue,
+            ushort maxValue = ushort.MaxValue)
             : base(sigProvider)
         {
             MinValue = minValue;
@@ -13,13 +14,18 @@ namespace UXAV.AVnet.Core.UI.Components
             AnalogJoinNumber = analogJoinNumber;
         }
 
-        public UIGuage(ISigProvider sigProvider, string analogFeedbackJoinName, ushort minValue = ushort.MinValue, ushort maxValue = ushort.MaxValue)
+        public UIGuage(ISigProvider sigProvider, string analogFeedbackJoinName, ushort minValue = ushort.MinValue,
+            ushort maxValue = ushort.MaxValue)
             : base(sigProvider)
         {
             MinValue = minValue;
             MaxValue = maxValue;
             AnalogJoinNumber = sigProvider.SigProvider.UShortInput[analogFeedbackJoinName].Number;
         }
+
+        public ushort MinValue { get; }
+
+        public ushort MaxValue { get; }
 
         public uint AnalogJoinNumber { get; }
 
@@ -35,23 +41,10 @@ namespace UXAV.AVnet.Core.UI.Components
 
         public void SetPosition(double position)
         {
-            if (position > 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(position), "value must be between 0 and 1");
-            }
+            if (position > 1) throw new ArgumentOutOfRangeException(nameof(position), "value must be between 0 and 1");
             SigProvider.UShortInput[AnalogJoinNumber].UShortValue =
-                (ushort) Tools.ScaleRange(position, 0, 1, MinValue, MaxValue);
+                (ushort)Tools.ScaleRange(position, 0, 1, MinValue, MaxValue);
         }
-
-        public void SetPositionScaled(double fromValue, double fromMinValue, double fromMaxValue)
-        {
-            SigProvider.UShortInput[AnalogJoinNumber].UShortValue =
-                (ushort) Tools.ScaleRange(fromValue, fromMinValue, fromMaxValue, MinValue, MaxValue);
-        }
-
-        public ushort MinValue { get; }
-
-        public ushort MaxValue { get; }
 
         public ushort Value
         {
@@ -69,6 +62,12 @@ namespace UXAV.AVnet.Core.UI.Components
         {
             get => Tools.ScaleRange(Value, MinValue, MaxValue, 0, 1);
             set => SetPosition(value);
+        }
+
+        public void SetPositionScaled(double fromValue, double fromMinValue, double fromMaxValue)
+        {
+            SigProvider.UShortInput[AnalogJoinNumber].UShortValue =
+                (ushort)Tools.ScaleRange(fromValue, fromMinValue, fromMaxValue, MinValue, MaxValue);
         }
     }
 }

@@ -34,12 +34,15 @@ namespace UXAV.AVnet.Core
         public static ushort MaximumNumberOfRunningProcesses =>
             Crestron.SimplSharpPro.Diagnostics.SystemMonitor.MaximumNumberOfRunningProcesses;
 
+        public static bool Available => CrestronEnvironment.DevicePlatform != eDevicePlatform.Server && _init;
+
         internal static void Init()
         {
             if (_init) return;
             _init = true;
             Crestron.SimplSharpPro.Diagnostics.SystemMonitor.CPUStatisticChange += OnSystemMonitorOnCpuStatisticChange;
-            Crestron.SimplSharpPro.Diagnostics.SystemMonitor.ProcessStatisticChange += SystemMonitorOnProcessStatisticChange;
+            Crestron.SimplSharpPro.Diagnostics.SystemMonitor.ProcessStatisticChange +=
+                SystemMonitorOnProcessStatisticChange;
             Crestron.SimplSharpPro.Diagnostics.SystemMonitor.SetUpdateInterval(10);
             CrestronEnvironment.ProgramStatusEventHandler += type =>
             {
@@ -51,10 +54,7 @@ namespace UXAV.AVnet.Core
             {
                 while (true)
                 {
-                    if (CheckWait.WaitOne(TimeSpan.FromSeconds(10)) || _programStopping)
-                    {
-                        return;
-                    }
+                    if (CheckWait.WaitOne(TimeSpan.FromSeconds(10)) || _programStopping) return;
 
                     CheckStats();
                 }
@@ -67,12 +67,12 @@ namespace UXAV.AVnet.Core
             lock (StatHistory)
             {
                 StatHistory.Enqueue(stat);
-                while (StatHistory.Count > 360)
-                {
+                while (StatHistory.Count > 2000)
+                    // ReSharper disable once UnusedVariable
                     StatHistory.TryDequeue(out var oldMemStat);
-                    //Logger.Debug($"Removed old memory stat with time: {oldMemStat.Time:u}");
-                }
+                //Logger.Debug($"Removed old memory stat with time: {oldMemStat.Time:u}");
             }
+
             EventService.Notify(EventMessageType.SystemMonitorStatsChange, new
             {
                 CpuValue = new

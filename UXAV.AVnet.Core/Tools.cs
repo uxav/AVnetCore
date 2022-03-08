@@ -13,8 +13,11 @@ namespace UXAV.AVnet.Core
 {
     public static class Tools
     {
+        private static readonly string[] SizeSuffixes =
+            { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+
         /// <summary>
-        /// Extends a normal System.IO.Stream and gets a Crestron.SimplSharp.CrestronIO.Stream
+        ///     Extends a normal System.IO.Stream and gets a Crestron.SimplSharp.CrestronIO.Stream
         /// </summary>
         /// <param name="stream"></param>
         /// <returns>Crestron.SimplSharp.CrestronIO.Stream</returns>
@@ -24,17 +27,14 @@ namespace UXAV.AVnet.Core
             var buffer = new byte[81920];
             int read;
             var result = new MemoryStream();
-            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                result.Write(buffer, 0, read);
-            }
+            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0) result.Write(buffer, 0, read);
 
             result.Position = 0;
             return result;
         }
 
         /// <summary>
-        /// Extends a normal Crestron.SimplSharp.CrestronIO.Stream and gets a System.IO.Stream
+        ///     Extends a normal Crestron.SimplSharp.CrestronIO.Stream and gets a System.IO.Stream
         /// </summary>
         /// <param name="stream"></param>
         /// <returns>System.IO..Stream</returns>
@@ -43,17 +43,14 @@ namespace UXAV.AVnet.Core
             var buffer = new byte[81920];
             int read;
             var result = new System.IO.MemoryStream();
-            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                result.Write(buffer, 0, read);
-            }
+            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0) result.Write(buffer, 0, read);
 
             result.Position = 0;
             return result;
         }
 
         /// <summary>
-        /// Tool to return a string showing readable representation of raw bytes in the form of "/x02/x03" etc
+        ///     Tool to return a string showing readable representation of raw bytes in the form of "/x02/x03" etc
         /// </summary>
         /// <param name="bytes">Byte array to convert</param>
         /// <param name="startIndex">Array start index</param>
@@ -65,22 +62,16 @@ namespace UXAV.AVnet.Core
             var result = string.Empty;
 
             for (var i = startIndex; i < length; i++)
-            {
                 if (showReadable && bytes[i] >= 32 && bytes[i] < 127)
-                {
-                    result = result + $"{(char) bytes[i]}";
-                }
+                    result = result + $"{(char)bytes[i]}";
                 else
-                {
                     result = result + $"\\x{bytes[i]:X2}";
-                }
-            }
 
             return result;
         }
 
         /// <summary>
-        /// Scale a number range
+        ///     Scale a number range
         /// </summary>
         /// <param name="value">Number to scale</param>
         /// <param name="fromMinValue">The current min value of the number</param>
@@ -128,21 +119,15 @@ namespace UXAV.AVnet.Core
         public static SystemBase CreateSystem(this CrestronControlSystem controlSystem, Assembly assembly,
             string typeName)
         {
-            if (string.IsNullOrEmpty(typeName))
-            {
-                throw new ArgumentException("string cannot be empty", nameof(typeName));
-            }
+            if (string.IsNullOrEmpty(typeName)) throw new ArgumentException("string cannot be empty", nameof(typeName));
 
             var systemType = assembly.GetType(typeName);
-            var ctor = systemType.GetConstructor(new[] {typeof(CrestronControlSystem)});
-            if (ctor == null)
-            {
-                throw new Exception($"Could not get ctor for type: {systemType.FullName}");
-            }
+            var ctor = systemType.GetConstructor(new[] { typeof(CrestronControlSystem) });
+            if (ctor == null) throw new Exception($"Could not get ctor for type: {systemType.FullName}");
 
             try
             {
-                return (SystemBase) ctor.Invoke(new object[] {controlSystem});
+                return (SystemBase)ctor.Invoke(new object[] { controlSystem });
             }
             catch (TargetInvocationException e)
             {
@@ -171,17 +156,42 @@ namespace UXAV.AVnet.Core
                 Device = match.Groups[2].Value,
                 IpId = uint.Parse(match.Groups[3].Value, NumberStyles.HexNumber)
             };
-            if (match.Groups[4].Success)
-            {
-                result.Port = uint.Parse(match.Groups[4].Value);
-            }
+            if (match.Groups[4].Success) result.Port = uint.Parse(match.Groups[4].Value);
 
-            if (match.Groups[5].Success)
-            {
-                result.Address = match.Groups[5].Value;
-            }
+            if (match.Groups[5].Success) result.Address = match.Groups[5].Value;
 
             return result;
+        }
+
+        /// <summary>
+        ///     Get a string showing size from bytes
+        /// </summary>
+        /// <param name="value">number of bytes</param>
+        /// <param name="decimalPlaces">number of decimal places</param>
+        public static string PrettyByteSize(long value, int decimalPlaces)
+        {
+            var i = 0;
+            var dValue = (decimal)value;
+            while (Math.Round(dValue, decimalPlaces) >= 1000)
+            {
+                dValue /= 1024;
+                i++;
+            }
+
+            return string.Format("{0:n" + decimalPlaces + "} {1}", dValue, SizeSuffixes[i]);
+        }
+
+        public static string GetDmInputEventIdName(int eventIdValue)
+        {
+            var fields = typeof(DMInputEventIds).GetFields();
+            foreach (var field in fields)
+            {
+                if (field.FieldType != typeof(int)) continue;
+                var v = (int)field.GetValue(null);
+                if (v == eventIdValue) return field.Name;
+            }
+
+            return "Unknown ID " + eventIdValue;
         }
 
         public struct DevicePortAddress
@@ -338,67 +348,22 @@ namespace UXAV.AVnet.Core
         }
 
         #endregion
-
-        private static readonly string[] SizeSuffixes =
-            {"bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
-
-        /// <summary>
-        /// Get a string showing size from bytes
-        /// </summary>
-        /// <param name="value">number of bytes</param>
-        /// <param name="decimalPlaces">number of decimal places</param>
-        public static string PrettyByteSize(Int64 value, int decimalPlaces)
-        {
-            var i = 0;
-            var dValue = (decimal) value;
-            while (Math.Round(dValue, decimalPlaces) >= 1000)
-            {
-                dValue /= 1024;
-                i++;
-            }
-
-            return string.Format("{0:n" + decimalPlaces + "} {1}", dValue, SizeSuffixes[i]);
-        }
-
-        public static string GetDmInputEventIdName(int eventIdValue)
-        {
-            var fields = typeof(DMInputEventIds).GetFields();
-            foreach (var field in fields)
-            {
-                if (field.FieldType != typeof(int)) continue;
-                var v = (int) field.GetValue(null);
-                if (v == eventIdValue) return field.Name;
-            }
-
-            return "Unknown ID " + eventIdValue;
-        }
     }
 
     public class DefaultDateFormatter : IFormatProvider, ICustomFormatter
     {
-        #region Implementation of IFormatProvider
-
-        public object GetFormat(Type formatType)
-        {
-            return formatType == typeof(ICustomFormatter) ? this : null;
-        }
-
-        #endregion
-
         #region Implementation of ICustomFormatter
 
         public string Format(string format, object arg, IFormatProvider formatProvider)
         {
             if (!(arg is DateTime)) throw new NotSupportedException();
 
-            var dt = (DateTime) arg;
+            var dt = (DateTime)arg;
 
             string suffix;
 
-            if (new[] {11, 12, 13}.Contains(dt.Day))
-            {
+            if (new[] { 11, 12, 13 }.Contains(dt.Day))
                 suffix = "th";
-            }
             else
                 switch (dt.Day % 10)
                 {
@@ -417,6 +382,15 @@ namespace UXAV.AVnet.Core
                 }
 
             return string.Format("{0:dddd} {1}{2} {0:MMMM}", arg, dt.Day, suffix);
+        }
+
+        #endregion
+
+        #region Implementation of IFormatProvider
+
+        public object GetFormat(Type formatType)
+        {
+            return formatType == typeof(ICustomFormatter) ? this : null;
         }
 
         #endregion

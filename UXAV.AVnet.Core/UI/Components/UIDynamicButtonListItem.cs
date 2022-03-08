@@ -11,7 +11,7 @@ namespace UXAV.AVnet.Core.UI.Components
         private readonly StringInputSig _iconSerialSig;
 
         /// <summary>
-        /// Creates a base class for subpage reference list items
+        ///     Creates a base class for subpage reference list items
         /// </summary>
         /// <param name="list">The subpage list</param>
         /// <param name="id">The index of the item</param>
@@ -35,49 +35,27 @@ namespace UXAV.AVnet.Core.UI.Components
             }
         }
 
+        public UIButton Button => _button;
+
+        public UIDynamicButtonList List { get; }
+
+        public ushort IconNumber
+        {
+            get => _iconAnalogSig.UShortValue;
+            set => _iconAnalogSig.UShortValue = value;
+        }
+
+        public string IconName
+        {
+            get => _iconSerialSig.StringValue;
+            set => _iconSerialSig.StringValue = value;
+        }
+
+        public object LinkedObject { get; set; }
+
         public uint DigitalJoinNumber => _button.DigitalJoinNumber;
         public uint EnableJoinNumber => _button.EnableJoinNumber;
-
-        public bool Enabled
-        {
-            get => _button.Enabled;
-            set => _button.Enabled = value;
-        }
-
-        public void Enable()
-        {
-            _button.Enable();
-        }
-
-        public void Disable()
-        {
-            _button.Disable();
-        }
-
-        public event VisibilityChangeEventHandler VisibilityChanged
-        {
-            add => _button.VisibilityChanged += value;
-            remove => _button.VisibilityChanged -= value;
-        }
-
-        public bool Visible
-        {
-            get => _button.Visible;
-            set => _button.Visible = value;
-        }
-
-        public bool RequestedVisibleState => _button.RequestedVisibleState;
         public uint VisibleJoinNumber => _button.VisibleJoinNumber;
-
-        public void Show()
-        {
-            _button.Show();
-        }
-
-        public void Hide()
-        {
-            _button.Hide();
-        }
 
         public bool IsPressed => _button.IsPressed;
 
@@ -114,25 +92,23 @@ namespace UXAV.AVnet.Core.UI.Components
             remove => _button.ButtonEvent -= value;
         }
 
-        public UIButton Button => _button;
-
-        public UIDynamicButtonList List { get; }
-
-        public ushort IconNumber
-        {
-            get => _iconAnalogSig.UShortValue;
-            set => _iconAnalogSig.UShortValue = value;
-        }
-
-        public string IconName
-        {
-            get => _iconSerialSig.StringValue;
-            set => _iconSerialSig.StringValue = value;
-        }
-
         public uint Id { get; }
 
-        public object LinkedObject { get; set; }
+        public bool Enabled
+        {
+            get => _button.Enabled;
+            set => _button.Enabled = value;
+        }
+
+        public void Enable()
+        {
+            _button.Enable();
+        }
+
+        public void Disable()
+        {
+            _button.Disable();
+        }
 
         public uint SerialJoinNumber => _button.SerialJoinNumber;
 
@@ -145,6 +121,30 @@ namespace UXAV.AVnet.Core.UI.Components
         {
             get => _button.Text;
             set => _button.Text = value;
+        }
+
+        public event VisibilityChangeEventHandler VisibilityChanged
+        {
+            add => _button.VisibilityChanged += value;
+            remove => _button.VisibilityChanged -= value;
+        }
+
+        public bool Visible
+        {
+            get => _button.Visible;
+            set => _button.Visible = value;
+        }
+
+        public bool RequestedVisibleState => _button.RequestedVisibleState;
+
+        public void Show()
+        {
+            _button.Show();
+        }
+
+        public void Hide()
+        {
+            _button.Hide();
         }
     }
 }

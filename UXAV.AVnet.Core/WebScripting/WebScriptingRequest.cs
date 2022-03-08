@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using Crestron.SimplSharp.CrestronIO;
 using Crestron.SimplSharp.WebScripting;
-using Stream = Crestron.SimplSharp.CrestronIO.Stream;
 
 namespace UXAV.AVnet.Core.WebScripting
 {

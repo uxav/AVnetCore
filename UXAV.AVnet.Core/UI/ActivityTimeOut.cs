@@ -7,8 +7,8 @@ namespace UXAV.AVnet.Core.UI
     public class ActivityTimeOut
     {
         private readonly ControllerActivityMonitor _monitor;
-        private TimeSpan _timeOut;
         private readonly Timer _timer;
+        private TimeSpan _timeOut;
 
         internal ActivityTimeOut(ControllerActivityMonitor monitor, TimeSpan timeOut, bool usesProximity)
         {
@@ -20,6 +20,7 @@ namespace UXAV.AVnet.Core.UI
                 _timer = new Timer(OnTimerCallback, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
                 return;
             }
+
             _timer = new Timer(OnTimerCallback, null, _timeOut, Timeout.InfiniteTimeSpan);
         }
 
@@ -37,13 +38,13 @@ namespace UXAV.AVnet.Core.UI
         }
 
         public event ActivityTimedOutEventHandler TimedOut;
-        
+
         internal void Cancel()
         {
             _timeOut = TimeSpan.Zero;
             _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
-        
+
         internal void HoldOff()
         {
             _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
@@ -51,12 +52,9 @@ namespace UXAV.AVnet.Core.UI
 
         internal void Restart()
         {
-            if (_timeOut > TimeSpan.Zero)
-            {
-                Reset(_timeOut);
-            }
+            if (_timeOut > TimeSpan.Zero) Reset(_timeOut);
         }
-        
+
         public void Reset()
         {
             Reset(_timeOut);
@@ -70,15 +68,13 @@ namespace UXAV.AVnet.Core.UI
                 _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
                 return;
             }
+
             _timer.Change(_timeOut, Timeout.InfiniteTimeSpan);
         }
 
         internal void NoProximityPresent()
         {
-            if (UsesProximity)
-            {
-                OnTimedOut(this, new ActivityTimedOutEventArgs(TimeOutEventType.NoProximityPresent));
-            }
+            if (UsesProximity) OnTimedOut(this, new ActivityTimedOutEventArgs(TimeOutEventType.NoProximityPresent));
         }
 
         protected virtual void OnTimedOut(ActivityTimeOut timeOut, ActivityTimedOutEventArgs args)
@@ -108,7 +104,7 @@ namespace UXAV.AVnet.Core.UI
             EventType = eventType;
         }
 
-        private TimeOutEventType EventType { get; }
+        public TimeOutEventType EventType { get; }
     }
 
     public delegate void ActivityTimedOutEventHandler(ActivityTimeOut timeOut, ActivityTimedOutEventArgs args);

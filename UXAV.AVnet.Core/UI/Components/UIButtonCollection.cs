@@ -26,12 +26,8 @@ namespace UXAV.AVnet.Core.UI.Components
             add
             {
                 if (_subscribeCount == 0)
-                {
                     foreach (var button in InternalDictionary.Values)
-                    {
                         button.ButtonEvent += OnButtonEvent;
-                    }
-                }
 
                 _subscribeCount++;
                 _buttonEvent += value;
@@ -43,19 +39,27 @@ namespace UXAV.AVnet.Core.UI.Components
                 // ReSharper disable once DelegateSubtraction
                 _buttonEvent -= value;
                 if (_subscribeCount == 0)
-                {
                     foreach (var button in InternalDictionary.Values)
-                    {
                         button.ButtonEvent -= OnButtonEvent;
-                    }
-                }
             }
+        }
+
+        public void SetInterlockedFeedback(uint key)
+        {
+            foreach (var dictItem in InternalDictionary.Where(item => item.Key != key)) dictItem.Value.Feedback = false;
+
+            if (InternalDictionary.ContainsKey(key)) InternalDictionary[key].Feedback = true;
+        }
+
+        public void ClearInterlockedFeedback()
+        {
+            foreach (var button in InternalDictionary.Values) button.Feedback = false;
         }
 
         public new void Add(IButton button)
         {
             base.Add(button);
-            if(_subscribeCount == 0) return;
+            if (_subscribeCount == 0) return;
             button.ButtonEvent += OnButtonEvent;
         }
 
@@ -72,33 +76,14 @@ namespace UXAV.AVnet.Core.UI.Components
             }
         }
 
-        public void SetInterlockedFeedback(uint key)
-        {
-            foreach (var dictItem in InternalDictionary.Where(item => item.Key != key))
-            {
-                dictItem.Value.Feedback = false;
-            }
-
-            if (InternalDictionary.ContainsKey(key))
-            {
-                InternalDictionary[key].Feedback = true;
-            }
-        }
-
-        public void ClearInterlockedFeedback()
-        {
-            foreach (var button in InternalDictionary.Values)
-            {
-                button.Feedback = false;
-            }
-        }
-
-        public static UIButtonCollection CreateSequencedCollection(ISigProvider provider, uint startJoinNumber, uint count)
+        public static UIButtonCollection CreateSequencedCollection(ISigProvider provider, uint startJoinNumber,
+            uint count)
         {
             return CreateSequencedCollection(provider, startJoinNumber, 1, count);
         }
 
-        public static UIButtonCollection CreateSequencedCollection(ISigProvider provider, uint startJoinNumber, uint firstId, uint count)
+        public static UIButtonCollection CreateSequencedCollection(ISigProvider provider, uint startJoinNumber,
+            uint firstId, uint count)
         {
             var list = new List<IButton>();
             for (var b = 0U; b < count; b++)
@@ -107,6 +92,7 @@ namespace UXAV.AVnet.Core.UI.Components
                 button.SetId(b + firstId);
                 list.Add(button);
             }
+
             return new UIButtonCollection(list);
         }
     }

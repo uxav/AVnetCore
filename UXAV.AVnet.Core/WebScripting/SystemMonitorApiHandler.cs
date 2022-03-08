@@ -33,14 +33,14 @@ namespace UXAV.AVnet.Core.WebScripting
             {
                 Cpu = SystemMonitor.CpuUtilization,
                 CpuMax = SystemMonitor.MaximumCpuUtilization,
-                Memory = (int) Tools.ScaleRange(ramUsed, 0, totalRam, 0, 100),
-                MemoryMax = (int) Tools.ScaleRange(maxRamUsed, 0, totalRam, 0, 100),
+                Memory = (int)Tools.ScaleRange(ramUsed, 0, totalRam, 0, 100),
+                MemoryMax = (int)Tools.ScaleRange(maxRamUsed, 0, totalRam, 0, 100),
                 Processes = SystemMonitor.NumberOfRunningProcesses,
                 ProcessesMax = SystemMonitor.MaximumNumberOfRunningProcesses,
                 HistoryChartData = new
                 {
                     CpuData = cpuData,
-                    MemoryData = memoryData,
+                    MemoryData = memoryData
                 }
             };
             WriteResponse(data);
@@ -62,8 +62,8 @@ namespace UXAV.AVnet.Core.WebScripting
                         WriteResponse(true);
                         return;
                 }
+
                 HandleError(400, "Bad Request", $"Method \"{method}\" not known");
-                return;
             }
             catch (Exception e)
             {

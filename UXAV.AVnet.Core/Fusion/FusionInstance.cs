@@ -13,32 +13,26 @@ namespace UXAV.AVnet.Core.Fusion
 {
     public class FusionInstance
     {
-        private readonly FusionRoom _fusionRoom;
-        private readonly RoomBase _room;
         private readonly Dictionary<uint, IFusionAsset> _fusionAssets = new Dictionary<uint, IFusionAsset>();
 
         internal FusionInstance(FusionRoom fusionRoom, RoomBase room)
         {
-            _fusionRoom = fusionRoom;
-            _room = room;
-            _fusionRoom.OnlineStatusChange += FusionRoomOnOnlineStatusChange;
-            _fusionRoom.FusionStateChange += FusionRoomOnFusionStateChange;
-            _fusionRoom.FusionAssetStateChange += FusionRoomOnFusionAssetStateChange;
+            FusionRoom = fusionRoom;
+            Room = room;
+            FusionRoom.OnlineStatusChange += FusionRoomOnOnlineStatusChange;
+            FusionRoom.FusionStateChange += FusionRoomOnFusionStateChange;
+            FusionRoom.FusionAssetStateChange += FusionRoomOnFusionAssetStateChange;
         }
 
-        public RoomBase Room => _room;
+        public RoomBase Room { get; }
 
-        public FusionRoom FusionRoom => _fusionRoom;
+        public FusionRoom FusionRoom { get; }
 
         private uint GetNextAvailableAssetKey()
         {
             for (var key = 1U; key <= 249; key++)
-            {
                 if (!_fusionAssets.ContainsKey(key))
-                {
                     return key;
-                }
-            }
 
             throw new IndexOutOfRangeException("No more asset keys available");
         }
@@ -46,12 +40,8 @@ namespace UXAV.AVnet.Core.Fusion
         private uint GetKeyForAssetDevice(IFusionAsset device)
         {
             foreach (var fusionAsset in _fusionAssets)
-            {
                 if (fusionAsset.Value == device)
-                {
                     return fusionAsset.Key;
-                }
-            }
 
             throw new KeyNotFoundException("No device exists in collection");
         }
@@ -65,16 +55,14 @@ namespace UXAV.AVnet.Core.Fusion
         public void AddAsset(IFusionAsset asset, uint key)
         {
             if (_fusionAssets.ContainsKey(key))
-            {
                 throw new ArgumentException($"Asset with key {key} already exists", nameof(key));
-            }
 
             FusionRoom.AddAsset(eAssetType.StaticAsset, key,
                 asset.Name, asset.FusionAssetType.ToString(), Guid.NewGuid().ToString());
 
             _fusionAssets.Add(key, asset);
 
-            var fusionAsset = (FusionStaticAsset) FusionRoom.UserConfigurableAssetDetails[key].Asset;
+            var fusionAsset = (FusionStaticAsset)FusionRoom.UserConfigurableAssetDetails[key].Asset;
             fusionAsset.ParamMake.Value = asset.ManufacturerName;
             fusionAsset.ParamModel.Value = asset.ModelName;
 
@@ -98,26 +86,24 @@ namespace UXAV.AVnet.Core.Fusion
 
         private void PowerDeviceOnPowerStatusChange(IPowerDevice device, DevicePowerStatusEventArgs args)
         {
-            var key = GetKeyForAssetDevice((IFusionAsset) device);
-            var fusionAsset = (FusionStaticAsset) FusionRoom.UserConfigurableAssetDetails[key].Asset;
+            var key = GetKeyForAssetDevice((IFusionAsset)device);
+            var fusionAsset = (FusionStaticAsset)FusionRoom.UserConfigurableAssetDetails[key].Asset;
             fusionAsset.PowerOn.InputSig.BoolValue = device.Power;
-            if (device is DisplayDeviceBase display)
-            {
+            if (device is DisplayDeviceBase)
                 Task.Run(() =>
                 {
                     var displayDevices =
                         UxEnvironment.System.DevicesDict.Values.Where(d =>
-                            d is DisplayDeviceBase && d.AllocatedRoom == _room).Cast<DisplayDeviceBase>();
+                            d is DisplayDeviceBase && d.AllocatedRoom == Room).Cast<DisplayDeviceBase>();
                     var powerFeedback = displayDevices.Any(d => d.Power);
-                    _fusionRoom.DisplayPowerOn.InputSig.BoolValue = powerFeedback;
+                    FusionRoom.DisplayPowerOn.InputSig.BoolValue = powerFeedback;
                 });
-            }
         }
 
         private void AssetOnDeviceCommunicatingChange(IConnectedItem device, bool communicating)
         {
-            var key = GetKeyForAssetDevice((IFusionAsset) device);
-            var fusionAsset = (FusionStaticAsset) FusionRoom.UserConfigurableAssetDetails[key].Asset;
+            var key = GetKeyForAssetDevice((IFusionAsset)device);
+            var fusionAsset = (FusionStaticAsset)FusionRoom.UserConfigurableAssetDetails[key].Asset;
             fusionAsset.Connected.InputSig.BoolValue = device.DeviceCommunicating;
         }
 
@@ -129,7 +115,7 @@ namespace UXAV.AVnet.Core.Fusion
             {
                 foreach (var kvp in _fusionAssets)
                 {
-                    var staticAsset = _fusionRoom.UserConfigurableAssetDetails[kvp.Key].Asset as FusionStaticAsset;
+                    var staticAsset = FusionRoom.UserConfigurableAssetDetails[kvp.Key].Asset as FusionStaticAsset;
 
                     if (staticAsset == null) continue;
 
@@ -146,22 +132,17 @@ namespace UXAV.AVnet.Core.Fusion
                     }
 
                     if (asset is IDevice device)
-                    {
                         staticAsset.FusionGenericAssetSerialsAsset3.StringInput[53].StringValue = device.VersionInfo;
-                    }
 
-                    if (asset is IPowerDevice powerDevice)
-                    {
-                        staticAsset.PowerOn.InputSig.BoolValue = powerDevice.Power;
-                    }
+                    if (asset is IPowerDevice powerDevice) staticAsset.PowerOn.InputSig.BoolValue = powerDevice.Power;
                 }
 
-                _fusionRoom.SystemPowerOn.InputSig.BoolValue = _room.Power;
+                FusionRoom.SystemPowerOn.InputSig.BoolValue = Room.Power;
                 var displayDevices =
                     UxEnvironment.System.DevicesDict.Values.Where(d =>
-                        d is DisplayDeviceBase && d.AllocatedRoom == _room).Cast<DisplayDeviceBase>();
+                        d is DisplayDeviceBase && d.AllocatedRoom == Room).Cast<DisplayDeviceBase>();
                 var powerFeedback = displayDevices.Any(d => d.Power);
-                _fusionRoom.DisplayPowerOn.InputSig.BoolValue = powerFeedback;
+                FusionRoom.DisplayPowerOn.InputSig.BoolValue = powerFeedback;
             });
         }
 
@@ -170,50 +151,44 @@ namespace UXAV.AVnet.Core.Fusion
             switch (args.EventId)
             {
                 case FusionEventIds.SystemPowerOffReceivedEventId:
-                    if (_fusionRoom.SystemPowerOff.OutputSig.BoolValue)
+                    if (FusionRoom.SystemPowerOff.OutputSig.BoolValue)
                     {
-                        Logger.Highlight($"Fusion requested power off in {_room.Name}");
-                        Task.Run(() => _room.FusionRequestedPowerOff());
+                        Logger.Highlight($"Fusion requested power off in {Room.Name}");
+                        Task.Run(() => Room.FusionRequestedPowerOff());
                     }
 
                     break;
                 case FusionEventIds.SystemPowerOnReceivedEventId:
-                    if (_fusionRoom.SystemPowerOn.OutputSig.BoolValue)
+                    if (FusionRoom.SystemPowerOn.OutputSig.BoolValue)
                     {
-                        Logger.Highlight($"Fusion requested power on in {_room.Name}");
-                        Task.Run(() => _room.FusionRequestedPowerOn());
+                        Logger.Highlight($"Fusion requested power on in {Room.Name}");
+                        Task.Run(() => Room.FusionRequestedPowerOn());
                     }
 
                     break;
                 case FusionEventIds.DisplayPowerOffReceivedEventId:
-                    if (_fusionRoom.DisplayPowerOff.OutputSig.BoolValue)
+                    if (FusionRoom.DisplayPowerOff.OutputSig.BoolValue)
                     {
                         var displays = UxEnvironment.System.DevicesDict.Values
                             .Where(d => d is DisplayDeviceBase)
                             .Cast<DisplayDeviceBase>()
-                            .Where(d => d.AllocatedRoom == _room);
+                            .Where(d => d.AllocatedRoom == Room);
 
-                        Logger.Highlight($"Fusion requested displays off in {_room.Name}");
-                        foreach (var display in displays)
-                        {
-                            display.Power = false;
-                        }
+                        Logger.Highlight($"Fusion requested displays off in {Room.Name}");
+                        foreach (var display in displays) display.Power = false;
                     }
 
                     break;
                 case FusionEventIds.DisplayPowerOnReceivedEventId:
-                    if (_fusionRoom.DisplayPowerOn.OutputSig.BoolValue)
+                    if (FusionRoom.DisplayPowerOn.OutputSig.BoolValue)
                     {
                         var displays = UxEnvironment.System.DevicesDict.Values
                             .Where(d => d is DisplayDeviceBase)
                             .Cast<DisplayDeviceBase>()
-                            .Where(d => d.AllocatedRoom == _room);
+                            .Where(d => d.AllocatedRoom == Room);
 
-                        Logger.Highlight($"Fusion requested displays on in {_room.Name}");
-                        foreach (var display in displays)
-                        {
-                            display.Power = true;
-                        }
+                        Logger.Highlight($"Fusion requested displays on in {Room.Name}");
+                        foreach (var display in displays) display.Power = true;
                     }
 
                     break;
@@ -223,7 +198,7 @@ namespace UXAV.AVnet.Core.Fusion
         private void FusionRoomOnFusionAssetStateChange(FusionBase device, FusionAssetStateEventArgs args)
         {
             var asset =
-                _fusionRoom.UserConfigurableAssetDetails[args.UserConfigurableAssetDetailIndex].Asset as
+                FusionRoom.UserConfigurableAssetDetails[args.UserConfigurableAssetDetailIndex].Asset as
                     FusionStaticAsset;
 
             if (asset == null) return;
@@ -234,22 +209,14 @@ namespace UXAV.AVnet.Core.Fusion
             {
                 case FusionAssetEventId.StaticAssetPowerOnReceivedEventId:
                     if (asset.PowerOn.OutputSig.BoolValue)
-                    {
                         if (powerDevice != null)
-                        {
                             powerDevice.Power = true;
-                        }
-                    }
 
                     break;
                 case FusionAssetEventId.StaticAssetPowerOffReceivedEventId:
                     if (asset.PowerOff.OutputSig.BoolValue)
-                    {
                         if (powerDevice != null)
-                        {
                             powerDevice.Power = false;
-                        }
-                    }
 
                     break;
             }

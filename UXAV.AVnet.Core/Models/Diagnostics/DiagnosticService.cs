@@ -6,16 +6,10 @@ namespace UXAV.AVnet.Core.Models.Diagnostics
 {
     public static class DiagnosticService
     {
-        private static SystemBase _system;
         private static GetSystemMessagesHandler _callback;
 
-        static DiagnosticService()
+        internal static void RegisterSystemCallback(GetSystemMessagesHandler callback)
         {
-        }
-
-        internal static void RegisterSystemCallback(SystemBase system, GetSystemMessagesHandler callback)
-        {
-            _system = system;
             _callback = callback;
         }
 
@@ -59,12 +53,12 @@ namespace UXAV.AVnet.Core.Models.Diagnostics
 
             var stats = new
             {
-                @Danger = dangerCount,
-                @Warning = messages.Count(m => m.Level == MessageLevel.Warning),
-                @Info = messages.Count(m => m.Level == MessageLevel.Info),
-                @Success = messages.Count(m => m.Level == MessageLevel.Success),
-                @Level = level,
-                @LevelCount = levelCount
+                Danger = dangerCount,
+                Warning = messages.Count(m => m.Level == MessageLevel.Warning),
+                Info = messages.Count(m => m.Level == MessageLevel.Info),
+                Success = messages.Count(m => m.Level == MessageLevel.Success),
+                Level = level,
+                LevelCount = levelCount
             };
             EventService.Notify(EventMessageType.DiagnosticsMessagesUpdated, stats);
             return messages;

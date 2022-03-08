@@ -8,7 +8,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
         bool DeviceCommunicating { get; }
 
         /// <summary>
-        /// Event called if the comms status changes on the device
+        ///     Event called if the comms status changes on the device
         /// </summary>
         event DeviceCommunicatingChangeHandler DeviceCommunicatingChange;
     }

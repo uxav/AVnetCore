@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Crestron.SimplSharpPro.AudioDistribution;
 using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.AVnet.Core.Models.Rooms;
 
@@ -26,9 +25,7 @@ namespace UXAV.AVnet.Core.Fusion
         public static void CreateFusionAsset(IFusionAsset device)
         {
             if (device.AllocatedRoom == null)
-            {
                 throw new ArgumentException("Device does not have allocated room", nameof(device));
-            }
 
             var fusionInstance = device.AllocatedRoom.GetFusionInstance();
             fusionInstance.AddAsset(device);

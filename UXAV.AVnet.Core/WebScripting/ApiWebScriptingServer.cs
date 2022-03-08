@@ -1,22 +1,23 @@
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting
 {
     public class ApiWebScriptingServer : WebScriptingServer
     {
-        public ApiWebScriptingServer(Models.SystemBase system, string directory)
+        public ApiWebScriptingServer(SystemBase system, string directory)
             : base(system, directory)
         {
-
         }
 
         public override void AddRoute(string routePattern, Type handlerType)
         {
             if (!handlerType.IsSubclassOf(typeof(ApiRequestHandler)))
-                throw new Exception($"Type \"{handlerType.Name}\" is not derived from {typeof(ApiRequestHandler).Name}");
+                throw new Exception(
+                    $"Type \"{handlerType.Name}\" is not derived from {nameof(ApiRequestHandler)}");
 
             base.AddRoute(routePattern, handlerType);
         }
@@ -29,15 +30,15 @@ namespace UXAV.AVnet.Core.WebScripting
             request.Response.ContentType = "application/json";
             var json = JToken.FromObject(new
             {
-                @Request = new
+                Request = new
                 {
                     request.Path,
                     request.Method
                 },
-                @Code = request.Response.StatusCode,
-                @Error = new
+                Code = request.Response.StatusCode,
+                Error = new
                 {
-                    @Status = request.Response.StatusDescription,
+                    Status = request.Response.StatusDescription,
                     e.Message,
                     e.StackTrace
                 }
@@ -45,7 +46,8 @@ namespace UXAV.AVnet.Core.WebScripting
             request.Response.Write(json.ToString(Formatting.Indented), true);
         }
 
-        public override void HandleError(WebScriptingRequest request, int statusCode, string statusDescription, string message)
+        public override void HandleError(WebScriptingRequest request, int statusCode, string statusDescription,
+            string message)
         {
             Logger.Warn("\"{3}\" Error {0} {1}: {2}", statusCode, statusDescription, message, request.Path);
             request.Response.StatusCode = statusCode;
@@ -53,17 +55,17 @@ namespace UXAV.AVnet.Core.WebScripting
             request.Response.ContentType = "application/json";
             var json = JToken.FromObject(new
             {
-                @Request = new
+                Request = new
                 {
                     request.Path,
                     request.Method
                 },
-                @Code = request.Response.StatusCode,
-                @Error = new
+                Code = request.Response.StatusCode,
+                Error = new
                 {
-                    @Status = request.Response.StatusDescription,
-                    @Message = message,
-                    @StackTrace = ""
+                    Status = request.Response.StatusDescription,
+                    Message = message,
+                    StackTrace = ""
                 }
             });
             request.Response.Write(json.ToString(Formatting.Indented), true);
