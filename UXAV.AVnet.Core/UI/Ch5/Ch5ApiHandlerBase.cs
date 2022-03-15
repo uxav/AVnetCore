@@ -62,12 +62,34 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 room = _deviceController?.Room?.Id ?? 0,
                 rooms
             });
+            EventService.EventOccured += EventServiceOnEventOccured;
             OnConnect(connection);
         }
 
         internal void OnDisconnectInternal(Ch5ConnectionInstance connection)
         {
+            EventService.EventOccured -= EventServiceOnEventOccured;
             Handlers.Remove(connection.ID);
+        }
+
+        private void EventServiceOnEventOccured(EventMessage message)
+        {
+            try
+            {
+                switch (message.MessageType)
+                {
+                    case EventMessageType.LogEntry:
+                    case EventMessageType.SessionExpired:
+                        return;
+                    default:
+                        SendNotification($"EventService:{message.MessageType}", message.Message);
+                        return;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         protected abstract void OnConnect(Ch5ConnectionInstance connection);
