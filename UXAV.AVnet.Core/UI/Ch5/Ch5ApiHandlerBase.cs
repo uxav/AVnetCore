@@ -80,6 +80,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 {
                     case EventMessageType.LogEntry:
                     case EventMessageType.SessionExpired:
+                    case EventMessageType.ProgramStopping:
+                    case EventMessageType.BootStatus:
                         return;
                     default:
                         SendNotification($"EventService:{message.MessageType}", message.Message);

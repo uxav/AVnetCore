@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Threading;
 using Newtonsoft.Json.Linq;
+using UXAV.AVnet.Core.Models;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 using Logger = UXAV.Logging.Logger;
@@ -29,6 +30,13 @@ namespace UXAV.AVnet.Core.UI.Ch5
             foreach (var protocol in Context.SecWebSocketProtocols)
                 Logger.Debug($"Connection protocol includes: {protocol}");
             _apiHandler.OnConnectInternal(this);
+            EventService.Notify(EventMessageType.DeviceConnectionChange, new
+            {
+                Device = "CH5 Websocket",
+                Description = $"CH5 Handler: {_apiHandler.GetType().Name}",
+                ConnectionInfo = RemoteIpAddress.ToString(),
+                Online = true
+            });
         }
 
         protected override void OnClose(CloseEventArgs e)
@@ -36,6 +44,13 @@ namespace UXAV.AVnet.Core.UI.Ch5
             base.OnClose(e);
             Logger.Warn($"Websocket Closed, {e.Code}, Clean: {e.WasClean}, Remote IP: {RemoteIpAddress}");
             _apiHandler.OnDisconnectInternal(this);
+            EventService.Notify(EventMessageType.DeviceConnectionChange, new
+            {
+                Device = "CH5 Websocket",
+                Description = $"CH5 Handler: {_apiHandler.GetType().Name}",
+                ConnectionInfo = RemoteIpAddress.ToString(),
+                Online = false
+            });
         }
 
         protected override void OnError(ErrorEventArgs e)

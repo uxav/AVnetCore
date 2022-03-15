@@ -570,7 +570,7 @@ namespace UXAV.AVnet.Core.Models
                 var handlers = Ch5ApiHandlerBase.ConnectedHandlers;
                 messages.AddRange(handlers.Select(handler => new DiagnosticMessage(MessageLevel.Info,
                     "Websocket connected", handler.Connection.RemoteIpAddress.ToString(), handler.GetType().Name,
-                    handler.Connection.ID)));
+                    handler.GetType().Name)));
             }
             catch (Exception e)
             {
