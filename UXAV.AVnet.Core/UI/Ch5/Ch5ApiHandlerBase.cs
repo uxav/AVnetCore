@@ -4,7 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Crestron.SimplSharp;
 using Newtonsoft.Json.Linq;
+using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
 using UXAV.AVnet.Core.UI.Ch5.MessageHandling;
 using UXAV.Logging;
@@ -180,6 +182,26 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
 
             throw new MissingMethodException("No method found");
+        }
+
+        [ApiTargetMethod("GetCsInfo")]
+        public object GetCsInfo()
+        {
+            return new
+            {
+                SystemBase.IpAddress,
+                SystemBase.HostName,
+                SystemBase.DomainName,
+                SystemBase.MacAddress,
+                SystemBase.DevicePlatform,
+                InitialParametersClass.RoomId,
+                InitialParametersClass.RoomName,
+                SystemBase.ProgramApplicationDirectory,
+                SystemBase.DhcpStatus,
+                ConfigManager.ConfigPath,
+                UpTime = SystemBase.UpTime.ToPrettyFormat(),
+                Ch5WebSocketServer.WebSocketBaseUrl,
+            };
         }
     }
 
