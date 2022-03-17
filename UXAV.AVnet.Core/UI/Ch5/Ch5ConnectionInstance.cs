@@ -91,8 +91,16 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private void OnHandlerSendRequest(string data)
         {
+            if(State != WebSocketState.Open) return;
             _sendMutex.WaitOne();
-            Send(data);
+            try
+            {
+                Send(data);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
             _sendMutex.ReleaseMutex();
         }
     }
