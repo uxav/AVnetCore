@@ -55,6 +55,7 @@ namespace UXAV.AVnet.Core.Models
 
         protected SystemBase(CrestronControlSystem controlSystem)
         {
+            CrestronEnvironment.ProgramStatusEventHandler += SystemStoppingInternal;
             Logger.MessageLogged += message => { EventService.Notify(EventMessageType.LogEntry, message); };
 
             Logger.Highlight("{0}.ctor()", GetType().FullName);
@@ -69,8 +70,6 @@ namespace UXAV.AVnet.Core.Models
             _initialConfig = ConfigManager.JConfig?.ToString();
 
             DiagnosticService.RegisterSystemCallback(GenerateDiagnosticMessagesInternal);
-
-            CrestronEnvironment.ProgramStatusEventHandler += OnProgramStatusEventHandler;
 
             RoomClock.Start();
             Scheduler.Init();
@@ -546,6 +545,23 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("Reboot response: {0}", response);
         }
 
+        private void SystemStoppingInternal(eProgramStatusEventType eventType)
+        {
+            if (eventType == eProgramStatusEventType.Stopping)
+            {
+                Task.Run(Ch5WebSocketServer.Stop);
+            }
+
+            try
+            {
+                OnProgramStatusEventHandler(eventType);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+        }
+
         protected abstract void OnProgramStatusEventHandler(eProgramStatusEventType eventType);
 
         internal IEnumerable<DiagnosticMessage> GenerateDiagnosticMessagesInternal()
@@ -559,6 +575,12 @@ namespace UXAV.AVnet.Core.Models
                 messages.AddRange(Logger.ConsoleConnections.Select(connection =>
                     new DiagnosticMessage(MessageLevel.Warning, $"Logger connection from {connection}",
                         "Console Connection", GetType().Name)));
+            }
+
+            if (Ch5WebSocketServer.Running)
+            {
+                messages.Add(new DiagnosticMessage(MessageLevel.Info, "CH5 websocket service listening",
+                    Ch5WebSocketServer.WebSocketBaseUrl, nameof(Ch5WebSocketServer)));
             }
 
             messages.AddRange(CipDevices.GetDiagnosticMessages());

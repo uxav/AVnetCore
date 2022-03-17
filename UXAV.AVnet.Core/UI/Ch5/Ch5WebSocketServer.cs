@@ -12,11 +12,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
         private static WebSocketServer _server;
         private static bool _initCalled;
 
-        static Ch5WebSocketServer()
-        {
-            CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
-        }
-
         public static string WebSocketBaseUrl =>
             $"ws{(_server.IsSecure ? "s" : "")}://{SystemBase.IpAddress}:{_server.Port}";
 
@@ -34,16 +29,36 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 WaitTime = TimeSpan.FromSeconds(30)
             };
 
+            CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
+
             _server.Log.Output += OnLogOutput;
             _server.Log.Level = LogLevel.Trace;
         }
 
+        private static void CrestronEnvironmentOnProgramStatusEventHandler(eProgramStatusEventType type)
+        {
+            if (type == eProgramStatusEventType.Stopping)
+            {
+                _server.Log.Output -= OnLogOutput;
+            }
+        }
+
         internal static bool InitCalled => _initCalled;
 
-        private static void CrestronEnvironmentOnProgramStatusEventHandler(eProgramStatusEventType eventType)
+        internal static void Stop()
         {
-            if (eventType == eProgramStatusEventType.Stopping && _server.IsListening)
-                _server.Stop(1012, "Processor is restarting / stopping");
+            try
+            {
+                if (_server.IsListening)
+                {
+                    Logger.Warn("Shutting down websocket server for UI");
+                    _server?.Stop(1012, "Processor is restarting / stopping");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         internal static void AddDeviceService<THandler>(Ch5UIController<THandler> controller)
@@ -85,6 +100,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 Logger.Error(e);
             }
         }
+
+        internal static bool Running => _server != null && _server.IsListening;
 
         private static void OnLogOutput(LogData data, string s)
         {
