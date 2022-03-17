@@ -10,6 +10,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
     public static class Ch5WebSocketServer
     {
         private static WebSocketServer _server;
+        private static bool _initCalled;
 
         static Ch5WebSocketServer()
         {
@@ -21,6 +22,12 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         public static void Init(int port)
         {
+            if (_initCalled)
+            {
+                Logger.Warn($"Init already called, will create new server!");
+            }
+
+            _initCalled = true;
             _server = new WebSocketServer(port, false)
             {
                 KeepClean = true,
@@ -30,6 +37,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             _server.Log.Output += OnLogOutput;
             _server.Log.Level = LogLevel.Trace;
         }
+
+        internal static bool InitCalled => _initCalled;
 
         private static void CrestronEnvironmentOnProgramStatusEventHandler(eProgramStatusEventType eventType)
         {
@@ -65,9 +74,16 @@ namespace UXAV.AVnet.Core.UI.Ch5
             });
         }
 
-        public static void Start()
+        internal static void Start()
         {
-            _server.Start();
+            try
+            {
+                _server?.Start();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         private static void OnLogOutput(LogData data, string s)
