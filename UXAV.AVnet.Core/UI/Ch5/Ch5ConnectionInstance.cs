@@ -27,6 +27,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             base.OnOpen();
             RemoteIpAddress = Context.UserEndPoint.Address;
             Logger.Success($"Websocket Opened from {RemoteIpAddress}!");
+            Logger.Log("Connection User-Agent:\r\n" + Context.Headers["User-Agent"]);
             foreach (var protocol in Context.SecWebSocketProtocols)
                 Logger.Debug($"Connection protocol includes: {protocol}");
             _apiHandler.OnConnectInternal(this);
