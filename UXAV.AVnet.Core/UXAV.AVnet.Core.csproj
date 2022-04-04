@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -115,8 +115,8 @@
             <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.1.1.1\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
             <Private>True</Private>
         </Reference>
-        <Reference Include="Microsoft.CSharp"/>
-        <Reference Include="mscorlib"/>
+        <Reference Include="Microsoft.CSharp" />
+        <Reference Include="mscorlib" />
         <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
             <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
             <Private>True</Private>
@@ -173,11 +173,11 @@
             <HintPath>..\packages\Crestron.SimplSharp.SDK.Library.2.17.36\lib\net47\SimplSharpTimerEventInterface.dll</HintPath>
             <Private>True</Private>
         </Reference>
-        <Reference Include="System"/>
-        <Reference Include="System.ComponentModel.Composition"/>
-        <Reference Include="System.Core"/>
-        <Reference Include="System.Data"/>
-        <Reference Include="System.Drawing"/>
+        <Reference Include="System" />
+        <Reference Include="System.ComponentModel.Composition" />
+        <Reference Include="System.Core" />
+        <Reference Include="System.Data" />
+        <Reference Include="System.Drawing" />
         <Reference Include="System.Drawing.Common, Version=4.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
             <HintPath>..\packages\System.Drawing.Common.4.7.0\lib\net461\System.Drawing.Common.dll</HintPath>
             <Private>True</Private>
@@ -186,8 +186,8 @@
             <HintPath>..\packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
             <Private>True</Private>
         </Reference>
-        <Reference Include="System.IO.Compression"/>
-        <Reference Include="System.Net"/>
+        <Reference Include="System.IO.Compression" />
+        <Reference Include="System.Net" />
         <Reference Include="System.Net.Http, Version=4.1.1.3, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
             <HintPath>..\packages\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
             <Private>True</Private>
@@ -232,8 +232,8 @@
             <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
             <Private>True</Private>
         </Reference>
-        <Reference Include="System.Web"/>
-        <Reference Include="System.Xml"/>
+        <Reference Include="System.Web" />
+        <Reference Include="System.Xml" />
         <Reference Include="UXAV.Logging, Version=1.2.0.18537, Culture=neutral, PublicKeyToken=null">
             <HintPath>..\packages\UXAV.Logging.1.2.0\lib\net47\UXAV.Logging.dll</HintPath>
             <Private>True</Private>
@@ -244,163 +244,162 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="AutoDiscovery.cs"/>
-        <Compile Include="AutoDiscoveryResult.cs"/>
-        <Compile Include="Cloud\CloudConnector.cs"/>
-        <Compile Include="Config\ConfigBase.cs"/>
-        <Compile Include="Config\ConfigManager.cs"/>
-        <Compile Include="Config\IConfigItem.cs"/>
-        <Compile Include="DeviceSupport\CipDevices.cs"/>
-        <Compile Include="DeviceSupport\ComPortExtensions.cs"/>
-        <Compile Include="DeviceSupport\ComPortHandler.cs"/>
-        <Compile Include="DeviceSupport\DeviceBase.cs"/>
-        <Compile Include="DeviceSupport\DisplayDeviceBase.cs"/>
-        <Compile Include="DeviceSupport\FireMonitor.cs"/>
-        <Compile Include="DeviceSupport\IAsset.cs"/>
-        <Compile Include="DeviceSupport\ICamera.cs"/>
-        <Compile Include="DeviceSupport\IConnectedItem.cs"/>
-        <Compile Include="DeviceSupport\IDeviceWithStandbyMode.cs"/>
-        <Compile Include="DeviceSupport\IFusionAsset.cs"/>
-        <Compile Include="DeviceSupport\IGenericDeviceWrapper.cs"/>
-        <Compile Include="DeviceSupport\IMuteControl.cs"/>
-        <Compile Include="DeviceSupport\IpIdHelper.cs"/>
-        <Compile Include="DeviceSupport\IVolumeControl.cs"/>
-        <Compile Include="DeviceSupport\IVolumeLevelDevice.cs"/>
-        <Compile Include="DeviceSupport\IDevice.cs"/>
-        <Compile Include="DeviceSupport\IDeviceConnection.cs"/>
-        <Compile Include="DeviceSupport\IHoistControl.cs"/>
-        <Compile Include="DeviceSupport\IPowerDevice.cs"/>
-        <Compile Include="DeviceSupport\ISigProvider.cs"/>
-        <Compile Include="DeviceSupport\SigProviderDevice.cs"/>
-        <Compile Include="DeviceSupport\TcpConnectionBase.cs"/>
-        <Compile Include="Fusion\FusionHelper.cs"/>
-        <Compile Include="Fusion\FusionInstance.cs"/>
-        <Compile Include="MidnightNotifier.cs"/>
-        <Compile Include="Models\Collections\UXCollection.cs"/>
-        <Compile Include="Models\DiagnosticsArchiveTool.cs"/>
-        <Compile Include="Models\Diagnostics\DeviceMessageExtenders.cs"/>
-        <Compile Include="Models\Diagnostics\DiagnosticMessage.cs"/>
-        <Compile Include="Models\Diagnostics\DiagnosticService.cs"/>
-        <Compile Include="Models\Diagnostics\IDiagnosticItem.cs"/>
-        <Compile Include="Models\DisplayControllerBase.cs"/>
-        <Compile Include="Models\EventMessage.cs"/>
-        <Compile Include="Models\EventService.cs"/>
-        <Compile Include="Models\IGenericItem.cs"/>
-        <Compile Include="Models\IInitializable.cs"/>
-        <Compile Include="Models\ISourceTarget.cs"/>
-        <Compile Include="Models\RoomClock.cs"/>
-        <Compile Include="Models\Rooms\RoomBase.cs"/>
-        <Compile Include="Models\Rooms\RoomCollection.cs"/>
-        <Compile Include="Models\Sources\Extensions.cs"/>
-        <Compile Include="Models\Sources\SourceBase.cs"/>
-        <Compile Include="Models\Sources\SourceCollection.cs"/>
-        <Compile Include="Models\SystemBase.cs"/>
-        <Compile Include="Models\UxEnvironment.cs"/>
-        <Compile Include="ProgramFileVersion.cs"/>
-        <Compile Include="Properties\AssemblyInfo.cs"/>
-        <Compile Include="Scheduler.cs"/>
-        <Compile Include="ShellHelper.cs"/>
-        <Compile Include="SystemMonitor.cs"/>
-        <Compile Include="Tools.cs"/>
-        <Compile Include="UI\ActivityMonitor.cs"/>
-        <Compile Include="UI\Ch5\Ch5ApiHandlerBase.cs"/>
-        <Compile Include="UI\Ch5\Ch5ConnectionInstance.cs"/>
-        <Compile Include="UI\Ch5\Ch5UIController.cs"/>
-        <Compile Include="UI\Ch5\Ch5WebSocketServer.cs"/>
-        <Compile Include="UI\Ch5\MessageHandling\MessageBase.cs"/>
-        <Compile Include="UI\Ch5\MessageHandling\NotificationMessage.cs"/>
-        <Compile Include="UI\Ch5\MessageHandling\RequestMessage.cs"/>
-        <Compile Include="UI\Ch5\MessageHandling\ResponseMessage.cs"/>
-        <Compile Include="UI\Components\UITextField.cs"/>
-        <Compile Include="UI\Components\Views\UIPinCodeView.cs"/>
-        <Compile Include="UI\ControllerActivityMonitor.cs"/>
-        <Compile Include="UI\ActivityTimeOut.cs"/>
-        <Compile Include="UI\Components\IAnalogItem.cs"/>
-        <Compile Include="UI\Components\IButton.cs"/>
-        <Compile Include="UI\Components\IButtonCollection.cs"/>
-        <Compile Include="UI\Components\IButtons.cs"/>
-        <Compile Include="UI\Components\IEnableItem.cs"/>
-        <Compile Include="UI\Components\ITextItem.cs"/>
-        <Compile Include="UI\Components\IVisibleItem.cs"/>
-        <Compile Include="UI\Components\VolumeMuteButton.cs"/>
-        <Compile Include="UI\Components\UIButton.cs"/>
-        <Compile Include="UI\Components\UIButtonCollection.cs"/>
-        <Compile Include="UI\Components\UIDynamicButtonList.cs"/>
-        <Compile Include="UI\Components\UIDynamicButtonListItem.cs"/>
-        <Compile Include="UI\Components\UIGenericSubPageReferenceList.cs"/>
-        <Compile Include="UI\Components\UIGenericSubPageReferenceListItem.cs"/>
-        <Compile Include="UI\Components\UIGuage.cs"/>
-        <Compile Include="UI\Components\UIHardButton.cs"/>
-        <Compile Include="UI\Components\UIKeypad.cs"/>
-        <Compile Include="UI\Components\UILabel.cs"/>
-        <Compile Include="UI\Components\UIObject.cs"/>
-        <Compile Include="UI\Components\UISlider.cs"/>
-        <Compile Include="UI\Components\UISubPageReferenceList.cs"/>
-        <Compile Include="UI\Components\UISubPageReferenceListItem.cs"/>
-        <Compile Include="UI\Components\UITabBar.cs"/>
-        <Compile Include="UI\Components\UITextButton.cs"/>
-        <Compile Include="UI\Components\Views\UIDialog.cs"/>
-        <Compile Include="UI\Components\Views\UIPageCollection.cs"/>
-        <Compile Include="UI\Components\Views\UIPageViewController.cs"/>
-        <Compile Include="UI\Components\Views\UISubPageViewController.cs"/>
-        <Compile Include="UI\Components\Views\UITabControllerBase.cs"/>
-        <Compile Include="UI\Components\Views\UIViewCollection.cs"/>
-        <Compile Include="UI\Components\Views\UIViewControllerBase.cs"/>
-        <Compile Include="UI\Components\VolumeSlider.cs"/>
-        <Compile Include="UI\Core3ControllerBase.cs"/>
-        <Compile Include="UI\Core3Controllers.cs"/>
-        <Compile Include="UI\Extensions.cs"/>
-        <Compile Include="UI\ReservedJoins\Serial.cs"/>
-        <Compile Include="UI\UIMediaIcons.cs"/>
-        <Compile Include="UI\UIMultiModeButton.cs"/>
-        <Compile Include="WebScripting\ApiRequestHandler.cs"/>
-        <Compile Include="WebScripting\ApiWebScriptingServer.cs"/>
-        <Compile Include="WebScripting\AppAuthentication.cs"/>
-        <Compile Include="WebScripting\Download\ServicePackageFileHandler.cs"/>
-        <Compile Include="WebScripting\FileHandlerBase.cs"/>
-        <Compile Include="WebScripting\InternalApi\AppControlApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\AuthenticationApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\AutoDiscoveryApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\ConfigApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\ConsoleApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\DiagnosticsApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\EventsApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\EventsSession.cs"/>
-        <Compile Include="WebScripting\InternalApi\FileUploadApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\LoggerApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\PasswordsApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\PlogApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\RoomsApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\SourcesApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\StatusApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\UploadedFilesApiHandler.cs"/>
-        <Compile Include="WebScripting\InternalApi\XPanelDetailsApiHandler.cs"/>
-        <Compile Include="WebScripting\NvramFileRequestHandler.cs"/>
-        <Compile Include="WebScripting\RequestHandler.cs"/>
-        <Compile Include="WebScripting\SecureRequestAttribute.cs"/>
-        <Compile Include="WebScripting\StaticFiles\Ch5AppFileHandler.cs"/>
-        <Compile Include="WebScripting\StaticFiles\InternalFileHandler.cs"/>
-        <Compile Include="WebScripting\StaticFiles\WebAppFileHandler.cs"/>
-        <Compile Include="WebScripting\SystemMonitorApiHandler.cs"/>
-        <Compile Include="WebScripting\UserFileRequestHandler.cs"/>
-        <Compile Include="WebScripting\WebScriptingRequest.cs"/>
-        <Compile Include="WebScripting\WebScriptingServer.cs"/>
-        <Compile Include="WebScripting\XPanelResourceFileHandler.cs"/>
+        <Compile Include="AutoDiscovery.cs" />
+        <Compile Include="AutoDiscoveryResult.cs" />
+        <Compile Include="Cloud\CloudConnector.cs" />
+        <Compile Include="Config\ConfigBase.cs" />
+        <Compile Include="Config\ConfigManager.cs" />
+        <Compile Include="Config\IConfigItem.cs" />
+        <Compile Include="DeviceSupport\CipDevices.cs" />
+        <Compile Include="DeviceSupport\ComPortExtensions.cs" />
+        <Compile Include="DeviceSupport\ComPortHandler.cs" />
+        <Compile Include="DeviceSupport\DeviceBase.cs" />
+        <Compile Include="DeviceSupport\DisplayDeviceBase.cs" />
+        <Compile Include="DeviceSupport\FireMonitor.cs" />
+        <Compile Include="DeviceSupport\IAsset.cs" />
+        <Compile Include="DeviceSupport\ICamera.cs" />
+        <Compile Include="DeviceSupport\IConnectedItem.cs" />
+        <Compile Include="DeviceSupport\IDeviceWithStandbyMode.cs" />
+        <Compile Include="DeviceSupport\IFusionAsset.cs" />
+        <Compile Include="DeviceSupport\IGenericDeviceWrapper.cs" />
+        <Compile Include="DeviceSupport\IMuteControl.cs" />
+        <Compile Include="DeviceSupport\IpIdHelper.cs" />
+        <Compile Include="DeviceSupport\IVolumeControl.cs" />
+        <Compile Include="DeviceSupport\IVolumeLevelDevice.cs" />
+        <Compile Include="DeviceSupport\IDevice.cs" />
+        <Compile Include="DeviceSupport\IDeviceConnection.cs" />
+        <Compile Include="DeviceSupport\IHoistControl.cs" />
+        <Compile Include="DeviceSupport\IPowerDevice.cs" />
+        <Compile Include="DeviceSupport\ISigProvider.cs" />
+        <Compile Include="DeviceSupport\SigProviderDevice.cs" />
+        <Compile Include="DeviceSupport\TcpConnectionBase.cs" />
+        <Compile Include="Fusion\FusionHelper.cs" />
+        <Compile Include="Fusion\FusionInstance.cs" />
+        <Compile Include="MidnightNotifier.cs" />
+        <Compile Include="Models\Collections\UXCollection.cs" />
+        <Compile Include="Models\DiagnosticsArchiveTool.cs" />
+        <Compile Include="Models\Diagnostics\DeviceMessageExtenders.cs" />
+        <Compile Include="Models\Diagnostics\DiagnosticMessage.cs" />
+        <Compile Include="Models\Diagnostics\DiagnosticService.cs" />
+        <Compile Include="Models\Diagnostics\IDiagnosticItem.cs" />
+        <Compile Include="Models\DisplayControllerBase.cs" />
+        <Compile Include="Models\EventMessage.cs" />
+        <Compile Include="Models\EventService.cs" />
+        <Compile Include="Models\IGenericItem.cs" />
+        <Compile Include="Models\IInitializable.cs" />
+        <Compile Include="Models\ISourceTarget.cs" />
+        <Compile Include="Models\RoomClock.cs" />
+        <Compile Include="Models\Rooms\RoomBase.cs" />
+        <Compile Include="Models\Rooms\RoomCollection.cs" />
+        <Compile Include="Models\Sources\Extensions.cs" />
+        <Compile Include="Models\Sources\SourceBase.cs" />
+        <Compile Include="Models\Sources\SourceCollection.cs" />
+        <Compile Include="Models\SystemBase.cs" />
+        <Compile Include="Models\UxEnvironment.cs" />
+        <Compile Include="ProgramFileVersion.cs" />
+        <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="Scheduler.cs" />
+        <Compile Include="ShellHelper.cs" />
+        <Compile Include="SystemMonitor.cs" />
+        <Compile Include="Tools.cs" />
+        <Compile Include="UI\ActivityMonitor.cs" />
+        <Compile Include="UI\Ch5\Ch5ApiHandlerBase.cs" />
+        <Compile Include="UI\Ch5\Ch5ConnectionInstance.cs" />
+        <Compile Include="UI\Ch5\Ch5UIController.cs" />
+        <Compile Include="UI\Ch5\Ch5WebSocketServer.cs" />
+        <Compile Include="UI\Ch5\MessageHandling\MessageBase.cs" />
+        <Compile Include="UI\Ch5\MessageHandling\NotificationMessage.cs" />
+        <Compile Include="UI\Ch5\MessageHandling\RequestMessage.cs" />
+        <Compile Include="UI\Ch5\MessageHandling\ResponseMessage.cs" />
+        <Compile Include="UI\Components\UITextField.cs" />
+        <Compile Include="UI\Components\Views\UIPinCodeView.cs" />
+        <Compile Include="UI\ControllerActivityMonitor.cs" />
+        <Compile Include="UI\ActivityTimeOut.cs" />
+        <Compile Include="UI\Components\IAnalogItem.cs" />
+        <Compile Include="UI\Components\IButton.cs" />
+        <Compile Include="UI\Components\IButtonCollection.cs" />
+        <Compile Include="UI\Components\IButtons.cs" />
+        <Compile Include="UI\Components\IEnableItem.cs" />
+        <Compile Include="UI\Components\ITextItem.cs" />
+        <Compile Include="UI\Components\IVisibleItem.cs" />
+        <Compile Include="UI\Components\VolumeMuteButton.cs" />
+        <Compile Include="UI\Components\UIButton.cs" />
+        <Compile Include="UI\Components\UIButtonCollection.cs" />
+        <Compile Include="UI\Components\UIDynamicButtonList.cs" />
+        <Compile Include="UI\Components\UIDynamicButtonListItem.cs" />
+        <Compile Include="UI\Components\UIGenericSubPageReferenceList.cs" />
+        <Compile Include="UI\Components\UIGenericSubPageReferenceListItem.cs" />
+        <Compile Include="UI\Components\UIGuage.cs" />
+        <Compile Include="UI\Components\UIHardButton.cs" />
+        <Compile Include="UI\Components\UIKeypad.cs" />
+        <Compile Include="UI\Components\UILabel.cs" />
+        <Compile Include="UI\Components\UIObject.cs" />
+        <Compile Include="UI\Components\UISlider.cs" />
+        <Compile Include="UI\Components\UISubPageReferenceList.cs" />
+        <Compile Include="UI\Components\UISubPageReferenceListItem.cs" />
+        <Compile Include="UI\Components\UITabBar.cs" />
+        <Compile Include="UI\Components\UITextButton.cs" />
+        <Compile Include="UI\Components\Views\UIDialog.cs" />
+        <Compile Include="UI\Components\Views\UIPageCollection.cs" />
+        <Compile Include="UI\Components\Views\UIPageViewController.cs" />
+        <Compile Include="UI\Components\Views\UISubPageViewController.cs" />
+        <Compile Include="UI\Components\Views\UITabControllerBase.cs" />
+        <Compile Include="UI\Components\Views\UIViewCollection.cs" />
+        <Compile Include="UI\Components\Views\UIViewControllerBase.cs" />
+        <Compile Include="UI\Components\VolumeSlider.cs" />
+        <Compile Include="UI\Core3ControllerBase.cs" />
+        <Compile Include="UI\Core3Controllers.cs" />
+        <Compile Include="UI\Extensions.cs" />
+        <Compile Include="UI\ReservedJoins\Serial.cs" />
+        <Compile Include="UI\UIMediaIcons.cs" />
+        <Compile Include="UI\UIMultiModeButton.cs" />
+        <Compile Include="WebScripting\ApiRequestHandler.cs" />
+        <Compile Include="WebScripting\ApiWebScriptingServer.cs" />
+        <Compile Include="WebScripting\AppAuthentication.cs" />
+        <Compile Include="WebScripting\Download\ServicePackageFileHandler.cs" />
+        <Compile Include="WebScripting\FileHandlerBase.cs" />
+        <Compile Include="WebScripting\InternalApi\AppControlApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\AuthenticationApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\AutoDiscoveryApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\ConfigApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\ConsoleApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\DiagnosticsApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\EventsApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\EventsSession.cs" />
+        <Compile Include="WebScripting\InternalApi\FileUploadApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\LoggerApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\PasswordsApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\PlogApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\RoomsApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\SourcesApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\StatusApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\UploadedFilesApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\XPanelDetailsApiHandler.cs" />
+        <Compile Include="WebScripting\NvramFileRequestHandler.cs" />
+        <Compile Include="WebScripting\RequestHandler.cs" />
+        <Compile Include="WebScripting\SecureRequestAttribute.cs" />
+        <Compile Include="WebScripting\StaticFiles\InternalFileHandler.cs" />
+        <Compile Include="WebScripting\StaticFiles\WebAppFileHandler.cs" />
+        <Compile Include="WebScripting\SystemMonitorApiHandler.cs" />
+        <Compile Include="WebScripting\UserFileRequestHandler.cs" />
+        <Compile Include="WebScripting\WebScriptingRequest.cs" />
+        <Compile Include="WebScripting\WebScriptingServer.cs" />
+        <Compile Include="WebScripting\XPanelResourceFileHandler.cs" />
     </ItemGroup>
     <ItemGroup>
-        <None Include="packages.config"/>
+        <None Include="packages.config" />
     </ItemGroup>
     <ItemGroup>
-        <None Include="UXAV.AVnet.Core.nuspec"/>
+        <None Include="UXAV.AVnet.Core.nuspec" />
     </ItemGroup>
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
-    <Import Project="..\packages\Crestron.SimplSharp.SDK.Library.2.17.36\build\Crestron.SimplSharp.SDK.Library.targets" Condition="Exists('..\packages\Crestron.SimplSharp.SDK.Library.2.17.36\build\Crestron.SimplSharp.SDK.Library.targets')"/>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <Import Project="..\packages\Crestron.SimplSharp.SDK.Library.2.17.36\build\Crestron.SimplSharp.SDK.Library.targets" Condition="Exists('..\packages\Crestron.SimplSharp.SDK.Library.2.17.36\build\Crestron.SimplSharp.SDK.Library.targets')" />
     <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
         <PropertyGroup>
             <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them. For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
         </PropertyGroup>
-        <Error Condition="!Exists('..\packages\Crestron.SimplSharp.SDK.Library.2.17.36\build\Crestron.SimplSharp.SDK.Library.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Crestron.SimplSharp.SDK.Library.2.17.36\build\Crestron.SimplSharp.SDK.Library.targets'))"/>
-        <Error Condition="!Exists('..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.17.36\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.17.36\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets'))"/>
+        <Error Condition="!Exists('..\packages\Crestron.SimplSharp.SDK.Library.2.17.36\build\Crestron.SimplSharp.SDK.Library.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Crestron.SimplSharp.SDK.Library.2.17.36\build\Crestron.SimplSharp.SDK.Library.targets'))" />
+        <Error Condition="!Exists('..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.17.36\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.17.36\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets'))" />
     </Target>
-    <Import Project="..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.17.36\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets" Condition="Exists('..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.17.36\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets')"/>
+    <Import Project="..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.17.36\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets" Condition="Exists('..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.17.36\build\Crestron.SimplSharp.SDK.ProgramLibrary.targets')" />
 </Project>

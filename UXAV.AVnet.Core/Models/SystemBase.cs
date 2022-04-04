@@ -55,6 +55,7 @@ namespace UXAV.AVnet.Core.Models
 
         protected SystemBase(CrestronControlSystem controlSystem)
         {
+            CrestronEnvironment.ProgramStatusEventHandler += SystemStoppingInternal;
             Logger.MessageLogged += message => { EventService.Notify(EventMessageType.LogEntry, message); };
 
             Logger.Highlight("{0}.ctor()", GetType().FullName);
@@ -69,8 +70,6 @@ namespace UXAV.AVnet.Core.Models
             _initialConfig = ConfigManager.JConfig?.ToString();
 
             DiagnosticService.RegisterSystemCallback(GenerateDiagnosticMessagesInternal);
-
-            CrestronEnvironment.ProgramStatusEventHandler += OnProgramStatusEventHandler;
 
             RoomClock.Start();
             Scheduler.Init();
@@ -546,6 +545,23 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("Reboot response: {0}", response);
         }
 
+        private void SystemStoppingInternal(eProgramStatusEventType eventType)
+        {
+            if (eventType == eProgramStatusEventType.Stopping)
+            {
+                Task.Run(Ch5WebSocketServer.Stop);
+            }
+
+            try
+            {
+                OnProgramStatusEventHandler(eventType);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+        }
+
         protected abstract void OnProgramStatusEventHandler(eProgramStatusEventType eventType);
 
         internal IEnumerable<DiagnosticMessage> GenerateDiagnosticMessagesInternal()
@@ -561,6 +577,12 @@ namespace UXAV.AVnet.Core.Models
                         "Console Connection", GetType().Name)));
             }
 
+            if (Ch5WebSocketServer.Running)
+            {
+                messages.Add(new DiagnosticMessage(MessageLevel.Info, "CH5 websocket service listening",
+                    Ch5WebSocketServer.WebSocketBaseUrl, nameof(Ch5WebSocketServer)));
+            }
+
             messages.AddRange(CipDevices.GetDiagnosticMessages());
 
             foreach (var device in DevicesDict.Values) messages.AddRange(device.GetMessages());
@@ -570,7 +592,7 @@ namespace UXAV.AVnet.Core.Models
                 var handlers = Ch5ApiHandlerBase.ConnectedHandlers;
                 messages.AddRange(handlers.Select(handler => new DiagnosticMessage(MessageLevel.Info,
                     "Websocket connected", handler.Connection.RemoteIpAddress.ToString(), handler.GetType().Name,
-                    handler.Connection.ID)));
+                    handler.GetType().Name)));
             }
             catch (Exception e)
             {
@@ -680,7 +702,7 @@ namespace UXAV.AVnet.Core.Models
             UpdateBootStatus(EBootStatus.Initializing, "Initializing rooms done", targetPercentage);
 
             startPercentage = BootProgress;
-            targetPercentage = 80;
+            targetPercentage = 60;
             var sources = UxEnvironment.GetSources();
             itemMaxCount = sources.Count;
             itemCount = 0;
@@ -696,7 +718,7 @@ namespace UXAV.AVnet.Core.Models
 
             UpdateBootStatus(EBootStatus.Initializing, "Initializing sources done", targetPercentage);
             Thread.Sleep(200);
-            UpdateBootStatus(EBootStatus.Initializing, "Setting up Fusion if required", 82);
+            UpdateBootStatus(EBootStatus.Initializing, "Setting up Fusion if required", 65);
             try
             {
                 CreateFusionRoomsAndAssets();
@@ -707,7 +729,7 @@ namespace UXAV.AVnet.Core.Models
             }
 
             Thread.Sleep(200);
-            UpdateBootStatus(EBootStatus.Initializing, "Generating RVI file info for Fusion", 85);
+            UpdateBootStatus(EBootStatus.Initializing, "Generating RVI file info for Fusion", 70);
             Logger.Highlight("Generating Fusion RVI File");
             try
             {
@@ -748,15 +770,22 @@ namespace UXAV.AVnet.Core.Models
             }
 
             Thread.Sleep(200);
-            UpdateBootStatus(EBootStatus.Initializing, "Registering Fusion", 90);
+            UpdateBootStatus(EBootStatus.Initializing, "Registering Fusion", 80);
             CipDevices.RegisterFusionRooms();
+            Thread.Sleep(500);
+            UpdateBootStatus(EBootStatus.Initializing, "Starting CH5 websocket services", 90);
+            Thread.Sleep(500);
+            if (Ch5WebSocketServer.InitCalled)
+            {
+                Logger.Highlight("Starting CH5 websocket services");
+                Ch5WebSocketServer.Start();
+                Thread.Sleep(500);
+                UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
+                Thread.Sleep(200);
+            }
 
-            Thread.Sleep(200);
-            UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
-            Thread.Sleep(200);
             Logger.Highlight("Initializing Core 3 UI Controllers");
             InitializeCore3Controllers();
-            Thread.Sleep(200);
             try
             {
                 OnInitializeComplete();

@@ -4,7 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Crestron.SimplSharp;
 using Newtonsoft.Json.Linq;
+using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
 using UXAV.AVnet.Core.UI.Ch5.MessageHandling;
 using UXAV.Logging;
@@ -62,12 +64,36 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 room = _deviceController?.Room?.Id ?? 0,
                 rooms
             });
+            EventService.EventOccured += EventServiceOnEventOccured;
             OnConnect(connection);
         }
 
         internal void OnDisconnectInternal(Ch5ConnectionInstance connection)
         {
+            EventService.EventOccured -= EventServiceOnEventOccured;
             Handlers.Remove(connection.ID);
+        }
+
+        private void EventServiceOnEventOccured(EventMessage message)
+        {
+            try
+            {
+                switch (message.MessageType)
+                {
+                    case EventMessageType.LogEntry:
+                    case EventMessageType.SessionExpired:
+                    case EventMessageType.ProgramStopping:
+                    case EventMessageType.BootStatus:
+                        return;
+                    default:
+                        SendNotification($"EventService:{message.MessageType}", message.Message);
+                        return;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         protected abstract void OnConnect(Ch5ConnectionInstance connection);
@@ -156,6 +182,26 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
 
             throw new MissingMethodException("No method found");
+        }
+
+        [ApiTargetMethod("GetCsInfo")]
+        public object GetCsInfo()
+        {
+            return new
+            {
+                SystemBase.IpAddress,
+                SystemBase.HostName,
+                SystemBase.DomainName,
+                SystemBase.MacAddress,
+                SystemBase.DevicePlatform,
+                InitialParametersClass.RoomId,
+                InitialParametersClass.RoomName,
+                SystemBase.ProgramApplicationDirectory,
+                SystemBase.DhcpStatus,
+                ConfigManager.ConfigPath,
+                UpTime = SystemBase.UpTime.ToPrettyFormat(),
+                Ch5WebSocketServer.WebSocketBaseUrl,
+            };
         }
     }
 

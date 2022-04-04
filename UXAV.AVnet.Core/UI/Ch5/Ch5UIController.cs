@@ -22,11 +22,14 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 Logger.Error(e);
             }
 
+            Device.StringInput[1002].StringValue = Device.ID.ToString("X2");
+
             Device.SigChange += (device, args) =>
             {
                 if (args.Event != eSigEvent.BoolChange || args.Sig.Number != 1001 || !args.Sig.BoolValue) return;
                 Logger.Log("Device received high join on 1001, sending websocket URL");
                 device.StringInput[1001].StringValue = WebSocketUrl;
+                device.StringInput[1002].StringValue = device.ID.ToString("X2");
             };
         }
 

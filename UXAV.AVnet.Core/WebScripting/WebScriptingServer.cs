@@ -123,7 +123,8 @@ namespace UXAV.AVnet.Core.WebScripting
                     try
                     {
                         Logger.Debug("Redirect found!, Redirected to: \"{0}\"", redirect.Value);
-                        args.Context.Response.Redirect(redirect.Value);
+                        Logger.Debug($"Query is {args.Context.Request.Url.Query}");
+                        args.Context.Response.Redirect(redirect.Value+args.Context.Request.Url.Query);
                     }
                     catch (Exception e)
                     {

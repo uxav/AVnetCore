@@ -1,7 +1,10 @@
 using System;
+using System.IO;
+using System.Text;
 using Crestron.SimplSharp;
 using UXAV.AVnet.Core.Models;
 using WebSocketSharp;
+using WebSocketSharp.Net;
 using WebSocketSharp.Server;
 using Logger = UXAV.Logging.Logger;
 
@@ -9,32 +12,134 @@ namespace UXAV.AVnet.Core.UI.Ch5
 {
     public static class Ch5WebSocketServer
     {
-        private static WebSocketServer _server;
-
-        static Ch5WebSocketServer()
-        {
-            CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
-        }
+        private static bool _initCalled;
+        private static HttpServer _server;
+        private static string _workingDirectory;
 
         public static string WebSocketBaseUrl =>
-            $"ws{(_server.IsSecure ? "s" : "")}://{SystemBase.IpAddress}:{_server.Port}";
+            $"ws://{SystemBase.IpAddress}:{_server.Port}";
 
-        public static void Init(int port)
+        public static void Init(int port, string workingDirectory = "./ch5")
         {
-            _server = new WebSocketServer(port, false)
+            if (_initCalled)
+            {
+                Logger.Warn($"Init already called, will create new server!");
+            }
+
+            _initCalled = true;
+
+            _workingDirectory = workingDirectory;
+            _server = new HttpServer(port, false)
             {
                 KeepClean = true,
-                WaitTime = TimeSpan.FromSeconds(30)
+                WaitTime = TimeSpan.FromSeconds(30),
+                RootPath = "/"
             };
+            _server.OnGet += HttpServerOnOnGet;
+            try
+            {
+                /*var cert = new X509Certificate2("/opt/crestron/virtualcontrol/data/ssl/certs/server.pfx", "password");
+                Logger.Highlight($"Loaded cert for websocket: {cert}");
+                _server.SslConfiguration.ServerCertificate = cert;
+                _server.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
+                _server.SslConfiguration.ClientCertificateRequired = false;
+                _server.AuthenticationSchemes = AuthenticationSchemes.None;
+                _server.UserCredentialsFinder = id => id.Name == "wsuser"
+                    ? new WebSocketSharp.Net.NetworkCredential(id.Name, "wsuser")
+                    : null;*/
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Error loading cert: {e.Message}");
+            }
+
+            CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
 
             _server.Log.Output += OnLogOutput;
             _server.Log.Level = LogLevel.Trace;
         }
 
-        private static void CrestronEnvironmentOnProgramStatusEventHandler(eProgramStatusEventType eventType)
+        public static int Port => _server.Port;
+
+        private static void HttpServerOnOnGet(object sender, HttpRequestEventArgs e)
         {
-            if (eventType == eProgramStatusEventType.Stopping && _server.IsListening)
-                _server.Stop(1012, "Processor is restarting / stopping");
+            var req = e.Request;
+            var res = e.Response;
+
+            var path = req.Url.LocalPath;
+            Logger.Debug($"GET {path}");
+            if (path == "/")
+                path += "index.html";
+
+            byte[] contents;
+
+            path = _workingDirectory + path;
+
+            if (!TryReadFile(path, out contents))
+            {
+                res.StatusCode = (int)HttpStatusCode.NotFound;
+                return;
+            }
+
+            if (path.EndsWith(".html"))
+            {
+                res.ContentType = "text/html";
+                res.ContentEncoding = Encoding.UTF8;
+            }
+            else if (path.EndsWith(".js"))
+            {
+                res.ContentType = "application/javascript";
+                res.ContentEncoding = Encoding.UTF8;
+            }
+
+            res.ContentLength64 = contents.LongLength;
+
+            res.Close(contents, true);
+        }
+
+        private static bool TryReadFile(string path, out byte[] contents)
+        {
+            contents = null;
+
+            if (!File.Exists(path))
+                return false;
+
+            try
+            {
+                contents = File.ReadAllBytes(path);
+            }
+            catch
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static void CrestronEnvironmentOnProgramStatusEventHandler(eProgramStatusEventType type)
+        {
+            if (type == eProgramStatusEventType.Stopping)
+            {
+                _server.Log.Output -= OnLogOutput;
+            }
+        }
+
+        internal static bool InitCalled => _initCalled;
+
+        internal static void Stop()
+        {
+            try
+            {
+                if (_server.IsListening)
+                {
+                    Logger.Warn("Shutting down websocket server for UI");
+                    _server?.Stop(1012, "Processor is restarting / stopping");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         internal static void AddDeviceService<THandler>(Ch5UIController<THandler> controller)
@@ -65,10 +170,19 @@ namespace UXAV.AVnet.Core.UI.Ch5
             });
         }
 
-        public static void Start()
+        internal static void Start()
         {
-            _server.Start();
+            try
+            {
+                _server?.Start();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
+
+        internal static bool Running => _server != null && _server.IsListening;
 
         private static void OnLogOutput(LogData data, string s)
         {
