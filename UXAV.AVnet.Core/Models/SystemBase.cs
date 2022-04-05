@@ -71,6 +71,9 @@ namespace UXAV.AVnet.Core.Models
 
             DiagnosticService.RegisterSystemCallback(GenerateDiagnosticMessagesInternal);
 
+            Logger.AddCommand((argString, args, connection, respond) => GC.Collect(), "GarbageCollect",
+                "Run the garbage collector");
+
             RoomClock.Start();
             Scheduler.Init();
             UpdateBootStatus(EBootStatus.Booting, "System is booting", 0);
