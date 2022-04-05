@@ -44,6 +44,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             base.OnClose(e);
             Logger.Warn($"Websocket Closed, {e.Code}, Clean: {e.WasClean}, Remote IP: {RemoteIpAddress}");
+            _apiHandler.SendEvent -= OnHandlerSendRequest;
             _apiHandler.OnDisconnectInternal(this);
             EventService.Notify(EventMessageType.DeviceConnectionChange, new
             {
@@ -92,7 +93,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private void OnHandlerSendRequest(string data)
         {
-            if(State != WebSocketState.Open) return;
+            if (State != WebSocketState.Open) return;
             _sendMutex.WaitOne();
             try
             {
@@ -102,6 +103,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 Logger.Error(e);
             }
+
             _sendMutex.ReleaseMutex();
         }
     }

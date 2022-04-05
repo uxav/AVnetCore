@@ -67,13 +67,28 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 rooms
             });
             EventService.EventOccured += EventServiceOnEventOccured;
-            OnConnect(connection);
+            try
+            {
+                OnConnect(connection);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         internal void OnDisconnectInternal(Ch5ConnectionInstance connection)
         {
             EventService.EventOccured -= EventServiceOnEventOccured;
             Handlers.Remove(connection.ID);
+            try
+            {
+                OnDisconnect();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         private void EventServiceOnEventOccured(EventMessage message)
@@ -99,6 +114,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
         }
 
         protected abstract void OnConnect(Ch5ConnectionInstance connection);
+
+        protected abstract void OnDisconnect();
 
         protected void SendNotification(string method, params object[] args)
         {
@@ -236,6 +253,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     handler.Method.Invoke(sub, new[] { result });
                     break;
                 }
+
                 return;
             }
 
