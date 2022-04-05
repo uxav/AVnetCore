@@ -18,9 +18,10 @@ namespace UXAV.AVnet.Core.UI.Ch5
         private static readonly Dictionary<string, Ch5ApiHandlerBase> Handlers =
             new Dictionary<string, Ch5ApiHandlerBase>();
 
-        private Dictionary<int, EventSubscription> _subscriptions = new Dictionary<int, EventSubscription>();
-
         private readonly Core3ControllerBase _deviceController;
+
+        private readonly Dictionary<int, EventSubscription> _eventSubscriptions =
+            new Dictionary<int, EventSubscription>();
 
         protected Ch5ApiHandlerBase()
         {
@@ -81,6 +82,16 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             EventService.EventOccured -= EventServiceOnEventOccured;
             Handlers.Remove(connection.ID);
+            lock (_eventSubscriptions)
+            {
+                foreach (var subscription in _eventSubscriptions.Values)
+                {
+                    subscription.Unsubscribe();
+                }
+
+                _eventSubscriptions.Clear();
+            }
+
             try
             {
                 OnDisconnect();
@@ -162,136 +173,107 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private ResponseMessage ProcessResponse(RequestMessage message)
         {
+            try
+            {
+                var result = FindAndInvokeMethod<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
+                return new ResponseMessage(message.Id, result);
+            }
+            catch (TargetInvocationException e)
+            {
+                Logger.Error(e.InnerException);
+                return new ResponseMessage(message.Id, e.InnerException);
+            }
+        }
+
+        private object FindAndInvokeMethod<T>(string method, JToken args) where T : ApiTargetAttributeBase
+        {
             var methods = GetType().GetMethods();
             foreach (var methodInfo in methods)
             {
-                var attribute = methodInfo.GetCustomAttribute<ApiTargetMethodAttribute>();
+                var attribute = methodInfo.GetCustomAttribute<T>();
                 //Logger.Debug($"Looking at method: {method.Name}");
-                if (attribute == null || attribute.Name != message.Method) continue;
+                if (attribute == null || attribute.Name != method) continue;
                 //Logger.Debug($"Name matches....");
                 var methodParams = methodInfo.GetParameters();
                 //Logger.Debug($"Param count = {methodParams.Length}");
-                switch (message.RequestParams)
+                switch (args)
                 {
                     case null when methodParams.Length == 0:
                     {
-                        try
-                        {
-                            var result = methodInfo.Invoke(this, new object[] { });
-                            if (methodInfo.ReturnType == typeof(void)) result = true;
-                            return new ResponseMessage(message.Id, result);
-                        }
-                        catch (TargetInvocationException e)
-                        {
-                            Logger.Error(e.InnerException);
-                            return new ResponseMessage(message.Id, e.InnerException);
-                        }
+                        var result = methodInfo.Invoke(this, new object[] { });
+                        if (methodInfo.ReturnType == typeof(void)) result = true;
+                        return result;
                     }
                     case null:
                         continue;
                     default:
                     {
-                        if (message.RequestParams.Count() != methodParams.Length) continue;
+                        if (args.Count() != methodParams.Length) continue;
                         var invokeParams = (from methodParam in methodParams
-                                where message.RequestParams[methodParam.Name] != null
+                                where args[methodParam.Name] != null
                                 // ReSharper disable once PossibleNullReferenceException
-                                select message.RequestParams[methodParam.Name].ToObject(methodParam.ParameterType))
+                                select args[methodParam.Name].ToObject(methodParam.ParameterType))
                             .ToArray();
                         if (invokeParams.Length != methodParams.Length) continue;
-                        try
-                        {
-                            var result = methodInfo.Invoke(this, invokeParams);
-                            if (methodInfo.ReturnType == typeof(void)) result = true;
-                            return new ResponseMessage(message.Id, result);
-                        }
-                        catch (TargetInvocationException e)
-                        {
-                            Logger.Error(e.InnerException);
-                            return new ResponseMessage(message.Id, e.InnerException);
-                        }
+                        var result = methodInfo.Invoke(this, invokeParams);
+                        if (methodInfo.ReturnType == typeof(void)) result = true;
+                        return result;
                     }
                 }
             }
 
-            throw new MissingMethodException(GetType().FullName, message.Method);
+            throw new MissingMethodException(GetType().FullName, method);
         }
 
         [ApiTargetMethod("Subscribe")]
-        public void Subscribe(string name, int id)
+        public void Subscribe(int id, string name, JToken @params)
         {
-            Logger.Debug($"Subscribe to \"{name}\", id = {id}");
-            lock (_subscriptions)
+            //Logger.Log($"Subscribe with id: {id}, name: {name}, params: {@params}");
+            lock (_eventSubscriptions)
             {
-                if (_subscriptions.ContainsKey(id))
+                if (_eventSubscriptions.ContainsKey(id))
                 {
-                    throw new InvalidOperationException($"Subscription with ID {id} already exists");
+                    throw new InvalidOperationException($"Event ID {id} already registered");
                 }
             }
 
-            var events = GetType().GetEvents();
-            foreach (var eventInfo in events)
+            var obj = FindAndInvokeMethod<ApiTargetEventAttribute>(name, @params);
+            var attribute = GetType().GetMethods()
+                .First(m => m.GetCustomAttribute<ApiTargetEventAttribute>()?.Name == name)
+                .GetCustomAttribute<ApiTargetEventAttribute>();
+            var ctor =
+                attribute.SubscriptionType.GetConstructor(new[]
+                    { typeof(Ch5ApiHandlerBase), typeof(int), typeof(string), typeof(object), typeof(string) });
+            var sub = (EventSubscription)ctor.Invoke(new[] { this, id, name, obj, attribute.EventName });
+            lock (_eventSubscriptions)
             {
-                var attribute = eventInfo.GetCustomAttribute<ApiTargetEventAttribute>();
-                //Logger.Debug($"Looking at method: {method.Name}");
-                if (attribute == null || attribute.Name != name) continue;
-                var sub = new EventSubscription(this, name, id);
-                lock (_subscriptions)
-                {
-                    _subscriptions[id] = sub;
-                }
-
-                var handler = Delegate.CreateDelegate(eventInfo.EventHandlerType, sub, "Notify");
-                eventInfo.AddEventHandler(this, handler);
-
-                var methods = GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance);
-                foreach (var methodInfo in methods)
-                {
-                    attribute = methodInfo.GetCustomAttribute<ApiTargetEventAttribute>();
-                    //Logger.Debug($"Looking at method: {method.Name}");
-                    if (attribute == null || attribute.Name != name) continue;
-                    var result = methodInfo.Invoke(this, new object[] { });
-                    handler.Method.Invoke(sub, new[] { result });
-                    break;
-                }
-
-                return;
+                _eventSubscriptions[id] = sub;
             }
 
-            throw new MissingMemberException(GetType().FullName, name);
+            if (!string.IsNullOrEmpty(attribute.MethodToGetCurrentValue))
+            {
+                var result = obj.GetType().GetMethod(attribute.MethodToGetCurrentValue)?.Invoke(obj, new object[] { });
+                sub.NotifyInternal(result);
+            }
         }
 
         [ApiTargetMethod("Unsubscribe")]
         public void Unsubscribe(int id)
         {
-            Logger.Debug($"Unsubscribe from id = {id}");
-            lock (_subscriptions)
+            //Logger.Log($"Unsubscribe with id: {id}");
+            lock (_eventSubscriptions)
             {
-                if (!_subscriptions.ContainsKey(id))
+                if (!_eventSubscriptions.ContainsKey(id))
                 {
                     throw new KeyNotFoundException($"Subscription with ID {id} does not exist");
                 }
             }
 
-            string name;
-            lock (_subscriptions)
+            lock (_eventSubscriptions)
             {
-                name = _subscriptions[id].Name;
-            }
-
-            var events = GetType().GetEvents();
-            foreach (var eventInfo in events)
-            {
-                var attribute = eventInfo.GetCustomAttribute<ApiTargetEventAttribute>();
-                //Logger.Debug($"Looking at method: {method.Name}");
-                if (attribute == null || attribute.Name != name) continue;
-                lock (_subscriptions)
-                {
-                    var handler = Delegate.CreateDelegate(eventInfo.EventHandlerType, _subscriptions[id], "Notify");
-                    eventInfo.RemoveEventHandler(this, handler);
-                    _subscriptions.Remove(id);
-                }
-
-                return;
+                var sub = _eventSubscriptions[id];
+                sub.Unsubscribe();
+                _eventSubscriptions.Remove(id);
             }
         }
 
@@ -317,53 +299,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
     }
 
     public delegate void SendEventHandler(string data);
-
-    public class ApiTargetMethodAttribute : Attribute
-    {
-        public ApiTargetMethodAttribute(string name)
-        {
-            Name = name;
-        }
-
-        public string Name { get; }
-    }
-
-    public class ApiTargetEventAttribute : Attribute
-    {
-        public ApiTargetEventAttribute(string name)
-        {
-            Name = name;
-        }
-
-        public string Name { get; }
-    }
-
-    internal class EventSubscription
-    {
-        private readonly Ch5ApiHandlerBase _handler;
-
-        internal EventSubscription(Ch5ApiHandlerBase handler, string name, int id)
-        {
-            _handler = handler;
-            Id = id;
-            Name = name;
-        }
-
-        public int Id { get; }
-        public string Name { get; }
-
-        public void Notify(object eventInfo)
-        {
-            _handler.SendNotificationInternal("event", new
-            {
-                Name,
-                Id,
-                Value = eventInfo
-            });
-        }
-    }
-
-    public delegate void SubscriptionEventHandler(object eventInfo);
 
     public enum ControllerType
     {
