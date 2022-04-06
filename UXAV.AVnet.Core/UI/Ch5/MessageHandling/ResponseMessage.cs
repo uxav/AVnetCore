@@ -69,6 +69,11 @@ namespace UXAV.AVnet.Core.UI.Ch5.MessageHandling
                     json.WritePropertyName("error");
                     json.WriteRawValueAsync(JToken.FromObject(Error).ToString(Formatting.None));
                 }
+                else
+                {
+                    json.WritePropertyName("result");
+                    json.WriteRawValueAsync("null");
+                }
 
                 json.WriteEndObject();
 

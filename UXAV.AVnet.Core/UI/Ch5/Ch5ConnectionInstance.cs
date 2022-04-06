@@ -27,6 +27,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             base.OnOpen();
             RemoteIpAddress = Context.UserEndPoint.Address;
             Logger.Success($"Websocket Opened from {RemoteIpAddress}!");
+            Logger.Log("Connection User-Agent:\r\n" + Context.Headers["User-Agent"]);
             foreach (var protocol in Context.SecWebSocketProtocols)
                 Logger.Debug($"Connection protocol includes: {protocol}");
             _apiHandler.OnConnectInternal(this);
@@ -43,6 +44,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             base.OnClose(e);
             Logger.Warn($"Websocket Closed, {e.Code}, Clean: {e.WasClean}, Remote IP: {RemoteIpAddress}");
+            _apiHandler.SendEvent -= OnHandlerSendRequest;
             _apiHandler.OnDisconnectInternal(this);
             EventService.Notify(EventMessageType.DeviceConnectionChange, new
             {
@@ -79,7 +81,14 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     if (data != null)
                     {
                         Logger.Debug($"Received from websocket at {RemoteIpAddress}:\r\n" + data);
-                        _apiHandler.OnReceiveInternal(JToken.Parse(data));
+                        try
+                        {
+                            _apiHandler.OnReceiveInternal(JToken.Parse(data));
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error(e);
+                        }
                     }
                 }
             }
@@ -91,7 +100,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private void OnHandlerSendRequest(string data)
         {
-            if(State != WebSocketState.Open) return;
+            if (State != WebSocketState.Open) return;
             _sendMutex.WaitOne();
             try
             {
@@ -101,6 +110,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 Logger.Error(e);
             }
+
             _sendMutex.ReleaseMutex();
         }
     }

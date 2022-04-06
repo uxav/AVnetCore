@@ -303,10 +303,14 @@
         <Compile Include="SystemMonitor.cs" />
         <Compile Include="Tools.cs" />
         <Compile Include="UI\ActivityMonitor.cs" />
+        <Compile Include="UI\Ch5\ApiTargetAttributeBase.cs" />
+        <Compile Include="UI\Ch5\ApiTargetEventAttribute.cs" />
+        <Compile Include="UI\Ch5\ApiTargetMethodAttribute.cs" />
         <Compile Include="UI\Ch5\Ch5ApiHandlerBase.cs" />
         <Compile Include="UI\Ch5\Ch5ConnectionInstance.cs" />
         <Compile Include="UI\Ch5\Ch5UIController.cs" />
         <Compile Include="UI\Ch5\Ch5WebSocketServer.cs" />
+        <Compile Include="UI\Ch5\EventSubscription.cs" />
         <Compile Include="UI\Ch5\MessageHandling\MessageBase.cs" />
         <Compile Include="UI\Ch5\MessageHandling\NotificationMessage.cs" />
         <Compile Include="UI\Ch5\MessageHandling\RequestMessage.cs" />
