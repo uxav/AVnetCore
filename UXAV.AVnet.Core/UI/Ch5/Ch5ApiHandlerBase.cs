@@ -183,6 +183,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 Logger.Error(e.InnerException);
                 return new ResponseMessage(message.Id, e.InnerException);
             }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+                return new ResponseMessage(message.Id, e);
+            }
         }
 
         private object FindAndInvokeMethod<T>(string method, JToken args) where T : ApiTargetAttributeBase

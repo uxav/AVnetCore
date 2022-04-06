@@ -81,7 +81,14 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     if (data != null)
                     {
                         Logger.Debug($"Received from websocket at {RemoteIpAddress}:\r\n" + data);
-                        _apiHandler.OnReceiveInternal(JToken.Parse(data));
+                        try
+                        {
+                            _apiHandler.OnReceiveInternal(JToken.Parse(data));
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error(e);
+                        }
                     }
                 }
             }
