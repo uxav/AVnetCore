@@ -98,7 +98,7 @@ namespace UXAV.AVnet.Core.Cloud
         internal static void MarkConfigForUpload()
         {
             _uploadConfig = true;
-            _waitHandle.Set();
+            _waitHandle?.Set();
         }
 
         internal static void Init(Assembly assembly, string host, string token)
