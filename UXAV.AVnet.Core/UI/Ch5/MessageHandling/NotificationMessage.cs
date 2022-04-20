@@ -7,6 +7,7 @@ namespace UXAV.AVnet.Core.UI.Ch5.MessageHandling
         internal NotificationMessage(string method, object messageParams)
         {
             Method = method;
+            if(messageParams == null) return;
             RequestParams = JToken.FromObject(messageParams);
         }
     }

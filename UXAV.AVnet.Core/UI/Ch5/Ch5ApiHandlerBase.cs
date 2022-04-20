@@ -134,7 +134,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             Send(msg.ToString());
         }
 
-        protected void SendNotification(string method, object namedArgsObject)
+        protected void SendNotification(string method, object namedArgsObject = null)
         {
             var msg = new NotificationMessage(method, namedArgsObject);
             Send(msg.ToString());

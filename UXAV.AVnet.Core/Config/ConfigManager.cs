@@ -204,7 +204,7 @@ namespace UXAV.AVnet.Core.Config
             {
                 _config = value;
                 Save();
-                EventService.Notify(EventMessageType.ConfigChanged, "Config has changed");
+                EventService.Notify(EventMessageType.ConfigChanged, null);
             }
         }
 

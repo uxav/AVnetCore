@@ -13,7 +13,7 @@ namespace UXAV.AVnet.Core.Models
             };
         }
 
-        public static void Notify(EventMessageType eventMessageType, object messageObject)
+        public static void Notify(EventMessageType eventMessageType, object messageObject = null)
         {
             OnEventOccured(new EventMessage(eventMessageType, messageObject));
         }
