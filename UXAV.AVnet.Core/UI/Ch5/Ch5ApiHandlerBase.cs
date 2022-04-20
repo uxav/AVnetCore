@@ -164,7 +164,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 {
                     Logger.Error(e);
                     var response = data["id"] != null
-                        ? new ResponseMessage(data["id"].Value<string>(), e)
+                        ? new ResponseMessage(data["id"].Value<int>(), e)
                         : new ResponseMessage(e);
                     Send(response.ToString());
                 }
@@ -173,20 +173,24 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private ResponseMessage ProcessResponse(RequestMessage message)
         {
+            if (message.Id == null)
+            {
+                throw new NullReferenceException("id cannot be null");
+            }
             try
             {
                 var result = FindAndInvokeMethod<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
-                return new ResponseMessage(message.Id, result);
+                return new ResponseMessage((int) message.Id, result);
             }
             catch (TargetInvocationException e)
             {
                 Logger.Error(e.InnerException);
-                return new ResponseMessage(message.Id, e.InnerException);
+                return new ResponseMessage((int) message.Id, e.InnerException);
             }
             catch (Exception e)
             {
                 Logger.Error(e);
-                return new ResponseMessage(message.Id, e);
+                return new ResponseMessage((int) message.Id, e);
             }
         }
 
