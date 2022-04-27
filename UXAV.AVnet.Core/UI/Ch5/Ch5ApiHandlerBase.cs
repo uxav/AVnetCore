@@ -234,6 +234,12 @@ namespace UXAV.AVnet.Core.UI.Ch5
             throw new MissingMethodException(GetType().FullName, method);
         }
 
+        [ApiTargetMethod("Log")]
+        public void Log(string message)
+        {
+            Logger.Highlight($"WS Connection Log: {message}");
+        }
+
         [ApiTargetMethod("Subscribe")]
         public void Subscribe(int id, string name, JToken @params)
         {
