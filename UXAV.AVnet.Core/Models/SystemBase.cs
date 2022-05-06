@@ -161,6 +161,22 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("ProgramNvramDirectory = {0}", ProgramNvramDirectory);
             Logger.Log("ProgramHtmlDirectory = {0}", ProgramHtmlDirectory);
             Logger.Log("DevicePlatform = {0}", CrestronEnvironment.DevicePlatform);
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
+            {
+                try
+                {
+                    dynamic programInstance = Vc4WebApi.GetProgramInstanceAsync().Result;
+                    dynamic programLibrary = Vc4WebApi.GetProgramLibraryAsync().Result;
+                    var programInfo = programLibrary[programInstance.ProgramLibraryId.ToString()];
+                    Logger.Log("Server ProgramInstanceId = {0}", programInstance.ProgramInstanceId);
+                    Logger.Log("Server ProgramLibraryId = {0}", programInstance.ProgramLibraryId);
+                    Logger.Log("Server Program FriendlyName = {0}", programInfo.FriendlyName);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Error logging VC-4 info from API, {e.Message}");
+                }
+            }
             Logger.Log("ControlSystem.NumberOfEthernetAdapters = {0}", ControlSystem.NumberOfEthernetAdapters);
             Logger.Log("ControlSystem.NumberOfComPorts = {0}", ControlSystem.NumberOfComPorts);
             Logger.Log("ControlSystem.NumberOfVersiPorts = {0}", ControlSystem.NumberOfVersiPorts);
