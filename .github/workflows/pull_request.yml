@@ -1,0 +1,36 @@
+  name: Test Build
+  
+  on:
+    pull_request:
+
+  env:
+    SOLUTION_NAME: AVnetCore
+    PROJECT_NAME: UXAV.AVnet.Core
+    CONFIG: Release
+
+  jobs:
+    build:
+      runs-on: windows-latest
+      steps:
+        - uses: actions/checkout@v2
+          with:
+            fetch-depth: 0
+            lfs: true
+
+        - name: Setup MsBuild
+          uses: microsoft/setup-msbuild@v1
+          
+        - name: Setup NuGet.exe
+          uses: NuGet/setup-nuget@v1.0.5
+          
+        - name: Nuget Add Source
+          run: nuget sources Add -Name "uxav" -Source https://nuget.pkg.github.com/uxav/index.json -username uxav -password ${{ secrets.GITHUB_TOKEN }} -StorePasswordInClearText
+
+        - name: Restore Nuget Packages
+          run: nuget restore ${{env.SOLUTION_NAME}}.sln
+
+        - name: Build
+          run: msbuild ${{env.SOLUTION_NAME}}.sln /p:Configuration=${{env.CONFIG}}
+          
+        - name: Pack Nuget
+          run: nuget pack ${{env.PROJECT_NAME}}/${{env.PROJECT_NAME}}.csproj -Properties Configuration=${{env.CONFIG}}
