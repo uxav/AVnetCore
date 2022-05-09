@@ -239,6 +239,7 @@ namespace UXAV.AVnet.Core.Models
                 ApiServer = new ApiWebScriptingServer(this, "api");
                 ApiServer.AddRoute(@"/api/status/<function:\w+>", typeof(StatusApiHandler));
                 ApiServer.AddRoute(@"/api/status", typeof(StatusApiHandler));
+                ApiServer.AddRoute(@"/api/virtualcontrol/<method:\w+>", typeof(Vc4StatusApiHandler));
                 ApiServer.AddRoute(@"/api/config/<function:plist>/<key:\w+>", typeof(ConfigApiHandler));
                 ApiServer.AddRoute(@"/api/config/<function:\w+>", typeof(ConfigApiHandler));
                 ApiServer.AddRoute(@"/api/config", typeof(ConfigApiHandler));
