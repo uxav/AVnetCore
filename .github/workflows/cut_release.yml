@@ -14,8 +14,8 @@ on:
           - major
 
 env:
-  SOLUTION_NAME: BuildTestExample
-  PROJECT_NAME: BuildTestExample
+  SOLUTION_NAME: AVnetCore
+  PROJECT_NAME: UXAV.AVnet.Core
   CONFIG: Release
   
 jobs:
