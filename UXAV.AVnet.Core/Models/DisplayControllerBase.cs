@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Crestron.SimplSharpPro.AudioDistribution;
 using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.AVnet.Core.Models.Rooms;
 using UXAV.AVnet.Core.Models.Sources;
@@ -7,7 +8,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.Models
 {
-    public abstract class DisplayControllerBase : ISourceTarget
+    public abstract class DisplayControllerBase : IGenericItem, ISourceTarget
     {
         /// <summary>
         ///     Only used if device is null
@@ -17,11 +18,15 @@ namespace UXAV.AVnet.Core.Models
         private bool _enabled = true;
         private SourceBase _source;
         private string _uniqueId;
+        private static uint _idCount = 0;
 
         protected DisplayControllerBase(DisplayDeviceBase displayDevice, string name)
         {
+            _idCount++;
+            Id = _idCount;
             Device = displayDevice;
             Name = name;
+            UxEnvironment.AddDisplay(this);
         }
 
         public DisplayDeviceBase Device { get; }
@@ -97,6 +102,8 @@ namespace UXAV.AVnet.Core.Models
             return _source;
         }
 
+        public event EventHandler<SourceBase> SourceChanged;
+
         public async Task<bool> SelectSourceAsync(SourceBase source, uint forIndex = 1)
         {
             if (_source == source && source != null && Enabled && Device != null && Device.Power == false)
@@ -127,6 +134,7 @@ namespace UXAV.AVnet.Core.Models
             return true;
         }
 
+        public uint Id { get; }
         public string Name { get; }
 
         protected virtual void SetPowerOnEnableDisable(bool powerRequest)
@@ -137,6 +145,27 @@ namespace UXAV.AVnet.Core.Models
         protected virtual void SetSourceOnEnableDisable(SourceBase source)
         {
             OnSourceChange(source);
+        }
+
+        private void OnSourceChangeInternal(SourceBase source)
+        {
+            try
+            {
+                OnSourceChange(source);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            try
+            {
+                SourceChanged?.Invoke(this, source);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         protected abstract void OnSourceChange(SourceBase source);
