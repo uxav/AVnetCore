@@ -3,7 +3,7 @@ using UXAV.AVnet.Core.Models.Sources;
 
 namespace UXAV.AVnet.Core.Models
 {
-    public interface ISourceTarget
+    public interface ISourceTarget : IUniqueId
     {
         string Name { get; }
         SourceBase GetCurrentSource(uint forIndex = 1);

@@ -16,6 +16,7 @@ namespace UXAV.AVnet.Core.Models
 
         private bool _enabled = true;
         private SourceBase _source;
+        private string _uniqueId;
 
         protected DisplayControllerBase(DisplayDeviceBase displayDevice, string name)
         {
@@ -24,6 +25,19 @@ namespace UXAV.AVnet.Core.Models
         }
 
         public DisplayDeviceBase Device { get; }
+
+        public string UniqueId
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_uniqueId))
+                {
+                    _uniqueId = Guid.NewGuid().ToString();
+                }
+
+                return _uniqueId;
+            }
+        }
 
         public SourceCollection<SourceBase> Sources => UxEnvironment.GetSources().SourcesForDisplay(this);
 

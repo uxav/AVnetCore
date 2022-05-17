@@ -288,6 +288,7 @@
         <Compile Include="Models\IGenericItem.cs" />
         <Compile Include="Models\IInitializable.cs" />
         <Compile Include="Models\ISourceTarget.cs" />
+        <Compile Include="Models\IUniqueId.cs" />
         <Compile Include="Models\RoomClock.cs" />
         <Compile Include="Models\Rooms\RoomBase.cs" />
         <Compile Include="Models\Rooms\RoomCollection.cs" />

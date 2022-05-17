@@ -33,6 +33,7 @@ namespace UXAV.AVnet.Core.Models.Rooms
         private SourceBase _lastMainSource;
         private RoomBase _parentRoom;
         private bool _power;
+        private string _uniqueId;
 
         protected RoomBase(uint id, string name, string screenName)
         {
@@ -304,7 +305,9 @@ namespace UXAV.AVnet.Core.Models.Rooms
             EventService.Notify(EventMessageType.OnSourceChange, new
             {
                 Room = room.Id,
+                RoomId = room.UniqueId,
                 Source = args.Source?.Id ?? 0,
+                SourceId = args.Source?.UniqueId ?? string.Empty,
                 Status = args.Type.ToString(),
                 args.RoomSourceIndex
             });
@@ -352,6 +355,19 @@ namespace UXAV.AVnet.Core.Models.Rooms
         public override string ToString()
         {
             return $"Room {Id}: {Name} \"{ScreenName}\" ({GetType().Name})";
+        }
+
+        public string UniqueId
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_uniqueId))
+                {
+                    _uniqueId = Guid.NewGuid().ToString();
+                }
+
+                return _uniqueId;
+            }
         }
     }
 
