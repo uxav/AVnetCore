@@ -161,6 +161,7 @@ namespace UXAV.AVnet.Core.Models.Rooms
         }
 
         public event SourceChangedEventHandler SourceChanged;
+        public event EventHandler<SourceBase> SourceTargetChangedSource;
 
         public virtual void FusionRequestedPowerOn()
         {
@@ -291,6 +292,15 @@ namespace UXAV.AVnet.Core.Models.Rooms
                     RoomSourceIndex = forIndex
                 });
 
+                Logger.Error(e);
+            }
+
+            try
+            {
+                SourceTargetChangedSource?.Invoke(this, newSource);
+            }
+            catch (Exception e)
+            {
                 Logger.Error(e);
             }
 

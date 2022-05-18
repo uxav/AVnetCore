@@ -102,7 +102,7 @@ namespace UXAV.AVnet.Core.Models
             return _source;
         }
 
-        public event EventHandler<SourceBase> SourceChanged;
+        public event EventHandler<SourceBase> SourceTargetChangedSource;
 
         public async Task<bool> SelectSourceAsync(SourceBase source, uint forIndex = 1)
         {
@@ -123,7 +123,7 @@ namespace UXAV.AVnet.Core.Models
             {
                 try
                 {
-                    OnSourceChange(_source);
+                    OnSourceChangeInternal(_source);
                     if (Device != null && _source != null) Device.Power = true;
                 }
                 catch (Exception e)
@@ -144,7 +144,7 @@ namespace UXAV.AVnet.Core.Models
 
         protected virtual void SetSourceOnEnableDisable(SourceBase source)
         {
-            OnSourceChange(source);
+            OnSourceChangeInternal(source);
         }
 
         private void OnSourceChangeInternal(SourceBase source)
@@ -160,7 +160,7 @@ namespace UXAV.AVnet.Core.Models
 
             try
             {
-                SourceChanged?.Invoke(this, source);
+                SourceTargetChangedSource?.Invoke(this, source);
             }
             catch (Exception e)
             {
