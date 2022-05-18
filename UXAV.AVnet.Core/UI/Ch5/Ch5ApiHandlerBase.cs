@@ -304,6 +304,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 ConfigManager.ConfigPath,
                 UpTime = SystemBase.UpTime.ToPrettyFormat(),
                 Ch5WebSocketServer.WebSocketBaseUrl,
+                CrestronEnvironment.SystemInfo.SerialNumber,
+                AppVersion = UxEnvironment.System.AppVersion.ToString()
             };
         }
     }
