@@ -264,12 +264,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 _eventSubscriptions[id] = sub;
             }
-
-            if (!string.IsNullOrEmpty(attribute.MethodToGetCurrentValue))
-            {
-                var result = obj.GetType().GetMethod(attribute.MethodToGetCurrentValue)?.Invoke(obj, new object[] { });
-                sub.NotifyInternal(result);
-            }
         }
 
         [ApiTargetMethod("Unsubscribe")]
