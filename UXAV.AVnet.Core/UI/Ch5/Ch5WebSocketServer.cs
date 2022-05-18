@@ -15,6 +15,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         private static bool _initCalled;
         private static HttpServer _server;
         private static string _workingDirectory;
+        private static string _runtimeGuid;
 
         public static string WebSocketBaseUrl =>
             $"ws://{SystemBase.IpAddress}:{_server.Port}";
@@ -125,6 +126,19 @@ namespace UXAV.AVnet.Core.UI.Ch5
         }
 
         internal static bool InitCalled => _initCalled;
+
+        public static string RuntimeGuid
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_runtimeGuid))
+                {
+                    _runtimeGuid = Guid.NewGuid().ToString();
+                }
+
+                return _runtimeGuid;
+            }
+        }
 
         internal static void Stop()
         {
