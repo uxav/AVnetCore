@@ -53,11 +53,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 Logger.Error($"Error loading cert: {e.Message}");
             }
-
-            CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
-
-            _server.Log.Output += OnLogOutput;
-            _server.Log.Level = LogLevel.Trace;
         }
 
         public static int Port => _server.Port;
@@ -117,14 +112,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
             return true;
         }
 
-        private static void CrestronEnvironmentOnProgramStatusEventHandler(eProgramStatusEventType type)
-        {
-            if (type == eProgramStatusEventType.Stopping)
-            {
-                _server.Log.Output -= OnLogOutput;
-            }
-        }
-
         internal static bool InitCalled => _initCalled;
 
         public static string RuntimeGuid
@@ -146,8 +133,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 if (_server.IsListening)
                 {
+                    _server.Log.Output -= OnLogOutput;
                     Logger.Warn("Shutting down websocket server for UI");
-                    _server?.Stop(1012, "Processor is restarting / stopping");
+                    _server?.Stop();
                 }
             }
             catch (Exception e)
@@ -186,8 +174,15 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         internal static void Start()
         {
+            if (_server.IsListening)
+            {
+                Logger.Warn("Server already started!");
+                return;
+            }
             try
             {
+                _server.Log.Output += OnLogOutput;
+                _server.Log.Level = LogLevel.Trace;
                 _server?.Start();
             }
             catch (Exception e)

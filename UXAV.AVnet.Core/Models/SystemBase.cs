@@ -569,7 +569,7 @@ namespace UXAV.AVnet.Core.Models
         {
             if (eventType == eProgramStatusEventType.Stopping)
             {
-                Task.Run(Ch5WebSocketServer.Stop);
+                Ch5WebSocketServer.Stop();
             }
 
             try
