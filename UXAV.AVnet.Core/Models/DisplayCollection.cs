@@ -25,5 +25,10 @@ namespace UXAV.AVnet.Core.Models
         {
             return new DisplayCollection<T>(this.Where(d => d.Room == null));
         }
+
+        public DisplayCollection<T> WithDevice()
+        {
+            return new DisplayCollection<T>(this.Where(d => d.Device != null));
+        }
     }
 }

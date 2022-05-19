@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Crestron.SimplSharpPro.AudioDistribution;
 using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.AVnet.Core.Models.Rooms;
 using UXAV.AVnet.Core.Models.Sources;
@@ -27,6 +26,17 @@ namespace UXAV.AVnet.Core.Models
             Device = displayDevice;
             Name = name;
             UxEnvironment.AddDisplay(this);
+            if (Device != null)
+            {
+                Device.PowerStatusChange += OnDeviceOnPowerStatusChange;
+            }
+        }
+
+        public event EventHandler<bool> PowerStatusChange;
+
+        private void OnDeviceOnPowerStatusChange(IPowerDevice device, DevicePowerStatusEventArgs args)
+        {
+            PowerStatusChange?.Invoke(this, device.Power);
         }
 
         public DisplayDeviceBase Device { get; }
@@ -169,5 +179,15 @@ namespace UXAV.AVnet.Core.Models
         }
 
         protected abstract void OnSourceChange(SourceBase source);
+
+        public virtual void PowerOff()
+        {
+            if (Device == null)
+            {
+                throw new NotImplementedException("Display controller does not have device");
+            }
+
+            Device.Power = false;
+        }
     }
 }
