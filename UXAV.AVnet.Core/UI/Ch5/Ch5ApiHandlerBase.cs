@@ -61,6 +61,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             SendNotification("hello", new
             {
                 type = _deviceController != null ? ControllerType.Ch5Device.ToString() : ControllerType.Web.ToString(),
+                guid = Ch5WebSocketServer.RuntimeGuid,
                 controller = _deviceController?.Id ?? 0,
                 ipid = _deviceController?.Device.ID ?? 0,
                 defaultRoom = _deviceController?.DefaultRoom?.Id ?? 0,
@@ -243,32 +244,37 @@ namespace UXAV.AVnet.Core.UI.Ch5
         [ApiTargetMethod("Subscribe")]
         public void Subscribe(int id, string name, JToken @params)
         {
-            //Logger.Log($"Subscribe with id: {id}, name: {name}, params: {@params}");
-            lock (_eventSubscriptions)
+            try
             {
-                if (_eventSubscriptions.ContainsKey(id))
+                //Logger.Log($"Subscribe with id: {id}, name: {name}, params: {@params}");
+                lock (_eventSubscriptions)
                 {
-                    throw new InvalidOperationException($"Event ID {id} already registered");
+                    if (_eventSubscriptions.ContainsKey(id))
+                    {
+                        throw new InvalidOperationException($"Event ID {id} already registered");
+                    }
+                }
+
+                var obj = FindAndInvokeMethod<ApiTargetEventAttribute>(name, @params);
+                var attribute = GetType().GetMethods()
+                    .First(m => m.GetCustomAttribute<ApiTargetEventAttribute>()?.Name == name)
+                    .GetCustomAttribute<ApiTargetEventAttribute>();
+                var ctor =
+                    attribute.SubscriptionType.GetConstructor(new[]
+                        { typeof(Ch5ApiHandlerBase), typeof(int), typeof(string), typeof(object), typeof(string) });
+                var sub = (EventSubscription)ctor.Invoke(new[] { this, id, name, obj, attribute.EventName });
+                lock (_eventSubscriptions)
+                {
+                    _eventSubscriptions[id] = sub;
                 }
             }
-
-            var obj = FindAndInvokeMethod<ApiTargetEventAttribute>(name, @params);
-            var attribute = GetType().GetMethods()
-                .First(m => m.GetCustomAttribute<ApiTargetEventAttribute>()?.Name == name)
-                .GetCustomAttribute<ApiTargetEventAttribute>();
-            var ctor =
-                attribute.SubscriptionType.GetConstructor(new[]
-                    { typeof(Ch5ApiHandlerBase), typeof(int), typeof(string), typeof(object), typeof(string) });
-            var sub = (EventSubscription)ctor.Invoke(new[] { this, id, name, obj, attribute.EventName });
-            lock (_eventSubscriptions)
+            catch (TargetInvocationException e)
             {
-                _eventSubscriptions[id] = sub;
+                throw e.InnerException ?? e;
             }
-
-            if (!string.IsNullOrEmpty(attribute.MethodToGetCurrentValue))
+            catch (Exception e)
             {
-                var result = obj.GetType().GetMethod(attribute.MethodToGetCurrentValue)?.Invoke(obj, new object[] { });
-                sub.NotifyInternal(result);
+                throw e;
             }
         }
 
@@ -309,6 +315,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 ConfigManager.ConfigPath,
                 UpTime = SystemBase.UpTime.ToPrettyFormat(),
                 Ch5WebSocketServer.WebSocketBaseUrl,
+                CrestronEnvironment.SystemInfo.SerialNumber,
+                AppVersion = UxEnvironment.System.AppVersion.ToString()
             };
         }
     }

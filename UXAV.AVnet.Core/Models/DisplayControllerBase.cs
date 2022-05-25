@@ -7,7 +7,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.Models
 {
-    public abstract class DisplayControllerBase : ISourceTarget
+    public abstract class DisplayControllerBase : IGenericItem, ISourceTarget
     {
         /// <summary>
         ///     Only used if device is null
@@ -16,14 +16,43 @@ namespace UXAV.AVnet.Core.Models
 
         private bool _enabled = true;
         private SourceBase _source;
+        private string _uniqueId;
+        private static uint _idCount = 0;
 
         protected DisplayControllerBase(DisplayDeviceBase displayDevice, string name)
         {
+            _idCount++;
+            Id = _idCount;
             Device = displayDevice;
             Name = name;
+            UxEnvironment.AddDisplay(this);
+            if (Device != null)
+            {
+                Device.PowerStatusChange += OnDeviceOnPowerStatusChange;
+            }
+        }
+
+        public event EventHandler<bool> PowerStatusChange;
+
+        private void OnDeviceOnPowerStatusChange(IPowerDevice device, DevicePowerStatusEventArgs args)
+        {
+            PowerStatusChange?.Invoke(this, device.Power);
         }
 
         public DisplayDeviceBase Device { get; }
+
+        public string UniqueId
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_uniqueId))
+                {
+                    _uniqueId = Guid.NewGuid().ToString();
+                }
+
+                return _uniqueId;
+            }
+        }
 
         public SourceCollection<SourceBase> Sources => UxEnvironment.GetSources().SourcesForDisplay(this);
 
@@ -83,6 +112,8 @@ namespace UXAV.AVnet.Core.Models
             return _source;
         }
 
+        public event EventHandler<SourceBase> SourceTargetChangedSource;
+
         public async Task<bool> SelectSourceAsync(SourceBase source, uint forIndex = 1)
         {
             if (_source == source && source != null && Enabled && Device != null && Device.Power == false)
@@ -102,7 +133,7 @@ namespace UXAV.AVnet.Core.Models
             {
                 try
                 {
-                    OnSourceChange(_source);
+                    OnSourceChangeInternal(_source);
                     if (Device != null && _source != null) Device.Power = true;
                 }
                 catch (Exception e)
@@ -113,6 +144,7 @@ namespace UXAV.AVnet.Core.Models
             return true;
         }
 
+        public uint Id { get; }
         public string Name { get; }
 
         protected virtual void SetPowerOnEnableDisable(bool powerRequest)
@@ -122,9 +154,40 @@ namespace UXAV.AVnet.Core.Models
 
         protected virtual void SetSourceOnEnableDisable(SourceBase source)
         {
-            OnSourceChange(source);
+            OnSourceChangeInternal(source);
+        }
+
+        private void OnSourceChangeInternal(SourceBase source)
+        {
+            try
+            {
+                OnSourceChange(source);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            try
+            {
+                SourceTargetChangedSource?.Invoke(this, source);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         protected abstract void OnSourceChange(SourceBase source);
+
+        public virtual void PowerOff()
+        {
+            if (Device == null)
+            {
+                throw new NotImplementedException("Display controller does not have device");
+            }
+
+            Device.Power = false;
+        }
     }
 }

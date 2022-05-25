@@ -16,6 +16,10 @@ namespace UXAV.AVnet.Core.Models
     {
         private static readonly SourceCollection<SourceBase> SourceCollection = new SourceCollection<SourceBase>();
         private static readonly RoomCollection<RoomBase> RoomsCollection = new RoomCollection<RoomBase>();
+
+        private static readonly DisplayCollection<DisplayControllerBase> DisplayCollection =
+            new DisplayCollection<DisplayControllerBase>();
+
         private static Version _version;
 
         static UxEnvironment()
@@ -90,6 +94,12 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log($"Added source {source.Id} to collection");
         }
 
+        internal static void AddDisplay(DisplayControllerBase display)
+        {
+            DisplayCollection.Add(display);
+            Logger.Log($"Added display {display.Id} to collection");
+        }
+
         public static bool RoomWithIdExists(uint id)
         {
             return RoomsCollection.Contains(id);
@@ -103,6 +113,11 @@ namespace UXAV.AVnet.Core.Models
         public static RoomBase GetRoom(uint id)
         {
             return RoomsCollection[id];
+        }
+
+        public static RoomBase GetRoom(string withUniqueId)
+        {
+            return RoomsCollection.FirstOrDefault(s => s.UniqueId == withUniqueId);
         }
 
         public static T GetRoom<T>(uint id) where T : RoomBase
@@ -125,6 +140,11 @@ namespace UXAV.AVnet.Core.Models
             return !SourceCollection.HasItemWithId(sourceId) ? null : SourceCollection[sourceId];
         }
 
+        public static SourceBase GetSource(string withUniqueId)
+        {
+            return SourceCollection.FirstOrDefault(s => s.UniqueId == withUniqueId);
+        }
+
         public static SourceCollection<SourceBase> GetSources()
         {
             return SourceCollection;
@@ -138,6 +158,26 @@ namespace UXAV.AVnet.Core.Models
         public static SourceCollection<T> GetSources<T>() where T : SourceBase
         {
             return new SourceCollection<T>(SourceCollection.Where(s => s is T).Cast<T>());
+        }
+
+        public static bool DisplayWithIdExists(uint id)
+        {
+            return DisplayCollection.HasItemWithId(id);
+        }
+
+        public static DisplayControllerBase GetDisplay(uint displayId)
+        {
+            return !DisplayCollection.HasItemWithId(displayId) ? null : DisplayCollection[displayId];
+        }
+
+        public static DisplayControllerBase GetDisplay(string withUniqueId)
+        {
+            return DisplayCollection.FirstOrDefault(d => d.UniqueId == withUniqueId);
+        }
+
+        public static DisplayCollection<DisplayControllerBase> GetDisplays()
+        {
+            return DisplayCollection;
         }
     }
 }

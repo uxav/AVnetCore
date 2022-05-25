@@ -282,12 +282,14 @@
         <Compile Include="Models\Diagnostics\DiagnosticMessage.cs" />
         <Compile Include="Models\Diagnostics\DiagnosticService.cs" />
         <Compile Include="Models\Diagnostics\IDiagnosticItem.cs" />
+        <Compile Include="Models\DisplayCollection.cs" />
         <Compile Include="Models\DisplayControllerBase.cs" />
         <Compile Include="Models\EventMessage.cs" />
         <Compile Include="Models\EventService.cs" />
         <Compile Include="Models\IGenericItem.cs" />
         <Compile Include="Models\IInitializable.cs" />
         <Compile Include="Models\ISourceTarget.cs" />
+        <Compile Include="Models\IUniqueId.cs" />
         <Compile Include="Models\RoomClock.cs" />
         <Compile Include="Models\Rooms\RoomBase.cs" />
         <Compile Include="Models\Rooms\RoomCollection.cs" />
@@ -379,6 +381,7 @@
         <Compile Include="WebScripting\InternalApi\SourcesApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\StatusApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\UploadedFilesApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\Vc4StatusApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\XPanelDetailsApiHandler.cs" />
         <Compile Include="WebScripting\NvramFileRequestHandler.cs" />
         <Compile Include="WebScripting\RequestHandler.cs" />

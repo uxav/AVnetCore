@@ -8,13 +8,14 @@ namespace UXAV.AVnet.Core.Models.Sources
     /// <summary>
     ///     The base class of all AV source items
     /// </summary>
-    public abstract class SourceBase : IGenericItem
+    public abstract class SourceBase : IGenericItem, IUniqueId
     {
         private readonly string _groupName;
         private readonly string _iconName;
         private readonly string _name;
         private int _activeUseCount;
         private bool _hasActiveVideo;
+        private string _uniqueId;
 
         protected SourceBase(uint id, SourceType type, string name, string groupName, string iconName)
         {
@@ -50,6 +51,19 @@ namespace UXAV.AVnet.Core.Models.Sources
         ///     Used to organize priority order of sources in a collection
         /// </summary>
         public uint Priority { get; set; }
+
+        public string UniqueId
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_uniqueId))
+                {
+                    _uniqueId = Guid.NewGuid().ToString();
+                }
+
+                return _uniqueId;
+            }
+        }
 
         public RoomCollection<RoomBase> AssignedRooms { get; } = new RoomCollection<RoomBase>();
 
