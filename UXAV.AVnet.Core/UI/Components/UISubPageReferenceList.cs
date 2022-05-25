@@ -103,7 +103,7 @@ namespace UXAV.AVnet.Core.UI.Components
         protected virtual void SetNumberOfItems(ushort items)
         {
             SigProvider.UShortInput["Set Number of Items"].UShortValue = items;
-            Logger.Debug($"{GetType().Name} NumberOfItems: {NumberOfItems}");
+            //Logger.Debug($"{GetType().Name} NumberOfItems: {NumberOfItems}");
         }
 
         public void ClearList(bool justByResettingTheCount)
