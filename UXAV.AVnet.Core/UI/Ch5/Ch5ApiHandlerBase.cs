@@ -178,20 +178,26 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 throw new NullReferenceException("id cannot be null");
             }
+
             try
             {
+                if (message.Method == "ping")
+                {
+                    return new ResponseMessage((int)message.Id, "pong");
+                }
+
                 var result = FindAndInvokeMethod<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
-                return new ResponseMessage((int) message.Id, result);
+                return new ResponseMessage((int)message.Id, result);
             }
             catch (TargetInvocationException e)
             {
                 Logger.Error(e.InnerException);
-                return new ResponseMessage((int) message.Id, e.InnerException);
+                return new ResponseMessage((int)message.Id, e.InnerException);
             }
             catch (Exception e)
             {
                 Logger.Error(e);
-                return new ResponseMessage((int) message.Id, e);
+                return new ResponseMessage((int)message.Id, e);
             }
         }
 
