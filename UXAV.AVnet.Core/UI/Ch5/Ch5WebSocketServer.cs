@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Text;
-using Crestron.SimplSharp;
 using UXAV.AVnet.Core.Models;
 using WebSocketSharp;
 using WebSocketSharp.Net;
@@ -133,7 +132,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 if (_server.IsListening)
                 {
-                    _server.Log.Output -= OnLogOutput;
+                    //_server.Log.Output -= OnLogOutput;
                     Logger.Warn("Shutting down websocket server for UI");
                     _server?.Stop();
                 }
@@ -181,8 +180,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
             try
             {
-                _server.Log.Output += OnLogOutput;
-                _server.Log.Level = LogLevel.Trace;
+                //_server.Log.Output += OnLogOutput;
+                //_server.Log.Level = LogLevel.Trace;
                 _server?.Start();
             }
             catch (Exception e)

@@ -26,10 +26,12 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             base.OnOpen();
             RemoteIpAddress = Context.UserEndPoint.Address;
-            Logger.Success($"👍🏻 Websocket Opened from {RemoteIpAddress}!");
+            Logger.Success($"👍🏻 Websocket Opened from {RemoteIpAddress}, ID = \"{ID}\"");
             Logger.Log("Connection User-Agent:\r\n" + Context.Headers["User-Agent"]);
             foreach (var protocol in Context.SecWebSocketProtocols)
-                Logger.Debug($"Connection protocol includes: {protocol}");
+            {
+                //Logger.Debug($"Connection protocol includes: {protocol}");
+            }
             _apiHandler.OnConnectInternal(this);
             EventService.Notify(EventMessageType.DeviceConnectionChange, new
             {
@@ -43,7 +45,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         protected override void OnClose(CloseEventArgs e)
         {
             base.OnClose(e);
-            Logger.Warn($"👋 Websocket Closed, {e.Code}, Clean: {e.WasClean}, Remote IP: {RemoteIpAddress}");
+            Logger.Log($"👋 Websocket Closed, {e.Code}, Clean: {e.WasClean}, Remote IP: {RemoteIpAddress}");
             _apiHandler.SendEvent -= OnHandlerSendRequest;
             _apiHandler.OnDisconnectInternal(this);
             EventService.Notify(EventMessageType.DeviceConnectionChange, new
@@ -72,15 +74,15 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 }
                 else if (args.IsBinary)
                 {
-                    Logger.Debug($"🟠 WS received from {RemoteIpAddress}:\r\n" +
-                                 Tools.GetBytesAsReadableString(args.RawData, 0, args.RawData.Length, true));
+                    /*Logger.Debug($"🟠 WS received from {RemoteIpAddress}:\r\n" +
+                                 Tools.GetBytesAsReadableString(args.RawData, 0, args.RawData.Length, true));*/
                 }
                 else if (args.IsText)
                 {
                     var data = args.Data;
                     if (data != null)
                     {
-                        Logger.Debug($"🟠 WS received from {RemoteIpAddress}:\r\n" + data);
+                        //Logger.Debug($"🟠 WS received from {RemoteIpAddress}:\r\n" + data);
                         try
                         {
                             _apiHandler.OnReceiveInternal(JToken.Parse(data));
@@ -104,7 +106,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             _sendMutex.WaitOne();
             try
             {
-                Logger.Debug($"🟢 WS send to {RemoteIpAddress}:\r\n" + data);
+                //Logger.Debug($"🟢 WS send to {RemoteIpAddress}:\r\n" + data);
                 Send(data);
             }
             catch (Exception e)
