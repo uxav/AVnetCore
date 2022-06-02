@@ -1,6 +1,7 @@
 using System;
 using System.IO;
-using System.Text;
+using System.Text.RegularExpressions;
+using System.Web;
 using UXAV.AVnet.Core.Models;
 using WebSocketSharp;
 using WebSocketSharp.Net;
@@ -76,15 +77,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 return;
             }
 
-            if (path.EndsWith(".html"))
+            var match = Regex.Match(path, @"^.*\.(\w+)$");
+            if (match.Success && match.Groups[1].Success)
             {
-                res.ContentType = "text/html";
-                res.ContentEncoding = Encoding.UTF8;
-            }
-            else if (path.EndsWith(".js"))
-            {
-                res.ContentType = "application/javascript";
-                res.ContentEncoding = Encoding.UTF8;
+                var extension = match.Groups[1].Value;
+                res.ContentType = MimeMapping.GetMimeMapping(path);
             }
 
             res.ContentLength64 = contents.LongLength;
