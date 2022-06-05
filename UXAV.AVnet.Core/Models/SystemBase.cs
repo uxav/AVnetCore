@@ -261,6 +261,7 @@ namespace UXAV.AVnet.Core.Models
                 ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
                 ApiServer.AddRoute(@"/api/upload/uploadedfiles/<fileType:\w+>", typeof(UploadedFilesApiHandler));
                 ApiServer.AddRoute(@"/api/xpanels", typeof(XPanelDetailsApiHandler));
+                ApiServer.AddRoute(@"/api/ch5/<page:\w+>", typeof(Ch5StatusApiHandler));
             }
             catch (Exception e)
             {

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
-using System.Text;
-using Crestron.SimplSharp;
+using System.Text.RegularExpressions;
+using System.Web;
 using UXAV.AVnet.Core.Models;
 using WebSocketSharp;
 using WebSocketSharp.Net;
@@ -12,7 +12,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
 {
     public static class Ch5WebSocketServer
     {
-        private static bool _initCalled;
         private static HttpServer _server;
         private static string _workingDirectory;
         private static string _runtimeGuid;
@@ -22,12 +21,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         public static void Init(int port, string workingDirectory = "./ch5")
         {
-            if (_initCalled)
+            if (_server != null)
             {
                 Logger.Warn($"Init already called, will create new server!");
+                _server.Stop();
             }
-
-            _initCalled = true;
 
             _workingDirectory = workingDirectory;
             _server = new HttpServer(port, false)
@@ -55,7 +53,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
         }
 
-        public static int Port => _server.Port;
+        public static int Port => _server?.Port ?? 0;
 
         private static void HttpServerOnOnGet(object sender, HttpRequestEventArgs e)
         {
@@ -77,15 +75,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 return;
             }
 
-            if (path.EndsWith(".html"))
+            var match = Regex.Match(path, @"^.*\.(\w+)$");
+            if (match.Success && match.Groups[1].Success)
             {
-                res.ContentType = "text/html";
-                res.ContentEncoding = Encoding.UTF8;
-            }
-            else if (path.EndsWith(".js"))
-            {
-                res.ContentType = "application/javascript";
-                res.ContentEncoding = Encoding.UTF8;
+                var extension = match.Groups[1].Value;
+                res.ContentType = MimeMapping.GetMimeMapping(path);
             }
 
             res.ContentLength64 = contents.LongLength;
@@ -112,7 +106,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             return true;
         }
 
-        internal static bool InitCalled => _initCalled;
+        internal static bool InitCalled => _server != null;
 
         public static string RuntimeGuid
         {
@@ -133,7 +127,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 if (_server.IsListening)
                 {
-                    _server.Log.Output -= OnLogOutput;
+                    //_server.Log.Output -= OnLogOutput;
                     Logger.Warn("Shutting down websocket server for UI");
                     _server?.Stop();
                 }
@@ -160,7 +154,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             Logger.Highlight($"Websocket URL for UI Controller {controller.Id} set to: {controller.WebSocketUrl}");
         }
 
-        public static void AddWebService<THandler>(string path) where THandler : Ch5ApiHandlerBase
+        public static void AddWebService<THandler>(string path = "/ui/web") where THandler : Ch5ApiHandlerBase
         {
             _server.AddWebSocketService(path, () =>
             {
@@ -181,8 +175,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
             try
             {
-                _server.Log.Output += OnLogOutput;
-                _server.Log.Level = LogLevel.Trace;
+                //_server.Log.Output += OnLogOutput;
+                //_server.Log.Level = LogLevel.Trace;
                 _server?.Start();
             }
             catch (Exception e)
