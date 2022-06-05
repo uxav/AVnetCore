@@ -368,6 +368,7 @@
         <Compile Include="WebScripting\InternalApi\AppControlApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\AuthenticationApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\AutoDiscoveryApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\Ch5StatusApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\ConfigApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\ConsoleApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\DiagnosticsApiHandler.cs" />

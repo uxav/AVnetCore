@@ -4,6 +4,7 @@ using Crestron.SimplSharpPro;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Cloud;
 using UXAV.AVnet.Core.Models;
+using UXAV.AVnet.Core.UI.Ch5;
 using UXAV.Logging;
 using s = System;
 
@@ -92,6 +93,8 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     ProcessId = process.Id,
                     CrestronSecureStorage = CrestronSecureStorage.Supported,
                     process.ProcessName,
+                    Ch5WebSocketServerEnabled = Ch5WebSocketServer.Running,
+                    Ch5WebSocketServer = Ch5WebSocketServer.Port,
                     Authentication = new
                     {
                         Authentication.Enabled,
