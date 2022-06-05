@@ -58,6 +58,8 @@ namespace UXAV.AVnet.Core.Models.Rooms
         public abstract bool HasConferenceFacility { get; }
         public abstract bool InCall { get; }
 
+        public string HtmlUiUrl { get; protected set; }
+
         public RoomBase ParentRoom
         {
             get => _parentRoom;

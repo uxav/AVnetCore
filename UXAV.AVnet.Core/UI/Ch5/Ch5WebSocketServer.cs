@@ -12,7 +12,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
 {
     public static class Ch5WebSocketServer
     {
-        private static bool _initCalled;
         private static HttpServer _server;
         private static string _workingDirectory;
         private static string _runtimeGuid;
@@ -22,12 +21,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         public static void Init(int port, string workingDirectory = "./ch5")
         {
-            if (_initCalled)
+            if (_server != null)
             {
                 Logger.Warn($"Init already called, will create new server!");
+                _server.Stop();
             }
-
-            _initCalled = true;
 
             _workingDirectory = workingDirectory;
             _server = new HttpServer(port, false)
@@ -55,7 +53,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
         }
 
-        public static int Port => _server.Port;
+        public static int Port => _server?.Port ?? 0;
 
         private static void HttpServerOnOnGet(object sender, HttpRequestEventArgs e)
         {
@@ -108,7 +106,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             return true;
         }
 
-        internal static bool InitCalled => _initCalled;
+        internal static bool InitCalled => _server != null;
 
         public static string RuntimeGuid
         {
@@ -156,7 +154,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             Logger.Highlight($"Websocket URL for UI Controller {controller.Id} set to: {controller.WebSocketUrl}");
         }
 
-        public static void AddWebService<THandler>(string path) where THandler : Ch5ApiHandlerBase
+        public static void AddWebService<THandler>(string path = "/ui/web") where THandler : Ch5ApiHandlerBase
         {
             _server.AddWebSocketService(path, () =>
             {
