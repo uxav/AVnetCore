@@ -34,8 +34,17 @@ namespace UXAV.AVnet.Core.UI.Ch5
             _deviceController = deviceController;
         }
 
-        internal static IEnumerable<Ch5ApiHandlerBase> ConnectedHandlers =>
-            new ReadOnlyCollectionBuilder<Ch5ApiHandlerBase>(Handlers.Values).ToReadOnlyCollection();
+        internal static IEnumerable<Ch5ApiHandlerBase> ConnectedHandlers
+        {
+            get
+            {
+                lock (Handlers)
+                {
+                    var handlers = Handlers.Values.ToArray();
+                    return new ReadOnlyCollectionBuilder<Ch5ApiHandlerBase>(handlers).ToReadOnlyCollection();
+                }
+            }
+        }
 
         public Ch5ConnectionInstance Connection { get; private set; }
 
@@ -49,7 +58,10 @@ namespace UXAV.AVnet.Core.UI.Ch5
         internal void OnConnectInternal(Ch5ConnectionInstance connection)
         {
             Connection = connection;
-            Handlers.Add(connection.ID, this);
+            lock (Handlers)
+            {
+                Handlers.Add(connection.ID, this);
+            }
             var rooms = new List<object>();
             foreach (var room in UxEnvironment.GetRooms())
                 rooms.Add(new
@@ -82,7 +94,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
         internal void OnDisconnectInternal(Ch5ConnectionInstance connection)
         {
             EventService.EventOccured -= EventServiceOnEventOccured;
-            Handlers.Remove(connection.ID);
+            lock (Handlers)
+            {
+                Handlers.Remove(connection.ID);
+            }
+
             lock (_eventSubscriptions)
             {
                 foreach (var subscription in _eventSubscriptions.Values)
