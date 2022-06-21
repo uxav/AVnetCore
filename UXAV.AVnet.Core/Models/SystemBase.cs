@@ -799,14 +799,18 @@ namespace UXAV.AVnet.Core.Models
             if (Ch5WebSocketServer.InitCalled)
             {
                 Logger.Highlight("Starting CH5 websocket services");
+                Thread.Sleep(1000);
                 Ch5WebSocketServer.Start();
-                Thread.Sleep(500);
-                UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
-                Thread.Sleep(200);
+                Thread.Sleep(2000);
             }
 
-            Logger.Highlight("Initializing Core 3 UI Controllers");
-            InitializeCore3Controllers();
+            if (Core3Controllers.Count > 0)
+            {
+                UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
+                Logger.Highlight("Initializing Core 3 UI Controllers");
+                InitializeCore3Controllers();
+            }
+
             try
             {
                 OnInitializeComplete();
