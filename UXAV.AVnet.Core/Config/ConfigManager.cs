@@ -30,10 +30,13 @@ namespace UXAV.AVnet.Core.Config
     {
         private static JToken _config;
         private static Timer _saveTimer;
-        private static readonly object LockWrite = new object();
+        private static readonly object ConfigLockWrite = new object();
+        private static readonly object PListLockWrite = new object();
         private static string _filePath;
         private static HttpClient _client;
         private static readonly Mutex PasswordMutex = new Mutex();
+        private static string _plistPath;
+        private static JObject _plist;
 
         static ConfigManager()
         {
@@ -121,6 +124,16 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        private static string PListPath
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_plistPath)) return _plistPath;
+                _plistPath = ConfigDirectory + $"/{ConfigNameSpace}.plist.json";
+                return _plistPath;
+            }
+        }
+
         public static bool ConfigIsDefaultFile
         {
             get
@@ -149,7 +162,7 @@ namespace UXAV.AVnet.Core.Config
             }
             set
             {
-                lock (LockWrite)
+                lock (ConfigLockWrite)
                 {
                     try
                     {
@@ -159,6 +172,39 @@ namespace UXAV.AVnet.Core.Config
                     catch (Exception e)
                     {
                         Logger.Error("Could not write config file, {0}", e.Message);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Config file contents as string
+        /// </summary>
+        private static string PListData
+        {
+            get
+            {
+                if (File.Exists(PListPath))
+                {
+                    Logger.Log("plist file exists at \"{0}\", getting contents", PListPath);
+                    return File.ReadAllText(PListPath);
+                }
+
+                Logger.Warn("plist file not found at \"{0}\", returning null", PListPath);
+                return null;
+            }
+            set
+            {
+                lock (PListLockWrite)
+                {
+                    try
+                    {
+                        Logger.Log("Writing plist file at \"{0}\"", PListPath);
+                        File.WriteAllText(PListPath, value);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error("Could not write plist file, {0}", e.Message);
                     }
                 }
             }
@@ -184,14 +230,6 @@ namespace UXAV.AVnet.Core.Config
                 try
                 {
                     _config = JToken.Parse(configString);
-
-                    if (_config["PropertyList"] == null)
-                    {
-                        Logger.Warn("PropertyList does not exist. Creating one");
-                        _config["PropertyList"] = new JObject();
-                        SaveAuto(2);
-                    }
-
                     return _config;
                 }
                 catch
@@ -203,21 +241,52 @@ namespace UXAV.AVnet.Core.Config
             set
             {
                 _config = value;
-                Save();
+                SaveConfig();
                 EventService.Notify(EventMessageType.ConfigChanged, null);
             }
         }
 
         public static JSchema Schema { get; private set; }
 
-        private static JObject PropertyList
+        internal static JObject PropertyList
         {
             get
             {
-                if (JConfig["PropertyList"] != null) return JConfig["PropertyList"] as JObject;
-                Logger.Warn("PropertyList does not exist. Creating one");
-                JConfig["PropertyList"] = new JObject();
-                return (JObject)JConfig["PropertyList"];
+                if (_plist != null) return _plist;
+
+                var data = PListData;
+
+                if (data == null)
+                {
+                    var config = JConfig;
+                    if (config["PropertyList"] != null)
+                    {
+                        Logger.Warn("Found plist data in config!");
+                        var plist = config["PropertyList"] as JObject;
+                        config["PropertyList"].Parent?.Remove();
+                        JConfig = config;
+                        _plist = plist;
+                        SavePList();
+                        return plist;
+                    }
+
+                    Logger.Warn("PropertyList does not exist. Creating one");
+                    _plist = new JObject();
+                    return _plist;
+                }
+
+                try
+                {
+                    _plist = JObject.Parse(data);
+                    return _plist;
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+
+                Logger.Warn("Failed to load PList, will return empty contents");
+                return new JObject();
             }
         }
 
@@ -265,7 +334,7 @@ namespace UXAV.AVnet.Core.Config
         {
             Logger.Highlight(nameof(SetConfig));
             var data = JToken.FromObject(config);
-            lock (LockWrite)
+            lock (ConfigLockWrite)
             {
                 try
                 {
@@ -285,7 +354,7 @@ namespace UXAV.AVnet.Core.Config
         {
             if (_filePath == DefaultConfigPath) throw new Exception("Cannot write from default config");
             Logger.Highlight($"Writing config from {_filePath} to default path {DefaultConfigPath}");
-            lock (LockWrite)
+            lock (ConfigLockWrite)
             {
                 try
                 {
@@ -349,7 +418,7 @@ namespace UXAV.AVnet.Core.Config
             var path = ConfigDirectory + "/" + name;
             if (File.Exists(path)) throw new InvalidOperationException("File already exists called: " + path);
             ConfigPath = path;
-            Save();
+            SaveConfig();
         }
 
         public static void DeleteCurrentFile()
@@ -386,7 +455,7 @@ namespace UXAV.AVnet.Core.Config
                 return PropertyList[key].ToObject<T>();
 
             PropertyList[key] = new JValue(defaultValue);
-            SaveAuto(2);
+            SavePlistAuto(2);
             return defaultValue;
         }
 
@@ -465,7 +534,7 @@ namespace UXAV.AVnet.Core.Config
                 PropertyList[key] = new JValue(item);
             }
 
-            SaveAuto(2);
+            SavePlistAuto(2);
         }
 
         /// <summary>
@@ -478,14 +547,16 @@ namespace UXAV.AVnet.Core.Config
             return PropertyList.ContainsKey(key);
         }
 
-        private static void SaveAuto(int seconds)
+        private static void SavePlistAuto(int seconds)
         {
             if (_saveTimer == null)
+            {
                 _saveTimer = new Timer(state =>
                 {
-                    Logger.Highlight(1, "Config Plist save timer now saving file");
-                    Save();
+                    Logger.Highlight(1, "Plist save timer now saving file");
+                    SavePList();
                 });
+            }
 
             _saveTimer.Change(TimeSpan.FromSeconds(seconds), TimeSpan.Zero);
         }
@@ -493,13 +564,21 @@ namespace UXAV.AVnet.Core.Config
         /// <summary>
         ///     Save the current config to file
         /// </summary>
-        private static void Save()
+        private static void SaveConfig()
         {
-            Logger.Highlight("Saving config!");
+            Logger.Log("Saving config!");
             if (_config == null) return;
             ConfigData = _config.ToString(Formatting.Indented);
             _config = null;
             CloudConnector.MarkConfigForUpload();
+        }
+
+        private static void SavePList()
+        {
+            Logger.Log("Saving plist!");
+            if (_plist == null) return;
+            PListData = _plist.ToString(Formatting.Indented);
+            _plist = null;
         }
 
         private static string[] GetPasswordKeyValues()
