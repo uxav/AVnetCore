@@ -73,7 +73,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             SendNotification("hello", new
             {
                 type = _deviceController != null ? ControllerType.Ch5Device.ToString() : ControllerType.Web.ToString(),
-                guid = Ch5WebSocketServer.RuntimeGuid,
+                guid = SystemBase.RuntimeGuid,
                 controller = _deviceController?.Id ?? 0,
                 ipid = _deviceController?.Device.ID ?? 0,
                 defaultRoom = _deviceController?.DefaultRoom?.Id ?? 0,
