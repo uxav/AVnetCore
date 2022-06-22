@@ -26,7 +26,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         case "plist":
                             if (!Request.RoutePatternArgs.ContainsKey("key"))
                             {
-                                HandleNotFound();
+                                WriteResponse(ConfigManager.PropertyList);
                                 return;
                             }
 
