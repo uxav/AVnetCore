@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using System.Web;
 using UXAV.AVnet.Core.Models;
@@ -16,9 +18,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
         private static string _workingDirectory;
 
         public static string WebSocketBaseUrl =>
-            $"ws://{SystemBase.IpAddress}:{_server.Port}";
+            $"wss://{SystemBase.IpAddress}:{_server.Port}";
 
-        public static void Init(int port, string workingDirectory = "./ch5")
+        public static void Init(int port, string workingDirectory = "./ch5", X509Certificate2 cert = null)
         {
             if (_server != null)
             {
@@ -27,24 +29,25 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
 
             _workingDirectory = workingDirectory;
-            _server = new HttpServer(port, false)
+            _server = new HttpServer(port, cert != null)
             {
                 KeepClean = true,
                 WaitTime = TimeSpan.FromSeconds(30),
                 RootPath = "/"
             };
             _server.OnGet += HttpServerOnOnGet;
+            _server.OnConnect += (sender, args) =>
+            {
+                Logger.Log($"Server on connect... {args.Request.Url}");
+            };
             try
             {
-                /*var cert = new X509Certificate2("/opt/crestron/virtualcontrol/data/ssl/certs/server.pfx", "password");
-                Logger.Highlight($"Loaded cert for websocket: {cert}");
-                _server.SslConfiguration.ServerCertificate = cert;
-                _server.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
-                _server.SslConfiguration.ClientCertificateRequired = false;
-                _server.AuthenticationSchemes = AuthenticationSchemes.None;
-                _server.UserCredentialsFinder = id => id.Name == "wsuser"
-                    ? new WebSocketSharp.Net.NetworkCredential(id.Name, "wsuser")
-                    : null;*/
+                if (cert != null)
+                {
+                    Logger.Highlight($"Loaded cert for websocket: {cert.FriendlyName}");
+                    _server.SslConfiguration = new ServerSslConfiguration(cert, false, SslProtocols.Tls12, false);
+                    _server.AuthenticationSchemes = AuthenticationSchemes.Anonymous;
+                }
             }
             catch (Exception e)
             {
@@ -53,6 +56,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
         }
 
         public static int Port => _server?.Port ?? 0;
+
+        public static bool Secure => _server.IsSecure;
 
         private static void HttpServerOnOnGet(object sender, HttpRequestEventArgs e)
         {
