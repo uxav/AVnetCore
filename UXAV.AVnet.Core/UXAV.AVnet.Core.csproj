@@ -35,6 +35,9 @@
         <NoWarn>1591</NoWarn>
     </PropertyGroup>
     <ItemGroup>
+        <Reference Include="BouncyCastle.Crypto, Version=1.8.9.0, Culture=neutral, PublicKeyToken=0e99375e54769942, processorArchitecture=MSIL">
+          <HintPath>..\packages\BouncyCastle.1.8.9\lib\BouncyCastle.Crypto.dll</HintPath>
+        </Reference>
         <Reference Include="Crestron.SimplSharpPro.AudioDistribution, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
             <HintPath>..\packages\Crestron.SimplSharp.SDK.ProgramLibrary.2.17.36\lib\net47\Crestron.SimplSharpPro.AudioDistribution.dll</HintPath>
             <Private>True</Private>
@@ -246,6 +249,7 @@
     <ItemGroup>
         <Compile Include="AutoDiscovery.cs" />
         <Compile Include="AutoDiscoveryResult.cs" />
+        <Compile Include="BouncyCertificate.cs" />
         <Compile Include="Cloud\CloudConnector.cs" />
         <Compile Include="Config\ConfigBase.cs" />
         <Compile Include="Config\ConfigManager.cs" />
