@@ -77,6 +77,7 @@ namespace UXAV.AVnet.Core.Cloud
                     CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_MAC_ADDRESS,
                     CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
                         .EthernetLANAdapter));
+                if (string.IsNullOrEmpty(macString)) throw new OperationCanceledException("Unable to get MAC address");
                 _instanceId = Regex.Replace(macString, @"[-:]", @"") + "\\" +
                               InitialParametersClass.ApplicationNumber.ToString("D2");
                 return _instanceId;
