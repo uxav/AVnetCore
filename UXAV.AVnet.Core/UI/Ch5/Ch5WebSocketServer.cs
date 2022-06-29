@@ -18,7 +18,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         private static string _workingDirectory;
 
         public static string WebSocketBaseUrl =>
-            $"wss://{SystemBase.IpAddress}:{_server.Port}";
+            $"ws{(Secure ? "s" : "")}://{SystemBase.IpAddress}:{_server.Port}";
 
         public static void Init(int port, string workingDirectory = "./ch5", X509Certificate2 cert = null)
         {
