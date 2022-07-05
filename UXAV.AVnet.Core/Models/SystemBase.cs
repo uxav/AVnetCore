@@ -52,6 +52,8 @@ namespace UXAV.AVnet.Core.Models
         private readonly string _initialConfig;
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
         internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
+        private static string _runtimeGuid;
+        private static bool _appIsUpdated;
 
         protected SystemBase(CrestronControlSystem controlSystem)
         {
@@ -194,9 +196,9 @@ namespace UXAV.AVnet.Core.Models
             foreach (var resource in resources) Logger.Log("Resource found: {0}", resource);
 
             UpdateBootStatus(EBootStatus.Booting, "Checking upgrade requirements", 0);
-            var appIsUpgrading = CheckIfNewVersion(AppAssembly);
-            Logger.Warn("App is new version: {0}", appIsUpgrading);
-            if (appIsUpgrading)
+            _appIsUpdated = CheckIfNewVersion(AppAssembly);
+            Logger.Warn("App is new version: {0}", _appIsUpdated);
+            if (_appIsUpdated)
             {
                 Logger.Log("App is new version, running upgrade scripts...");
                 try
@@ -332,6 +334,23 @@ namespace UXAV.AVnet.Core.Models
             {
                 var fileVersionInfo = FileVersionInfo.GetVersionInfo(AppAssembly.Location);
                 return new Version(fileVersionInfo.ProductVersion);
+            }
+        }
+
+        public static string RuntimeGuid
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_runtimeGuid)) return _runtimeGuid;
+                if (_appIsUpdated)
+                {
+                    _runtimeGuid = Guid.NewGuid().ToString();
+                    ConfigManager.SetPropertyListItemWithKey("RuntimeGuid", _runtimeGuid);
+                    return _runtimeGuid;
+                }
+
+                _runtimeGuid = ConfigManager.GetOrCreatePropertyListItem("RuntimeGuid", Guid.NewGuid().ToString());
+                return _runtimeGuid;
             }
         }
 
@@ -799,14 +818,18 @@ namespace UXAV.AVnet.Core.Models
             if (Ch5WebSocketServer.InitCalled)
             {
                 Logger.Highlight("Starting CH5 websocket services");
+                Thread.Sleep(1000);
                 Ch5WebSocketServer.Start();
-                Thread.Sleep(500);
-                UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
-                Thread.Sleep(200);
+                Thread.Sleep(2000);
             }
 
-            Logger.Highlight("Initializing Core 3 UI Controllers");
-            InitializeCore3Controllers();
+            if (Core3Controllers.Count > 0)
+            {
+                UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
+                Logger.Highlight("Initializing Core 3 UI Controllers");
+                InitializeCore3Controllers();
+            }
+
             try
             {
                 OnInitializeComplete();

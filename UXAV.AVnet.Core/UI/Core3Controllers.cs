@@ -29,6 +29,17 @@ namespace UXAV.AVnet.Core.UI
             }
         }
 
+        public static int Count
+        {
+            get
+            {
+                lock (Controllers)
+                {
+                    return Controllers.Count;
+                }
+            }
+        }
+
         public static T[] Get<T>() where T : Core3ControllerBase
         {
             lock (Controllers)
