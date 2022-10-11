@@ -251,6 +251,7 @@
         <Compile Include="AutoDiscoveryResult.cs" />
         <Compile Include="BouncyCertificate.cs" />
         <Compile Include="Cloud\CloudConnector.cs" />
+        <Compile Include="Cloud\UpdateHelper.cs" />
         <Compile Include="Config\ConfigBase.cs" />
         <Compile Include="Config\ConfigManager.cs" />
         <Compile Include="Config\IConfigItem.cs" />
