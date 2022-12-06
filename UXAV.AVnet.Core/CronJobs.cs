@@ -48,12 +48,14 @@ namespace UXAV.AVnet.Core
 
                     try
                     {
-                        Task.Run(callback);
+                        callback();
                     }
                     catch (Exception e)
                     {
                         Logger.Error(e);
                     }
+
+                    Thread.Sleep(100);
                 }
             });
         }
