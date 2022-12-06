@@ -42,7 +42,8 @@ namespace UXAV.AVnet.Core
                     var offset = cronJob.GetNextOccurrence(DateTimeOffset.UtcNow, TimeZoneInfo.Local);
                     if (offset == null) return;
                     var time = ((DateTimeOffset)offset).DateTime;
-                    var waitTime = time - DateTime.Now;
+                    var waitTime = (time - DateTime.Now);
+                    Logger.Debug($"Cronjob will wait for {waitTime:g}");
                     var signaled = waitHandle.WaitOne(waitTime);
                     if (signaled) return;
 
@@ -55,7 +56,7 @@ namespace UXAV.AVnet.Core
                         Logger.Error(e);
                     }
 
-                    Thread.Sleep(100);
+                    Thread.Sleep(1000);
                 }
             });
         }
