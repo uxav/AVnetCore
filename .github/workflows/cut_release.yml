@@ -28,14 +28,14 @@ jobs:
         if: ${{ github.event.inputs.release-type != 'major' && github.event.inputs.release-type != 'minor' && github.event.inputs.release-type != 'patch' }}
       
       - name: Checkout develop for ${{ github.event.inputs.release-type }} release
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         if: ${{ github.event.inputs.release-type == 'major' || github.event.inputs.release-type == 'minor' }}
         with:
           ref: develop
           lfs: true
 
       - name: Checkout main for ${{ github.event.inputs.release-type }} release
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         if: ${{ github.event.inputs.release-type == 'patch' }}
         with:
           ref: main
@@ -70,7 +70,7 @@ jobs:
         uses: microsoft/setup-msbuild@v1
 
       - name: Setup NuGet.exe
-        uses: NuGet/setup-nuget@v1.0.5
+        uses: NuGet/setup-nuget@v1.1.1
 
       - name: Nuget Add Source
         run: nuget sources Add -Name "uxav" -Source https://nuget.pkg.github.com/uxav/index.json -username uxav -password ${{ secrets.GITHUB_TOKEN }} -StorePasswordInClearText
@@ -93,7 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download branch name artifact
         uses: actions/download-artifact@v3
@@ -122,7 +122,7 @@ jobs:
           echo "$develop_pr_body" >> $GITHUB_ENV
           echo 'END_OF_OUTPUT' >> $GITHUB_ENV
 
-          echo "::set-output name=branch_name::$branch_name"
+          echo "{branch_name}={$branch_name}" >> $GITHUB_OUTPUT
       
       - name: Create pull request into develop
         uses: repo-sync/pull-request@v2
