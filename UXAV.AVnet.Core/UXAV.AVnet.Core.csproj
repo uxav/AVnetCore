@@ -113,9 +113,8 @@
             <HintPath>..\packages\CsvHelper.15.0.8\lib\net47\CsvHelper.dll</HintPath>
             <Private>True</Private>
         </Reference>
-        <Reference Include="Figgle, Version=0.4.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\packages\Figgle.0.4.0\lib\net45\Figgle.dll</HintPath>
-            <Private>True</Private>
+        <Reference Include="Figgle, Version=0.4.1.0, Culture=neutral, processorArchitecture=MSIL">
+          <HintPath>..\packages\Figgle.0.4.1\lib\net452\Figgle.dll</HintPath>
         </Reference>
         <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
             <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.1.1.1\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
@@ -123,13 +122,11 @@
         </Reference>
         <Reference Include="Microsoft.CSharp" />
         <Reference Include="mscorlib" />
-        <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
-            <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-            <Private>True</Private>
+        <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+          <HintPath>..\packages\Newtonsoft.Json.13.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
         </Reference>
-        <Reference Include="Newtonsoft.Json.Schema, Version=3.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
-            <HintPath>..\packages\Newtonsoft.Json.Schema.3.0.13\lib\net45\Newtonsoft.Json.Schema.dll</HintPath>
-            <Private>True</Private>
+        <Reference Include="Newtonsoft.Json.Schema, Version=3.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+          <HintPath>..\packages\Newtonsoft.Json.Schema.3.0.14\lib\net45\Newtonsoft.Json.Schema.dll</HintPath>
         </Reference>
         <Reference Include="SimplSharpAutoUpdateInterface, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b">
             <HintPath>..\packages\Crestron.SimplSharp.SDK.Library.2.17.36\lib\net47\SimplSharpAutoUpdateInterface.dll</HintPath>
@@ -184,9 +181,8 @@
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
         <Reference Include="System.Drawing" />
-        <Reference Include="System.Drawing.Common, Version=4.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
-            <HintPath>..\packages\System.Drawing.Common.4.7.0\lib\net461\System.Drawing.Common.dll</HintPath>
-            <Private>True</Private>
+        <Reference Include="System.Drawing.Common, Version=4.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+          <HintPath>..\packages\System.Drawing.Common.4.7.3\lib\net461\System.Drawing.Common.dll</HintPath>
         </Reference>
         <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
             <HintPath>..\packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
