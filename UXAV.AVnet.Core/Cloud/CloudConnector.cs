@@ -136,20 +136,31 @@ namespace UXAV.AVnet.Core.Cloud
             Task.Run(CheckInProcess);
             Logger.AddCommand(async (argString, args, connection, respond) =>
             {
-                switch (args["cmd"])
-                {
-                    default:
+                if (args.ContainsKey("cmd"))
+                    switch (args["cmd"])
                     {
-                        respond("Checking for updates...\r\n");
-                        var table = new ConsoleTable("Version", "Date", "Pre-Release");
-                        var data = await UpdateHelper.GetUpdatesAsync(_applicationName, Token);
-                        foreach (var updateInfo in data)
-                            table.AddRow(updateInfo.AssemblyVersion, updateInfo.Time.ToString("f"),
-                                updateInfo.PreRelease);
-                        respond(table.ToString(true));
-                        return;
+                        case "latest":
+                            var latest = await UpdateHelper.GetLatestUpdate(_applicationName, Token);
+                            respond($"Latest version: {latest.Name}, URL: {latest.DownloadUrl}");
+                            return;
+                        case "test":
+                            var info = await UpdateHelper.GetLatestUpdate(_applicationName, Token);
+                            var url = info.DownloadUrl;
+                            await UpdateHelper.DownloadFile(url);
+                            respond("Done");
+                            return;
+                        default:
+                            respond($"Unknown command \"{args["cmd"]}\"");
+                            return;
                     }
-                }
+
+                respond("Checking for updates...\r\n");
+                var table = new ConsoleTable("Name", "Version", "AssemblyVersion", "Date", "Pre-Release", "Path");
+                var data = await UpdateHelper.GetUpdatesAsync(_applicationName, Token);
+                foreach (var updateInfo in data)
+                    table.AddRow(updateInfo.Name, updateInfo.AssemblyVersion, updateInfo.Version,
+                        updateInfo.Time.ToString("f"), updateInfo.PreRelease, updateInfo.Path);
+                respond(table.ToString(true));
             }, "SoftwareUpdate", "Cloud software update commands", "cmd");
         }
 
