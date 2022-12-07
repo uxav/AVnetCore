@@ -20,6 +20,7 @@ namespace UXAV.AVnet.Core.Cloud
         [JsonProperty("fileName")] public string FileName => System.IO.Path.GetFileName(Path);
         [JsonProperty("prerelease")] public bool PreRelease { get; set; }
         [JsonProperty("debug")] public bool Debug { get; set; }
+        [JsonProperty("releaseNotes")] public string ReleaseNotes { get; set; }
         [JsonProperty("signedUrl")] public string DownloadUrl { get; set; }
     }
 }
