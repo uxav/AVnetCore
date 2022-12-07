@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
@@ -71,7 +72,10 @@ namespace UXAV.AVnet.Core
             ThrowIfNotCorrectPlatform();
             if (string.IsNullOrEmpty(programInstanceId)) programInstanceId = InitialParametersClass.RoomId;
             dynamic data = await GetAsync($"/IpTableByPID/{programInstanceId}");
-            return data.Device.Programs.IpTableByPID;
+            if (data.Device?.Programs?.IpTableByPID == null) return null;
+
+            var items = data.Device.Programs.IpTableByPID as JArray;
+            return items?.OrderBy(item => item["ProgramIpId"].Value<int>());
         }
 
         public static async Task<object> GetProgramLibraryAsync()
