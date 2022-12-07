@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
@@ -12,10 +13,7 @@ namespace UXAV.AVnet.Core
 
         private static async Task<object> GetAsync(string path)
         {
-            if (!path.StartsWith("/"))
-            {
-                path = path + "/";
-            }
+            if (!path.StartsWith("/")) path = path + "/";
 
             var uri = new Uri($"http://localhost:5000{path}");
 
@@ -24,6 +22,20 @@ namespace UXAV.AVnet.Core
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsStringAsync();
                 return JObject.Parse(content);
+            }
+        }
+
+        private static async Task<object> PutAsync(string path, HttpContent content)
+        {
+            if (!path.StartsWith("/")) path = path + "/";
+
+            var uri = new Uri($"http://localhost:5000{path}");
+
+            using (var response = await HttpClient.PutAsync(uri, content))
+            {
+                response.EnsureSuccessStatusCode();
+                var receivedContent = await response.Content.ReadAsStringAsync();
+                return JObject.Parse(receivedContent);
             }
         }
 
@@ -57,10 +69,7 @@ namespace UXAV.AVnet.Core
         public static async Task<object> GetIpTableAsync(string programInstanceId = null)
         {
             ThrowIfNotCorrectPlatform();
-            if (string.IsNullOrEmpty(programInstanceId))
-            {
-                programInstanceId = InitialParametersClass.RoomId;
-            }
+            if (string.IsNullOrEmpty(programInstanceId)) programInstanceId = InitialParametersClass.RoomId;
             dynamic data = await GetAsync($"/IpTableByPID/{programInstanceId}");
             return data.Device.Programs.IpTableByPID;
         }
@@ -81,9 +90,28 @@ namespace UXAV.AVnet.Core
 
         public static async Task<object> GetProgramInstanceAsync(string roomId = null)
         {
-            dynamic library = await GetProgramInstancesAsync();
-            if (roomId == null) return library[InitialParametersClass.RoomId];
-            return library[roomId];
+            dynamic instances = await GetProgramInstancesAsync();
+            return roomId == null ? instances[InitialParametersClass.RoomId] : instances[roomId];
+        }
+
+        public static async Task<int> GetProgramLibraryId(string roomId = null)
+        {
+            dynamic instance = await GetProgramInstanceAsync(roomId);
+            return (int)instance.ProgramLibraryId;
+        }
+
+        public static async Task<object> LoadProgramAsync(string filePath)
+        {
+            var id = await GetProgramLibraryId();
+            var content = new MultipartFormDataContent();
+            using (var file = new FileStream(filePath, FileMode.Open))
+            {
+                var fileName = Path.GetFileName(file.Name);
+                content.Add(new StreamContent(file), "AppFile", fileName);
+                content.Add(new StringContent(id.ToString()), "ProgramId");
+                content.Add(new StringContent("true"), "StartNow");
+                return await PutAsync("/ProgramLibrary", content);
+            }
         }
     }
 }

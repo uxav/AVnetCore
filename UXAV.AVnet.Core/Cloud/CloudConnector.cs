@@ -20,16 +20,14 @@ namespace UXAV.AVnet.Core.Cloud
 {
     internal static class CloudConnector
     {
-        private static readonly HttpClient HttpClient;
+        internal static readonly HttpClient HttpClient;
         private static string _instanceId;
-        private static string _applicationName;
         private static string _version;
         private static string _productVersion;
         private static bool _init;
         private static EventWaitHandle _waitHandle;
         private static Uri _checkinUri;
         private static bool _suppressWarning;
-        private static string _host;
         private static Uri _configUploadUri;
         private static bool _uploadConfig = true;
         private static bool _programStopping;
@@ -39,14 +37,16 @@ namespace UXAV.AVnet.Core.Cloud
             HttpClient = new HttpClient();
         }
 
+        internal static string Host { get; private set; }
+
         private static Uri CheckinUri
         {
             get
             {
                 if (_checkinUri == null)
                     _checkinUri = new Uri(
-                        $"https://{_host}/api/checkin/v2" +
-                        $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
+                        $"https://{Host}/api/checkin/v2" +
+                        $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
 
                 return _checkinUri;
             }
@@ -61,14 +61,14 @@ namespace UXAV.AVnet.Core.Cloud
                     $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");*/
                 if (_configUploadUri == null)
                     _configUploadUri = new Uri(
-                        $"https://{_host}/api/configs/v1/submit" +
-                        $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
+                        $"https://{Host}/api/configs/v1/submit" +
+                        $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
 
                 return _configUploadUri;
             }
         }
 
-        internal static string InstanceId
+        public static string InstanceId
         {
             get
             {
@@ -84,31 +84,33 @@ namespace UXAV.AVnet.Core.Cloud
             }
         }
 
+        public static string ApplicationName { get; private set; }
+
         public static string Token { get; private set; } = "";
 
         public static string LogsUploadUrl
         {
             get
             {
-                if (string.IsNullOrEmpty(_host) || string.IsNullOrEmpty(Token)) return null;
-                return $"https://{_host}/api/uploadlogs/v1" +
-                       $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}";
+                if (string.IsNullOrEmpty(Host) || string.IsNullOrEmpty(Token)) return null;
+                return $"https://{Host}/api/uploadlogs/v1" +
+                       $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}";
             }
         }
 
-        internal static void MarkConfigForUpload()
+        public static void MarkConfigForUpload()
         {
             _uploadConfig = true;
             _waitHandle?.Set();
         }
 
-        internal static void Init(Assembly assembly, string host, string token)
+        public static void Init(Assembly assembly, string host, string token)
         {
             if (_init) return;
             _init = true;
-            _host = host;
+            Host = host;
             Token = token;
-            _applicationName = assembly.GetName().Name;
+            ApplicationName = assembly.GetName().Name;
             var types = assembly.GetTypes();
             foreach (var type in types)
                 try
@@ -118,7 +120,7 @@ namespace UXAV.AVnet.Core.Cloud
                         type.BaseType != typeof(CrestronControlSystem))
                         continue;
 
-                    _applicationName = type.Namespace;
+                    ApplicationName = type.Namespace;
                     break;
                 }
                 catch (Exception e)
@@ -142,7 +144,7 @@ namespace UXAV.AVnet.Core.Cloud
             while (true)
             {
 #if DEBUG
-                Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
+                //Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
 #endif
                 await CheckInAsync();
                 if (_uploadConfig)
@@ -236,16 +238,16 @@ namespace UXAV.AVnet.Core.Cloud
                 try
                 {
 #if DEBUG
-                    Logger.Debug($"Cloud checkin URL is {CheckinUri}");
+                    //Logger.Debug($"Cloud checkin URL is {CheckinUri}");
 #endif
                     var result = await HttpClient.PostAsync(CheckinUri, content);
 #if DEBUG
-                    Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
+                    //Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
 #endif
                     result.EnsureSuccessStatusCode();
                     var contents = await result.Content.ReadAsStringAsync();
 #if DEBUG
-                    Logger.Debug($"Cloud Rx:\r\n{contents}");
+                    //Logger.Debug($"Cloud Rx:\r\n{contents}");
 #endif
                     var responseData = JToken.Parse(contents);
                     if (responseData["actions"] != null)
@@ -296,16 +298,16 @@ namespace UXAV.AVnet.Core.Cloud
             var json = JToken.FromObject(data);
             var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
 #if DEBUG
-            Logger.Debug($"Cloud config upload URL is {ConfigUploadUri}");
+            //Logger.Debug($"Cloud config upload URL is {ConfigUploadUri}");
 #endif
             var result = await HttpClient.PostAsync(ConfigUploadUri, content);
 #if DEBUG
-            Logger.Debug($"{nameof(CloudConnector)}.{nameof(UploadConfigAsync)}() result = {result.StatusCode}");
+            //Logger.Debug($"{nameof(CloudConnector)}.{nameof(UploadConfigAsync)}() result = {result.StatusCode}");
 #endif
             result.EnsureSuccessStatusCode();
             var contents = await result.Content.ReadAsStringAsync();
 #if DEBUG
-            Logger.Debug($"Cloud Rx:\r\n{contents}");
+            //Logger.Debug($"Cloud Rx:\r\n{contents}");
 #endif
             result.Dispose();
         }
