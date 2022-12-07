@@ -15,7 +15,6 @@ using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
-using UXAV.Logging.Console;
 
 namespace UXAV.AVnet.Core.Cloud
 {
@@ -23,7 +22,6 @@ namespace UXAV.AVnet.Core.Cloud
     {
         internal static readonly HttpClient HttpClient;
         private static string _instanceId;
-        private static string _applicationName;
         private static string _version;
         private static string _productVersion;
         private static bool _init;
@@ -48,7 +46,7 @@ namespace UXAV.AVnet.Core.Cloud
                 if (_checkinUri == null)
                     _checkinUri = new Uri(
                         $"https://{Host}/api/checkin/v2" +
-                        $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
+                        $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
 
                 return _checkinUri;
             }
@@ -64,13 +62,13 @@ namespace UXAV.AVnet.Core.Cloud
                 if (_configUploadUri == null)
                     _configUploadUri = new Uri(
                         $"https://{Host}/api/configs/v1/submit" +
-                        $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
+                        $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
 
                 return _configUploadUri;
             }
         }
 
-        internal static string InstanceId
+        public static string InstanceId
         {
             get
             {
@@ -86,6 +84,8 @@ namespace UXAV.AVnet.Core.Cloud
             }
         }
 
+        public static string ApplicationName { get; private set; }
+
         public static string Token { get; private set; } = "";
 
         public static string LogsUploadUrl
@@ -94,23 +94,23 @@ namespace UXAV.AVnet.Core.Cloud
             {
                 if (string.IsNullOrEmpty(Host) || string.IsNullOrEmpty(Token)) return null;
                 return $"https://{Host}/api/uploadlogs/v1" +
-                       $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}";
+                       $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}";
             }
         }
 
-        internal static void MarkConfigForUpload()
+        public static void MarkConfigForUpload()
         {
             _uploadConfig = true;
             _waitHandle?.Set();
         }
 
-        internal static void Init(Assembly assembly, string host, string token)
+        public static void Init(Assembly assembly, string host, string token)
         {
             if (_init) return;
             _init = true;
             Host = host;
             Token = token;
-            _applicationName = assembly.GetName().Name;
+            ApplicationName = assembly.GetName().Name;
             var types = assembly.GetTypes();
             foreach (var type in types)
                 try
@@ -120,7 +120,7 @@ namespace UXAV.AVnet.Core.Cloud
                         type.BaseType != typeof(CrestronControlSystem))
                         continue;
 
-                    _applicationName = type.Namespace;
+                    ApplicationName = type.Namespace;
                     break;
                 }
                 catch (Exception e)
@@ -134,34 +134,6 @@ namespace UXAV.AVnet.Core.Cloud
             _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
             Task.Run(CheckInProcess);
-            Logger.AddCommand(async (argString, args, connection, respond) =>
-            {
-                if (args.ContainsKey("cmd"))
-                    switch (args["cmd"])
-                    {
-                        case "latest":
-                            var latest = await UpdateHelper.GetLatestUpdate(_applicationName, Token);
-                            respond($"Latest version: {latest.Name}, URL: {latest.DownloadUrl}");
-                            return;
-                        case "test":
-                            var info = await UpdateHelper.GetLatestUpdate(_applicationName, Token);
-                            var url = info.DownloadUrl;
-                            await UpdateHelper.DownloadFile(url);
-                            respond("Done");
-                            return;
-                        default:
-                            respond($"Unknown command \"{args["cmd"]}\"");
-                            return;
-                    }
-
-                respond("Checking for updates...\r\n");
-                var table = new ConsoleTable("Name", "Version", "AssemblyVersion", "Date", "Pre-Release", "Path");
-                var data = await UpdateHelper.GetUpdatesAsync(_applicationName, Token);
-                foreach (var updateInfo in data)
-                    table.AddRow(updateInfo.Name, updateInfo.AssemblyVersion, updateInfo.Version,
-                        updateInfo.Time.ToString("f"), updateInfo.PreRelease, updateInfo.Path);
-                respond(table.ToString(true));
-            }, "SoftwareUpdate", "Cloud software update commands", "cmd");
         }
 
         private static async void CheckInProcess()
