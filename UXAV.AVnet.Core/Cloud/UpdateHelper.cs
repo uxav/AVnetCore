@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Web;
 using Crestron.SimplSharp;
 using Newtonsoft.Json.Linq;
+using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -13,6 +14,20 @@ namespace UXAV.AVnet.Core.Cloud
 {
     internal static class UpdateHelper
     {
+        private static bool _cronSetup;
+        private static bool _updatesAvailable;
+
+        public static bool UpdatesAvailable
+        {
+            get => _updatesAvailable;
+            private set
+            {
+                if (_updatesAvailable == value) return;
+                _updatesAvailable = value;
+                EventService.Notify(EventMessageType.UpdateAvailableChange);
+            }
+        }
+
         public static async Task<SoftwareUpdateInfo[]> GetUpdatesAsync(
             bool includeDebug = false, bool includePreRelease = false, bool includeOlder = false)
         {
@@ -166,6 +181,21 @@ namespace UXAV.AVnet.Core.Cloud
             {
                 response.Dispose();
             }
+        }
+
+        public static void SetupUpdateTimer()
+        {
+            if (_cronSetup) throw new InvalidOperationException("Update check crob job already setup");
+            var expression = ConfigManager.GetOrCreatePropertyListItem("CloudUpdateCheckCron", "0 * * * *");
+            Task.Run(CheckForUpdates);
+            CronJobs.Add(expression, CheckForUpdates);
+            _cronSetup = true;
+        }
+
+        private static async void CheckForUpdates()
+        {
+            var updates = await GetUpdatesAsync(includePreRelease: false);
+            UpdatesAvailable = updates?.Any() ?? false;
         }
     }
 }

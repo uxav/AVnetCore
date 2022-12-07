@@ -563,6 +563,7 @@ namespace UXAV.AVnet.Core.Models
         public void InitCloudConnector(Assembly assembly, string host, string token)
         {
             CloudConnector.Init(assembly, host, token);
+            UpdateHelper.SetupUpdateTimer();
         }
 
         public string RestartApp()
