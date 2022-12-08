@@ -9,7 +9,7 @@ namespace UXAV.AVnet.Core.Models
         {
             CrestronEnvironment.ProgramStatusEventHandler += type =>
             {
-                if (type == eProgramStatusEventType.Stopping) Notify(EventMessageType.ProgramStopping, null);
+                if (type == eProgramStatusEventType.Stopping) Notify(EventMessageType.ProgramStopping);
             };
         }
 
@@ -50,6 +50,7 @@ namespace UXAV.AVnet.Core.Models
         SessionExpired,
         DeviceConnectionChange,
         DiagnosticsMessagesUpdated,
-        SystemMonitorStatsChange
+        SystemMonitorStatsChange,
+        UpdateAvailableChange
     }
 }

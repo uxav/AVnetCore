@@ -250,6 +250,8 @@
         <Compile Include="AutoDiscoveryResult.cs" />
         <Compile Include="BouncyCertificate.cs" />
         <Compile Include="Cloud\CloudConnector.cs" />
+        <Compile Include="Cloud\SoftwareUpdateInfo.cs" />
+        <Compile Include="Cloud\UpdateHelper.cs" />
         <Compile Include="Config\ConfigBase.cs" />
         <Compile Include="Config\ConfigManager.cs" />
         <Compile Include="Config\IConfigItem.cs" />
@@ -385,6 +387,7 @@
         <Compile Include="WebScripting\InternalApi\RoomsApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\SourcesApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\StatusApiHandler.cs" />
+        <Compile Include="WebScripting\InternalApi\UpdatesApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\UploadedFilesApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\Vc4StatusApiHandler.cs" />
         <Compile Include="WebScripting\InternalApi\XPanelDetailsApiHandler.cs" />

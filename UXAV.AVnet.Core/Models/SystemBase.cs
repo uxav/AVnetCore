@@ -49,11 +49,11 @@ namespace UXAV.AVnet.Core.Models
 
         private static string _programRootDirectory;
         private static string _systemName;
+        private static string _runtimeGuid;
+        private static bool _appIsUpdated;
         private readonly string _initialConfig;
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
         internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
-        private static string _runtimeGuid;
-        private static bool _appIsUpdated;
 
         protected SystemBase(CrestronControlSystem controlSystem)
         {
@@ -164,7 +164,6 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("ProgramHtmlDirectory = {0}", ProgramHtmlDirectory);
             Logger.Log("DevicePlatform = {0}", CrestronEnvironment.DevicePlatform);
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-            {
                 try
                 {
                     dynamic programInstance = Vc4WebApi.GetProgramInstanceAsync().Result;
@@ -178,7 +177,7 @@ namespace UXAV.AVnet.Core.Models
                 {
                     Logger.Error($"Error logging VC-4 info from API, {e.Message}");
                 }
-            }
+
             Logger.Log("ControlSystem.NumberOfEthernetAdapters = {0}", ControlSystem.NumberOfEthernetAdapters);
             Logger.Log("ControlSystem.NumberOfComPorts = {0}", ControlSystem.NumberOfComPorts);
             Logger.Log("ControlSystem.NumberOfVersiPorts = {0}", ControlSystem.NumberOfVersiPorts);
@@ -264,6 +263,7 @@ namespace UXAV.AVnet.Core.Models
                 ApiServer.AddRoute(@"/api/upload/uploadedfiles/<fileType:\w+>", typeof(UploadedFilesApiHandler));
                 ApiServer.AddRoute(@"/api/xpanels", typeof(XPanelDetailsApiHandler));
                 ApiServer.AddRoute(@"/api/ch5/<page:\w+>", typeof(Ch5StatusApiHandler));
+                ApiServer.AddRoute(@"/api/swupdate", typeof(UpdatesApiHandler));
             }
             catch (Exception e)
             {
@@ -563,6 +563,7 @@ namespace UXAV.AVnet.Core.Models
         public void InitCloudConnector(Assembly assembly, string host, string token)
         {
             CloudConnector.Init(assembly, host, token);
+            UpdateHelper.SetupUpdateTimer();
         }
 
         public string RestartApp()
@@ -587,10 +588,7 @@ namespace UXAV.AVnet.Core.Models
 
         private void SystemStoppingInternal(eProgramStatusEventType eventType)
         {
-            if (eventType == eProgramStatusEventType.Stopping)
-            {
-                Ch5WebSocketServer.Stop();
-            }
+            if (eventType == eProgramStatusEventType.Stopping) Ch5WebSocketServer.Stop();
 
             try
             {
@@ -618,10 +616,8 @@ namespace UXAV.AVnet.Core.Models
             }
 
             if (Ch5WebSocketServer.Running)
-            {
                 messages.Add(new DiagnosticMessage(MessageLevel.Info, "CH5 websocket service listening",
                     Ch5WebSocketServer.WebSocketBaseUrl, nameof(Ch5WebSocketServer)));
-            }
 
             messages.AddRange(CipDevices.GetDiagnosticMessages());
 

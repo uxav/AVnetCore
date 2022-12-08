@@ -82,6 +82,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     AppVersion = Server.System.AppVersion.ToString(),
                     AppAssemblyVersion = Server.System.AppAssemblyVersion.ToString(),
                     AppBuildTime = System.ProgramBuildTime,
+                    UpdateHelper.UpdatesAvailable,
                     Include4Dat = System.Include4DatInfo,
                     ProgramDirectory = InitialParametersClass.ProgramDirectory.ToString(),
                     BootStatus = UxEnvironment.System.BootStatus.ToString(),
