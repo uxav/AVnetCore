@@ -203,6 +203,7 @@ namespace UXAV.AVnet.Core.Cloud
                     logger_port = Logger.ListenPort,
                     version = _version,
                     productVersion = _productVersion,
+                    updateAvailable = UpdateHelper.UpdatesAvailable,
                     device_type = CrestronEnvironment.DevicePlatform.ToString(),
                     room_id = InitialParametersClass.RoomId,
                     room_name = InitialParametersClass.RoomName,
