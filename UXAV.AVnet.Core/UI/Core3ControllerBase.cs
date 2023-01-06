@@ -460,7 +460,7 @@ namespace UXAV.AVnet.Core.UI
 
         protected abstract void OnHardButtonEvent(IButton button, ButtonEventArgs args);
 
-        internal void InitializeInternal()
+        internal virtual void InitializeInternal()
         {
             if (UxEnvironment.RoomWithIdExists(_roomId)) DefaultRoom = UxEnvironment.GetRoom(_roomId);
 
