@@ -74,9 +74,16 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             path = _workingDirectory + path;
 
+            if (!File.Exists(path) && File.Exists(_workingDirectory + "/index.html"))
+            {
+                Logger.Debug("File not found, using index.html");
+                path = _workingDirectory + "/index.html";
+            }
+
             if (!TryReadFile(path, out contents))
             {
                 res.StatusCode = (int)HttpStatusCode.NotFound;
+                res.Close();
                 return;
             }
 
