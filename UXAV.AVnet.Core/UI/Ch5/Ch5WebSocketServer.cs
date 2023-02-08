@@ -20,11 +20,19 @@ namespace UXAV.AVnet.Core.UI.Ch5
         public static string WebSocketBaseUrl =>
             $"ws{(Secure ? "s" : "")}://{SystemBase.IpAddress}:{_server.Port}";
 
+        public static int Port => _server?.Port ?? 0;
+
+        public static bool Secure => _server.IsSecure;
+
+        internal static bool InitCalled => _server != null;
+
+        internal static bool Running => _server != null && _server.IsListening;
+
         public static void Init(int port, string workingDirectory = "./ch5", X509Certificate2 cert = null)
         {
             if (_server != null)
             {
-                Logger.Warn($"Init already called, will create new server!");
+                Logger.Warn("Init already called, will create new server!");
                 _server.Stop();
             }
 
@@ -36,10 +44,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 RootPath = "/"
             };
             _server.OnGet += HttpServerOnOnGet;
-            _server.OnConnect += (sender, args) =>
-            {
-                Logger.Log($"Server on connect... {args.Request.Url}");
-            };
+            _server.OnConnect += (sender, args) => { Logger.Log($"Server on connect... {args.Request.Url}"); };
             try
             {
                 if (cert != null)
@@ -55,10 +60,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
         }
 
-        public static int Port => _server?.Port ?? 0;
-
-        public static bool Secure => _server.IsSecure;
-
         private static void HttpServerOnOnGet(object sender, HttpRequestEventArgs e)
         {
             var req = e.Request;
@@ -73,9 +74,16 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             path = _workingDirectory + path;
 
+            if (!File.Exists(path) && File.Exists(_workingDirectory + "/index.html"))
+            {
+                Logger.Debug("File not found, using index.html");
+                path = _workingDirectory + "/index.html";
+            }
+
             if (!TryReadFile(path, out contents))
             {
                 res.StatusCode = (int)HttpStatusCode.NotFound;
+                res.Close();
                 return;
             }
 
@@ -110,8 +118,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
             return true;
         }
 
-        internal static bool InitCalled => _server != null;
-
         internal static void Stop()
         {
             try
@@ -132,7 +138,10 @@ namespace UXAV.AVnet.Core.UI.Ch5
         internal static void AddDeviceService<THandler>(Ch5UIController<THandler> controller)
             where THandler : Ch5ApiHandlerBase
         {
+            Logger.Debug($"Adding device service for {controller}");
             var path = $"/ui/{controller.Device.ID:x2}";
+            Logger.Debug("Path = " + path);
+
             _server.AddWebSocketService(path, () =>
             {
                 var ctor = typeof(THandler).GetConstructor(new[] { typeof(Core3ControllerBase) });
@@ -164,6 +173,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 Logger.Warn("Server already started!");
                 return;
             }
+
             try
             {
                 //_server.Log.Output += OnLogOutput;
@@ -175,8 +185,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 Logger.Error(e);
             }
         }
-
-        internal static bool Running => _server != null && _server.IsListening;
 
         private static void OnLogOutput(LogData data, string s)
         {

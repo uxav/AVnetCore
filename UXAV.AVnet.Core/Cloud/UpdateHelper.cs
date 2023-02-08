@@ -113,14 +113,10 @@ namespace UXAV.AVnet.Core.Cloud
                     var url = json?.ToObject<SoftwareUpdateInfo>()?.DownloadUrl;
                     if (string.IsNullOrEmpty(url)) throw new OperationCanceledException("No update url found");
                     var targetPath = SystemBase.ProgramUserDirectory + "/updates";
-                    if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+                    if (!Directory.Exists(targetPath))
                     {
-                        targetPath = SystemBase.ProgramUserDirectory + "/updates";
-                        if (!Directory.Exists(targetPath))
-                        {
-                            Logger.Debug("Created directory: " + targetPath);
-                            Directory.CreateDirectory(targetPath);
-                        }
+                        Logger.Debug("Created directory: " + targetPath);
+                        Directory.CreateDirectory(targetPath);
                     }
 
                     var path = await DownloadFile(url, targetPath);
