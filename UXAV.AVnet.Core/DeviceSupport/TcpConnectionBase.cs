@@ -15,6 +15,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
         private int _failConnectCount;
 
         private bool _remainConnected;
+        private CancellationTokenSource _sendCancel;
         private Task _sendProcess;
         private BlockingCollection<byte[]> _sendQueue;
         private NetworkStream _stream;
@@ -78,38 +79,58 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 return;
             }
 
-            if (_sendQueue == null || _sendQueue.IsCompleted) _sendQueue = new BlockingCollection<byte[]>();
+            if (_sendQueue == null || _sendQueue.IsCompleted)
+            {
+                _sendCancel = new CancellationTokenSource();
+                _sendQueue = new BlockingCollection<byte[]>();
+            }
 
             var copiedBytes = new byte[count];
             Array.Copy(bytes, index, copiedBytes, 0, count);
             _sendQueue.Add(copiedBytes);
 
-            if (_sendProcess == null || _sendProcess.Status != TaskStatus.Running)
-                _sendProcess = Task.Run(() =>
+            if (_sendProcess != null && !_sendProcess.IsCompleted) return;
+            try
+            {
+                _sendProcess = Task.Run(SendProcess);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+        }
+
+        private void SendProcess()
+        {
+            if (DebugEnabled) Logger.Debug("Starting Send Process...");
+            while (_stream != null && _stream.CanWrite)
+                try
                 {
-                    Logger.Debug("Starting Send Process...");
-                    while (_stream != null && _stream.CanWrite)
-                        try
-                        {
-                            var bytesToSend = _sendQueue.Take();
-                            if (DebugEnabled)
-                                Logger.Debug(
-                                    $"{GetType().Name} {Address} Tx: {Tools.GetBytesAsReadableString(bytesToSend, 0, bytesToSend.Length, true)}");
+                    var bytesToSend = _sendQueue.Take(_sendCancel.Token);
+                    if (DebugEnabled)
+                        Logger.Debug(
+                            $"{GetType().Name} {Address} Tx: {Tools.GetBytesAsReadableString(bytesToSend, 0, bytesToSend.Length, true)}");
 
-                            _stream.Write(bytesToSend, 0, bytesToSend.Length);
-                        }
-                        catch (InvalidOperationException)
-                        {
-                            Logger.Debug("Exiting send process as send queue is now marked as complete.");
-                            return;
-                        }
-                        catch (Exception e)
-                        {
-                            Logger.Error(e);
-                        }
+                    _stream.Write(bytesToSend, 0, bytesToSend.Length);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (InvalidOperationException)
+                {
+                    Logger.Debug("Exiting send process as send queue is now marked as complete.");
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                    break;
+                }
 
-                    _sendProcess = null;
-                });
+            if (DebugEnabled) Logger.Debug("Exiting Send Process...");
+
+            _sendProcess = null;
         }
 
         private async Task ConnectionProcess()
@@ -173,9 +194,19 @@ namespace UXAV.AVnet.Core.DeviceSupport
                                 Logger.Debug($"{GetType().Name} Stream read count is 0 or less. Disconnecting...");
 
                             Logger.Warn("{0} disconnecting!", GetType().Name);
+                            OnConnectedChange(this, false);
+                            try
+                            {
+                                _stream.Dispose();
+                                _client.Dispose();
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.Error(e);
+                            }
+
                             _stream = null;
                             _client = null;
-                            OnConnectedChange(this, false);
                             break;
                         }
 
@@ -193,7 +224,11 @@ namespace UXAV.AVnet.Core.DeviceSupport
                         break;
                     }
 
-                if (_sendQueue != null && !_sendQueue.IsCompleted) _sendQueue.CompleteAdding();
+                if (_sendQueue != null && !_sendQueue.IsCompleted)
+                {
+                    _sendQueue.CompleteAdding();
+                    _sendCancel.Cancel();
+                }
 
                 if (_client != null && _client.Connected)
                 {
@@ -205,6 +240,16 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
             if (DebugEnabled) Logger.Debug($"{GetType().Name} exited connection process loop");
 
+            try
+            {
+                _stream?.Dispose();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            _stream = null;
             _client = null;
 
             if (_remainConnected)
