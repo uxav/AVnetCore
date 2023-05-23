@@ -272,6 +272,7 @@ namespace UXAV.AVnet.Core.Config
 
                     Logger.Warn("PropertyList does not exist. Creating one");
                     _plist = new JObject();
+                    SavePList();
                     return _plist;
                 }
 
@@ -450,9 +451,8 @@ namespace UXAV.AVnet.Core.Config
 
         public static T GetOrCreatePropertyListItem<T>(string key, T defaultValue)
         {
-            if (PropertyList.ContainsKey(key))
-                // ReSharper disable once PossibleNullReferenceException
-                return PropertyList[key].ToObject<T>();
+            if (PropertyList.TryGetValue(key, out var value))
+                return value.ToObject<T>();
 
             PropertyList[key] = new JValue(defaultValue);
             SavePlistAuto(2);
