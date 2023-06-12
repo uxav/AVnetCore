@@ -62,6 +62,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 Handlers.Add(connection.ID, this);
             }
+
             var rooms = new List<object>();
             foreach (var room in UxEnvironment.GetRooms())
                 rooms.Add(new
@@ -101,10 +102,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             lock (_eventSubscriptions)
             {
-                foreach (var subscription in _eventSubscriptions.Values)
-                {
-                    subscription.Unsubscribe();
-                }
+                foreach (var subscription in _eventSubscriptions.Values) subscription.Unsubscribe();
 
                 _eventSubscriptions.Clear();
             }
@@ -190,17 +188,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private ResponseMessage ProcessResponse(RequestMessage message)
         {
-            if (message.Id == null)
-            {
-                throw new NullReferenceException("id cannot be null");
-            }
+            if (message.Id == null) throw new NullReferenceException("id cannot be null");
 
             try
             {
-                if (message.Method == "ping")
-                {
-                    return new ResponseMessage((int)message.Id, "pong");
-                }
+                if (message.Method == "ping") return new ResponseMessage((int)message.Id, "pong");
 
                 var result = FindAndInvokeMethod<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
                 return new ResponseMessage((int)message.Id, result);
@@ -219,7 +211,25 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private object FindAndInvokeMethod<T>(string method, JToken args) where T : ApiTargetAttributeBase
         {
-            var methods = GetType().GetMethods();
+            object target = this;
+            var namedArgs = args;
+            Logger.Debug("Looking for method: " + method);
+
+            if (method == "Room.Invoke")
+            {
+                Logger.Debug("Room.Invoke found");
+                if (args["room"] == null || args["method"] == null)
+                    throw new Exception("Room.Invoke requires a room and method parameter");
+                var roomId = args["room"].Value<uint>();
+                var room = UxEnvironment.GetRoom(roomId);
+                method = args["method"].Value<string>();
+                target = room;
+                Logger.Debug("Target set to room: " + room);
+                Logger.Debug("Args\n" + args);
+                namedArgs = args["roomParams"];
+            }
+
+            var methods = target.GetType().GetMethods();
             foreach (var methodInfo in methods)
             {
                 var attribute = methodInfo.GetCustomAttribute<T>();
@@ -228,11 +238,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 //Logger.Debug($"Name matches....");
                 var methodParams = methodInfo.GetParameters();
                 //Logger.Debug($"Param count = {methodParams.Length}");
-                switch (args)
+                switch (namedArgs)
                 {
                     case null when methodParams.Length == 0:
                     {
-                        var result = methodInfo.Invoke(this, new object[] { });
+                        var result = methodInfo.Invoke(target, new object[] { });
                         if (methodInfo.ReturnType == typeof(void)) result = true;
                         return result;
                     }
@@ -240,21 +250,21 @@ namespace UXAV.AVnet.Core.UI.Ch5
                         continue;
                     default:
                     {
-                        if (args.Count() != methodParams.Length) continue;
+                        if (namedArgs.Count() != methodParams.Length) continue;
                         var invokeParams = (from methodParam in methodParams
-                                where args[methodParam.Name] != null
+                                where namedArgs[methodParam.Name] != null
                                 // ReSharper disable once PossibleNullReferenceException
-                                select args[methodParam.Name].ToObject(methodParam.ParameterType))
+                                select namedArgs[methodParam.Name].ToObject(methodParam.ParameterType))
                             .ToArray();
                         if (invokeParams.Length != methodParams.Length) continue;
-                        var result = methodInfo.Invoke(this, invokeParams);
+                        var result = methodInfo.Invoke(target, invokeParams);
                         if (methodInfo.ReturnType == typeof(void)) result = true;
                         return result;
                     }
                 }
             }
 
-            throw new MissingMethodException(GetType().FullName, method);
+            throw new MissingMethodException(target.GetType().FullName, method);
         }
 
         [ApiTargetMethod("Log")]
@@ -272,9 +282,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 lock (_eventSubscriptions)
                 {
                     if (_eventSubscriptions.ContainsKey(id))
-                    {
                         throw new InvalidOperationException($"Event ID {id} already registered");
-                    }
                 }
 
                 var obj = FindAndInvokeMethod<ApiTargetEventAttribute>(name, @params);
@@ -307,9 +315,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             lock (_eventSubscriptions)
             {
                 if (!_eventSubscriptions.ContainsKey(id))
-                {
                     throw new KeyNotFoundException($"Subscription with ID {id} does not exist");
-                }
             }
 
             lock (_eventSubscriptions)
@@ -340,7 +346,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 Ch5WebSocketServer.WebSocketBaseUrl,
                 CrestronEnvironment.SystemInfo.SerialNumber,
                 AppVersion = UxEnvironment.System.AppVersion.ToString(),
-                AVNetVersion = UxEnvironment.Version.ToString(),
+                AVNetVersion = UxEnvironment.Version.ToString()
             };
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -64,9 +65,10 @@ namespace UXAV.AVnet.Core.Models
                         {
                             Logger.Debug("Zipping files from " + SystemBase.ProgramNvramDirectory);
                             var nvramFolder = new DirectoryInfo(SystemBase.ProgramNvramDirectory);
-                            files = nvramFolder.GetFiles("*", SearchOption.AllDirectories);
+                            var logFiles = new List<FileInfo>();
+                            logFiles.AddRange(nvramFolder.GetFiles("*", SearchOption.AllDirectories));
 
-                            foreach (var fileInfo in files)
+                            foreach (var fileInfo in logFiles.Where(f => f.Extension == "log"))
                             {
                                 Logger.Debug("Creating zip entry for " + fileInfo.FullName);
                                 var zipPath = Regex.Replace(fileInfo.FullName,

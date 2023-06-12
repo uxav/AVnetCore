@@ -242,7 +242,7 @@ namespace UXAV.AVnet.Core.Config
             {
                 _config = value;
                 SaveConfig();
-                EventService.Notify(EventMessageType.ConfigChanged, null);
+                EventService.Notify(EventMessageType.ConfigChanged);
             }
         }
 
@@ -265,14 +265,17 @@ namespace UXAV.AVnet.Core.Config
                         var plist = config["PropertyList"] as JObject;
                         config["PropertyList"].Parent?.Remove();
                         JConfig = config;
-                        _plist = plist;
-                        SavePList();
-                        return plist;
+                        if (plist != null)
+                        {
+                            _plist = plist;
+                            SavePList(true);
+                            return plist;
+                        }
                     }
 
                     Logger.Warn("PropertyList does not exist. Creating one");
                     _plist = new JObject();
-                    SavePList();
+                    SavePList(true);
                     return _plist;
                 }
 
@@ -451,9 +454,19 @@ namespace UXAV.AVnet.Core.Config
 
         public static T GetOrCreatePropertyListItem<T>(string key, T defaultValue)
         {
-            if (PropertyList.TryGetValue(key, out var value))
-                return value.ToObject<T>();
+            try
+            {
+                if (PropertyList.TryGetValue(key, out var value))
+                    //Logger.Debug("Getting property list item with key: {0}, {1}", key, value);
+                    return value.ToObject<T>();
+            }
+            catch (Exception e)
+            {
+                Logger.Error("Could not get property list item with key: {0}, {1}", key, e.Message);
+                throw;
+            }
 
+            Logger.Log($"Creating new property list item with key: {key} and default value: \"{defaultValue}\"");
             PropertyList[key] = new JValue(defaultValue);
             SavePlistAuto(2);
             return defaultValue;
@@ -550,13 +563,11 @@ namespace UXAV.AVnet.Core.Config
         private static void SavePlistAuto(int seconds)
         {
             if (_saveTimer == null)
-            {
                 _saveTimer = new Timer(state =>
                 {
                     Logger.Highlight(1, "Plist save timer now saving file");
                     SavePList();
                 });
-            }
 
             _saveTimer.Change(TimeSpan.FromSeconds(seconds), TimeSpan.Zero);
         }
@@ -573,11 +584,12 @@ namespace UXAV.AVnet.Core.Config
             CloudConnector.MarkConfigForUpload();
         }
 
-        private static void SavePList()
+        private static void SavePList(bool keepInMemory = false)
         {
             Logger.Log("Saving plist!");
             if (_plist == null) return;
             PListData = _plist.ToString(Formatting.Indented);
+            if (keepInMemory) return;
             _plist = null;
         }
 
@@ -668,27 +680,18 @@ namespace UXAV.AVnet.Core.Config
                 return GetOrCreatePropertyListItem("pw_" + passwordKey, defaultValue);
             }
 
+            var password = defaultValue;
             try
             {
                 PasswordMutex.WaitOne();
-                var getResult = CrestronSecureStorage.Retrieve(passwordKey, false, null, out var password);
-                if (getResult == eCrestronSecureStorageStatus.RetrieveFailure && password == null)
-                {
-                    var storeResult =
-                        CrestronSecureStorage.Store(passwordKey, false, Encoding.UTF8.GetBytes(defaultValue), null);
-                    if (storeResult != eCrestronSecureStorageStatus.Ok)
-                        throw new Exception(
-                            $"Could not store value to {nameof(CrestronSecureStorage)}, result = {storeResult}");
+                var result = CrestronSecureStorage.Retrieve(passwordKey, false, null, out var passwordBytes);
 
-                    AddPasswordKeyValue(passwordKey);
-                    return defaultValue;
-                }
+                if (result == eCrestronSecureStorageStatus.Ok)
+                    return Encoding.UTF8.GetString(passwordBytes, 0, passwordBytes.Length);
 
-                if (getResult != eCrestronSecureStorageStatus.Ok)
-                    throw new Exception($"Could not read from {nameof(CrestronSecureStorage)}, result = {getResult}");
-
-                AddPasswordKeyValue(passwordKey);
-                return Encoding.UTF8.GetString(password, 0, password.Length);
+                Logger.Warn($"Password not found, result = {result}, creating new storage entry...");
+                PasswordSet(passwordKey, password);
+                return password;
             }
             finally
             {

@@ -56,7 +56,8 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     userPageAuth = Authentication.UserPageAuthEnabled;
 
                 object bacNet = null;
-                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+                try
+                {
                     bacNet = new
                     {
                         Supported = System.ControlSystem.SupportsBACNet,
@@ -65,6 +66,11 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         System.ControlSystem.ControllerBACnetDevice.BACnetDiscoveryEnabled,
                         BACnet.IsLicensed
                     };
+                }
+                catch (s.Exception e)
+                {
+                    Logger.Error(e);
+                }
 
                 WriteResponse(JToken.FromObject(new
                 {
