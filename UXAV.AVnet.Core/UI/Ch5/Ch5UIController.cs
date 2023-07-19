@@ -13,20 +13,20 @@ namespace UXAV.AVnet.Core.UI.Ch5
             string pathOfVtz)
             : base(system, roomId, typeName, ipId, description, pathOfVtz)
         {
-            Device.StringInput[1002].StringValue = Device.ID.ToString("X2");
+            Device.StringInput[11].StringValue = Device.ID.ToString("X2");
 
             Device.SigChange += (device, args) =>
             {
-                if (args.Event == eSigEvent.StringChange && args.Sig.Number == 1002)
+                if (args.Event == eSigEvent.StringChange && args.Sig.Number == 12)
                 {
                     Logger.Log($"Received log over CIP from Device {device}: {args.Sig.StringValue}");
                     return;
                 }
 
-                if (args.Event != eSigEvent.BoolChange || args.Sig.Number != 1001 || !args.Sig.BoolValue) return;
-                Logger.Log("Device received high join on 1001, sending websocket URL");
-                device.StringInput[1001].StringValue = WebSocketUrl;
-                device.StringInput[1002].StringValue = device.ID.ToString("X2");
+                if (args.Event != eSigEvent.BoolChange || args.Sig.Number != 10 || !args.Sig.BoolValue) return;
+                Logger.Log($"Device received high join on 10, sending websocket URL: {WebSocketUrl}");
+                device.StringInput[10].StringValue = WebSocketUrl;
+                device.StringInput[11].StringValue = device.ID.ToString("X2");
             };
         }
 
@@ -36,7 +36,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             internal set
             {
                 _webSocketUrl = value;
-                Device.StringInput[1001].StringValue = _webSocketUrl;
+                Device.StringInput[10].StringValue = _webSocketUrl;
             }
         }
 
@@ -44,9 +44,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             base.OnOnlineStatusChange(currentDevice, args);
             Logger.Log("Device online, sending websocket URL");
-            Device.StringInput[1001].StringValue = string.Empty;
-            Device.StringInput[1001].StringValue = WebSocketUrl;
-            Device.StringInput[1002].StringValue = Device.ID.ToString("X2");
+            Device.StringInput[10].StringValue = WebSocketUrl;
+            Device.StringInput[11].StringValue = Device.ID.ToString("X2");
         }
 
         internal override void InitializeInternal()
