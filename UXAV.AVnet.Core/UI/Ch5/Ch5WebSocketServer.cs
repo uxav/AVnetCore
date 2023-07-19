@@ -70,6 +70,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             if (path == "/")
                 path += "index.html";
 
+            res.AddHeader("Access-Control-Allow-Origin", "*");
+
             byte[] contents;
 
             path = _workingDirectory + path;
