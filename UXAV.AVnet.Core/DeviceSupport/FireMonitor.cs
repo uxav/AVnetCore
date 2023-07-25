@@ -15,19 +15,24 @@ namespace UXAV.AVnet.Core.DeviceSupport
 {
     public class FireMonitor : IInitializable
     {
+        public enum FireMonitorMode
+        {
+            Listener,
+            Server
+        }
+
         private readonly PortDevice _port;
         private readonly EventWaitHandle _sendWait = new EventWaitHandle(true, EventResetMode.AutoReset);
         private UdpClient _client;
         private bool _fireState;
-        private bool _initialized;
         private bool _normalState;
         private bool _programStopping;
         private int _sendCount;
         private TimeSpan _sendWaitTime = TimeSpan.FromSeconds(30);
-        private int _udpPort;
 
         public FireMonitor(Versiport versiPort)
         {
+            Mode = FireMonitorMode.Server;
             _port = versiPort;
             if (!_port.Registered) _port.Register();
 
@@ -42,6 +47,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         public FireMonitor(DigitalInput digitalInput)
         {
+            Mode = FireMonitorMode.Server;
             _port = digitalInput;
             if (!_port.Registered) _port.Register();
 
@@ -55,23 +61,18 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         public FireMonitor(int udpListenPort)
         {
+            Mode = FireMonitorMode.Listener;
             _client = new UdpClient(udpListenPort);
+            UdpPort = udpListenPort;
             CrestronEnvironment.ProgramStatusEventHandler += type =>
             {
                 if (type == eProgramStatusEventType.Stopping) _programStopping = true;
             };
-            Task.Run(() =>
-            {
-                while (!_programStopping)
-                {
-                    var endpoint = new IPEndPoint(IPAddress.Any, _udpPort);
-                    var bytes = _client.Receive(ref endpoint);
-                    if (bytes[0] == 0x02 && bytes[4] == 0x03)
-                        if (Encoding.ASCII.GetString(bytes, 1, 2) == "FM")
-                            FireState = Convert.ToBoolean(bytes[3]);
-                }
-            });
         }
+
+        public FireMonitorMode Mode { get; }
+
+        public int UdpPort { get; private set; }
 
         public bool FireState
         {
@@ -85,24 +86,54 @@ namespace UXAV.AVnet.Core.DeviceSupport
             }
         }
 
+        public bool Initialized { get; private set; }
+
         public uint Id => 0;
         public string Name => "Fire Interface";
 
         public void Initialize()
         {
-            switch (_port)
+            if (Mode == FireMonitorMode.Server)
             {
-                case Versiport versiport:
-                    _normalState = versiport.DigitalIn;
-                    break;
-                case DigitalInput digitalInput:
-                    _normalState = digitalInput.State;
-                    break;
+                switch (_port)
+                {
+                    case Versiport versiport:
+                        _normalState = versiport.DigitalIn;
+                        break;
+                    case DigitalInput digitalInput:
+                        _normalState = digitalInput.State;
+                        break;
+                }
+
+                if (_port != null)
+                    Logger.Highlight($"Fire interface state set as {_port}, normal state = " +
+                                     (_normalState ? "closed" : "open"));
+                Initialized = true;
+                return;
             }
 
-            Logger.Highlight($"Fire interface state set as {_port}, normal state = " +
-                             (_normalState ? "closed" : "open"));
-            _initialized = true;
+
+            if (_client != null)
+            {
+                Task.Run(() =>
+                {
+                    while (!_programStopping)
+                    {
+                        var endpoint = new IPEndPoint(IPAddress.Any, UdpPort);
+                        var bytes = _client.Receive(ref endpoint);
+                        /*Logger.Debug("Fire monitor received bytes: " +
+                                     Tools.GetBytesAsReadableString(bytes, 0, bytes.Length, true));*/
+                        if (bytes[0] == 0x02 && bytes[4] == 0x03)
+                            if (Encoding.ASCII.GetString(bytes, 1, 2) == "FM")
+                                FireState = Convert.ToBoolean(bytes[3]);
+                    }
+                });
+
+                Initialized = true;
+                return;
+            }
+
+            throw new Exception("Fire monitor initialized with no port or client");
         }
 
         public event FireStateChangeHandler FireStateChanged;
@@ -110,7 +141,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
         private void PortOnVersiportChange(Versiport port, VersiportEventArgs args)
         {
             if (args.Event != eVersiportEvent.DigitalInChange) return;
-            if (!_initialized)
+            if (!Initialized)
             {
                 Logger.Log($"Fire versiport = {port.DigitalIn}" +
                            ", not yet initialized so ignoring and will use this as normal value when it does");
@@ -123,7 +154,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         private void DigitalInputOnStateChange(DigitalInput digitalinput, DigitalInputEventArgs args)
         {
-            if (!_initialized)
+            if (!Initialized)
             {
                 Logger.Log($"Fire digital input = {args.State}" +
                            ", not yet initialized so ignoring and will use this as normal value when it does");
@@ -147,14 +178,14 @@ namespace UXAV.AVnet.Core.DeviceSupport
         {
             if (_client != null) throw new InvalidOperationException("Listen client already started");
 
-            _udpPort = port;
+            UdpPort = port;
             _client = new UdpClient(new IPEndPoint(IPAddress.Any, port));
             Task.Run(() =>
             {
                 while (!_programStopping)
                     try
                     {
-                        if (_initialized)
+                        if (Initialized)
                         {
                             _sendCount++;
                             if (_sendCount >= 5)
@@ -167,7 +198,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
                             {
                                 0x02, 0x46, 0x4D, Convert.ToByte(_fireState), 0x03
                             };
-                            _client.Send(bytes, bytes.Length, new IPEndPoint(IPAddress.Broadcast, _udpPort));
+                            _client.Send(bytes, bytes.Length, new IPEndPoint(IPAddress.Broadcast, UdpPort));
                         }
 
                         _sendWait.WaitOne(_sendWaitTime);
