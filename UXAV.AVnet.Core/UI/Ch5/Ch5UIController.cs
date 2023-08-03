@@ -1,5 +1,9 @@
 using System;
+using System.Threading;
+using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -7,11 +11,12 @@ namespace UXAV.AVnet.Core.UI.Ch5
 {
     public abstract class Ch5UIController<THandler> : Core3ControllerBase where THandler : Ch5ApiHandlerBase
     {
+        private readonly Mutex _settingsMutex = new Mutex();
         private string _webSocketUrl;
 
         protected Ch5UIController(SystemBase system, uint roomId, string typeName, uint ipId, string description,
-            string pathOfVtz)
-            : base(system, roomId, typeName, ipId, description, pathOfVtz)
+            string pathOfPanelArchiveFile)
+            : base(system, roomId, typeName, ipId, description, pathOfPanelArchiveFile)
         {
             Device.StringInput[11].StringValue = Device.ID.ToString("X2");
 
@@ -40,12 +45,78 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
         }
 
+        private string StorageTagForSettings => $"UI_SETTINGS_{Device.ID:X2}";
+
         protected override void OnOnlineStatusChange(GenericBase currentDevice, OnlineOfflineEventArgs args)
         {
             base.OnOnlineStatusChange(currentDevice, args);
+            if (!args.DeviceOnLine) return;
             Logger.Log("Device online, sending websocket URL");
             Device.StringInput[10].StringValue = WebSocketUrl;
             Device.StringInput[11].StringValue = Device.ID.ToString("X2");
+        }
+
+        internal override void WebsocketConnected(Ch5ApiHandlerBase ch5ApiHandlerBase)
+        {
+            try
+            {
+                var settings = GetSettings();
+                if (settings == null)
+                {
+                    var newSettings = GetDefaultUiSettings();
+                    settings = JToken.FromObject(newSettings);
+                    SaveSettings(settings);
+                }
+
+                OnNotifyWebsocket("SettingsInit", settings);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+        }
+
+        protected abstract object GetDefaultUiSettings();
+
+        internal override void SaveSettings(JToken args)
+        {
+            _settingsMutex.WaitOne(TimeSpan.FromSeconds(5));
+            try
+            {
+                Logger.Debug("Saving UI settings, received settings:\r\n" + args.ToString(Formatting.Indented));
+                CrestronDataStoreStatic.GetLocalStringValue(StorageTagForSettings, out var settingsString);
+                if (string.IsNullOrEmpty(settingsString))
+                {
+                    Logger.Debug("Saving UI settings, no data to merge. Saved as sent!");
+                    CrestronDataStoreStatic.SetLocalStringValue(StorageTagForSettings, args.ToString());
+                    return;
+                }
+
+                var currentSettings = JToken.Parse(settingsString);
+                var settings = new JsonMergeSettings { MergeArrayHandling = MergeArrayHandling.Union };
+                var mergedSettings = (JContainer)currentSettings;
+                mergedSettings.Merge(args, settings);
+                Logger.Debug("Saving UI settings, merged copy:\r\n" + mergedSettings.ToString(Formatting.Indented));
+                CrestronDataStoreStatic.SetLocalStringValue(StorageTagForSettings, mergedSettings.ToString());
+            }
+            finally
+            {
+                _settingsMutex.ReleaseMutex();
+            }
+        }
+
+        internal override JToken GetSettings()
+        {
+            _settingsMutex.WaitOne(TimeSpan.FromSeconds(5));
+            try
+            {
+                CrestronDataStoreStatic.GetLocalStringValue(StorageTagForSettings, out var settingsString);
+                return string.IsNullOrEmpty(settingsString) ? null : JToken.Parse(settingsString);
+            }
+            finally
+            {
+                _settingsMutex.ReleaseMutex();
+            }
         }
 
         internal override void InitializeInternal()

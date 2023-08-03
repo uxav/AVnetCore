@@ -12,6 +12,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
     public class Ch5ConnectionInstance : WebSocketBehavior
     {
         private readonly Ch5ApiHandlerBase _apiHandler;
+        private readonly Core3ControllerBase _controller;
         private readonly Mutex _sendMutex = new Mutex();
 
         public Ch5ConnectionInstance(Ch5ApiHandlerBase apiHandler)
@@ -20,7 +21,20 @@ namespace UXAV.AVnet.Core.UI.Ch5
             _apiHandler.SendEvent += OnHandlerSendRequest;
         }
 
+        public Ch5ConnectionInstance(Ch5ApiHandlerBase apiHandler, Core3ControllerBase controller)
+        {
+            _apiHandler = apiHandler;
+            _apiHandler.SendEvent += OnHandlerSendRequest;
+            _controller = controller;
+            _controller.NotifyWebsocket += ControllerOnNotifyWebsocket;
+        }
+
         public IPAddress RemoteIpAddress { get; private set; }
+
+        private void ControllerOnNotifyWebsocket(object sender, NotifyWebsocketEventArgs args)
+        {
+            _apiHandler.SendNotificationInternal(args.Method, args.Data);
+        }
 
         protected override void OnOpen()
         {
@@ -32,6 +46,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 //Logger.Debug($"Connection protocol includes: {protocol}");
             }
+
             _apiHandler.OnConnectInternal(this);
             EventService.Notify(EventMessageType.DeviceConnectionChange, new
             {
@@ -47,6 +62,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             base.OnClose(e);
             Logger.Log($"👋 Websocket Closed, {e.Code}, Clean: {e.WasClean}, Remote IP: {RemoteIpAddress}");
             _apiHandler.SendEvent -= OnHandlerSendRequest;
+            if (_controller != null)
+                _controller.NotifyWebsocket -= ControllerOnNotifyWebsocket;
             _apiHandler.OnDisconnectInternal(this);
             EventService.Notify(EventMessageType.DeviceConnectionChange, new
             {
@@ -81,7 +98,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 {
                     var data = args.Data;
                     if (data != null)
-                    {
                         //Logger.Debug($"🟠 WS received from {RemoteIpAddress}:\r\n" + data);
                         try
                         {
@@ -91,7 +107,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
                         {
                             Logger.Error(e);
                         }
-                    }
                 }
             }
             catch (Exception e)

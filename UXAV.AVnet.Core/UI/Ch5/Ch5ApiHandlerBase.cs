@@ -90,6 +90,15 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 Logger.Error(e);
             }
+
+            try
+            {
+                _deviceController?.WebsocketConnected(this);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         internal void OnDisconnectInternal(Ch5ConnectionInstance connection)
@@ -215,18 +224,27 @@ namespace UXAV.AVnet.Core.UI.Ch5
             var namedArgs = args;
             Logger.Debug("Looking for method: " + method);
 
-            if (method == "Room.Invoke")
+            switch (method)
             {
-                Logger.Debug("Room.Invoke found");
-                if (args["room"] == null || args["method"] == null)
-                    throw new Exception("Room.Invoke requires a room and method parameter");
-                var roomId = args["room"].Value<uint>();
-                var room = UxEnvironment.GetRoom(roomId);
-                method = args["method"].Value<string>();
-                target = room;
-                Logger.Debug("Target set to room: " + room);
-                Logger.Debug("Args\n" + args);
-                namedArgs = args["roomParams"];
+                case "Room.Invoke":
+                {
+                    Logger.Debug("Room.Invoke found");
+                    if (args["room"] == null || args["method"] == null)
+                        throw new Exception("Room.Invoke requires a room and method parameter");
+                    var roomId = args["room"].Value<uint>();
+                    var room = UxEnvironment.GetRoom(roomId);
+                    method = args["method"].Value<string>();
+                    target = room;
+                    Logger.Debug("Target set to room: " + room);
+                    Logger.Debug("Args\n" + args);
+                    namedArgs = args["roomParams"];
+                    break;
+                }
+                case "GetSettings":
+                    return _deviceController.GetSettings();
+                case "SaveSettings":
+                    _deviceController.SaveSettings(args);
+                    return true;
             }
 
             var methods = target.GetType().GetMethods();

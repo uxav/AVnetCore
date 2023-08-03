@@ -151,7 +151,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 if (ctor == null)
                     throw new InvalidOperationException($"Could not get ctor for type: {typeof(THandler).FullName}");
                 var handler = (Ch5ApiHandlerBase)ctor.Invoke(new object[] { controller });
-                return new Ch5ConnectionInstance(handler);
+                return new Ch5ConnectionInstance(handler, controller);
             });
 #pragma warning restore CS0618
             controller.WebSocketUrl = $"{WebSocketBaseUrl}{path}";
