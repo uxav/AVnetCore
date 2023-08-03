@@ -358,6 +358,10 @@ namespace UXAV.AVnet.Core.Models
 
         public static eDevicePlatform DevicePlatform => CrestronEnvironment.DevicePlatform;
 
+        /// <summary>
+        ///     Returns the application's 'root' directory. This is where NVRAM and HTML folders can be found. No trailing
+        ///     directory separator at the end.
+        /// </summary>
         public static string ProgramRootDirectory
         {
             get
@@ -369,6 +373,9 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
+        /// <summary>
+        ///     The directory of the running program
+        /// </summary>
         public static string ProgramApplicationDirectory => InitialParametersClass.ProgramDirectory.ToString();
 
         public static string TempFileDirectory
@@ -411,7 +418,7 @@ namespace UXAV.AVnet.Core.Models
             get
             {
                 if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                    return $"http://{IpAddress}/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws";
+                    return $"https://{IpAddress}/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws";
 
                 return $"https://{IpAddress}/cws";
             }
