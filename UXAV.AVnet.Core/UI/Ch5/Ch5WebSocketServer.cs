@@ -41,7 +41,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 KeepClean = true,
                 WaitTime = TimeSpan.FromSeconds(30),
-                RootPath = "/"
+                DocumentRootPath = "./"
             };
             _server.OnGet += HttpServerOnOnGet;
             _server.OnConnect += (sender, args) => { Logger.Log($"Server on connect... {args.Request.Url}"); };
@@ -50,8 +50,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 if (cert != null)
                 {
                     Logger.Highlight($"Loaded cert for websocket: {cert.FriendlyName}");
-                    _server.SslConfiguration = new ServerSslConfiguration(cert, false, SslProtocols.Tls12, false);
-                    _server.AuthenticationSchemes = AuthenticationSchemes.Anonymous;
+                    _server.SslConfiguration.ServerCertificate = cert;
+                    _server.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
                 }
             }
             catch (Exception e)
@@ -69,6 +69,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             Logger.Debug($"GET {path}");
             if (path == "/")
                 path += "index.html";
+
+            res.AddHeader("Access-Control-Allow-Origin", "*");
 
             byte[] contents;
 
@@ -142,20 +144,23 @@ namespace UXAV.AVnet.Core.UI.Ch5
             var path = $"/ui/{controller.Device.ID:x2}";
             Logger.Debug("Path = " + path);
 
+#pragma warning disable CS0618
             _server.AddWebSocketService(path, () =>
             {
                 var ctor = typeof(THandler).GetConstructor(new[] { typeof(Core3ControllerBase) });
                 if (ctor == null)
                     throw new InvalidOperationException($"Could not get ctor for type: {typeof(THandler).FullName}");
                 var handler = (Ch5ApiHandlerBase)ctor.Invoke(new object[] { controller });
-                return new Ch5ConnectionInstance(handler);
+                return new Ch5ConnectionInstance(handler, controller);
             });
+#pragma warning restore CS0618
             controller.WebSocketUrl = $"{WebSocketBaseUrl}{path}";
             Logger.Highlight($"Websocket URL for UI Controller {controller.Id} set to: {controller.WebSocketUrl}");
         }
 
         public static void AddWebService<THandler>(string path = "/ui/web") where THandler : Ch5ApiHandlerBase
         {
+#pragma warning disable CS0618
             _server.AddWebSocketService(path, () =>
             {
                 var ctor = typeof(THandler).GetConstructor(new Type[] { });
@@ -164,6 +169,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 var handler = (Ch5ApiHandlerBase)ctor.Invoke(new object[] { });
                 return new Ch5ConnectionInstance(handler);
             });
+#pragma warning restore CS0618
         }
 
         internal static void Start()

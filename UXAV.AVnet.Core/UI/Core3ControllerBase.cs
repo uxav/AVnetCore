@@ -9,10 +9,12 @@ using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro.UI;
+using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.AVnet.Core.Models;
 using UXAV.AVnet.Core.Models.Rooms;
 using UXAV.AVnet.Core.Models.Sources;
+using UXAV.AVnet.Core.UI.Ch5;
 using UXAV.AVnet.Core.UI.Components;
 using UXAV.AVnet.Core.UI.Components.Views;
 using UXAV.AVnet.Core.UI.ReservedJoins;
@@ -34,16 +36,17 @@ namespace UXAV.AVnet.Core.UI
         private RoomBase _room;
 
         protected Core3ControllerBase(SystemBase system, uint roomId, string typeName, uint ipId, string description,
-            string pathOfVtz = "", string sgdPathOverride = "")
+            string pathOfPanelArchiveFile = "", string sgdPathOverride = "")
         {
             _roomId = roomId;
+            PathOfPanelArchiveFile = pathOfPanelArchiveFile;
             System = system;
             Logger.Highlight(
                 $"Creating {GetType().FullName} with device type {typeName} with IP ID: {ipId:X2}");
 
             if (typeName == typeof(XpanelForSmartGraphics).FullName)
                 Device = (BasicTriListWithSmartObject)CipDevices.CreateXPanelForSmartGraphics(ipId, description,
-                    pathOfVtz);
+                    pathOfPanelArchiveFile);
             else
                 Device = (BasicTriListWithSmartObject)CipDevices.CreateDevice(typeName, ipId, description);
 
@@ -192,6 +195,8 @@ namespace UXAV.AVnet.Core.UI
         }
 
         public BasicTriListWithSmartObject Device { get; }
+
+        public string PathOfPanelArchiveFile { get; }
 
         public SystemBase System { get; }
 
@@ -476,7 +481,33 @@ namespace UXAV.AVnet.Core.UI
         {
             return $"{Device}";
         }
+
+        internal abstract void WebsocketConnected(Ch5ApiHandlerBase ch5ApiHandlerBase);
+
+        internal event NotifyWebsocketEventHandler NotifyWebsocket;
+
+        protected void OnNotifyWebsocket(string method, object data)
+        {
+            NotifyWebsocket?.Invoke(this, new NotifyWebsocketEventArgs(method, data));
+        }
+
+        internal abstract void SaveSettings(JToken args);
+        internal abstract JToken GetSettings();
     }
 
     public delegate void RoomChangeEventHandler(Core3ControllerBase controller, RoomBase newRoom);
+
+    public delegate void NotifyWebsocketEventHandler(object sender, NotifyWebsocketEventArgs args);
+
+    public class NotifyWebsocketEventArgs : EventArgs
+    {
+        public NotifyWebsocketEventArgs(string method, object data)
+        {
+            Method = method;
+            Data = data;
+        }
+
+        public string Method { get; }
+        public object Data { get; }
+    }
 }

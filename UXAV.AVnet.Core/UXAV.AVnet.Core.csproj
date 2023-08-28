@@ -240,9 +240,8 @@
             <HintPath>..\packages\UXAV.Logging.1.2.0\lib\net47\UXAV.Logging.dll</HintPath>
             <Private>True</Private>
         </Reference>
-        <Reference Include="websocket-sharp, Version=1.0.2.59611, Culture=neutral, PublicKeyToken=5660b08a1845a91e">
-            <HintPath>..\packages\WebSocketSharp.1.0.3-rc11\lib\websocket-sharp.dll</HintPath>
-            <Private>True</Private>
+        <Reference Include="websocket-sharp, Version=1.0.1.0, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
+          <HintPath>..\packages\WebSocketSharp-netstandard.1.0.1\lib\net45\websocket-sharp.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>
