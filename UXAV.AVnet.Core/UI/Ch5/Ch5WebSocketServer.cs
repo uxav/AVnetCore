@@ -44,7 +44,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 DocumentRootPath = "./"
             };
             _server.OnGet += HttpServerOnOnGet;
-            _server.OnConnect += (sender, args) => { Logger.Log($"Server on connect... {args.Request.Url}"); };
             try
             {
                 if (cert != null)
@@ -71,6 +70,13 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 path += "index.html";
 
             res.AddHeader("Access-Control-Allow-Origin", "*");
+
+            if (path.StartsWith("/user/") && OnUserGet != null)
+            {
+                Logger.Debug("User request: " + path);
+                OnUserGet?.Invoke(sender, e);
+                return;
+            }
 
             byte[] contents;
 
@@ -212,5 +218,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     break;
             }
         }
+
+        public static event EventHandler<HttpRequestEventArgs> OnUserGet;
     }
 }
