@@ -49,10 +49,16 @@ namespace UXAV.AVnet.Core.UI.Ch5
         public Ch5ConnectionInstance Connection { get; private set; }
 
         public event SendEventHandler SendEvent;
+        public event SendBinaryEventHandler SendDataEvent;
 
         private void Send(string data)
         {
             SendEvent?.Invoke(data);
+        }
+
+        private void Send(byte[] data)
+        {
+            SendDataEvent?.Invoke(data);
         }
 
         internal void OnConnectInternal(Ch5ConnectionInstance connection)
@@ -370,6 +376,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
     }
 
     public delegate void SendEventHandler(string data);
+    public delegate void SendBinaryEventHandler(byte[] data);
 
     public enum ControllerType
     {

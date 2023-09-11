@@ -19,12 +19,14 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             _apiHandler = apiHandler;
             _apiHandler.SendEvent += OnHandlerSendRequest;
+            _apiHandler.SendDataEvent += OnHandlerSendDataRequest;
         }
 
         public Ch5ConnectionInstance(Ch5ApiHandlerBase apiHandler, Core3ControllerBase controller)
         {
             _apiHandler = apiHandler;
             _apiHandler.SendEvent += OnHandlerSendRequest;
+            _apiHandler.SendDataEvent += OnHandlerSendDataRequest;
             _controller = controller;
             _controller.NotifyWebsocket += ControllerOnNotifyWebsocket;
         }
@@ -62,6 +64,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             base.OnClose(e);
             Logger.Log($"👋 Websocket Closed, {e.Code}, Clean: {e.WasClean}, Remote IP: {RemoteIpAddress}");
             _apiHandler.SendEvent -= OnHandlerSendRequest;
+            _apiHandler.SendDataEvent -= OnHandlerSendDataRequest;
             if (_controller != null)
                 _controller.NotifyWebsocket -= ControllerOnNotifyWebsocket;
             _apiHandler.OnDisconnectInternal(this);
@@ -116,6 +119,23 @@ namespace UXAV.AVnet.Core.UI.Ch5
         }
 
         private void OnHandlerSendRequest(string data)
+        {
+            if (State != WebSocketState.Open) return;
+            _sendMutex.WaitOne();
+            try
+            {
+                //Logger.Debug($"🟢 WS send to {RemoteIpAddress}:\r\n" + data);
+                Send(data);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            _sendMutex.ReleaseMutex();
+        }
+
+        private void OnHandlerSendDataRequest(byte[] data)
         {
             if (State != WebSocketState.Open) return;
             _sendMutex.WaitOne();
