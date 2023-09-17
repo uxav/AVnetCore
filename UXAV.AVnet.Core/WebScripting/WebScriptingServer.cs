@@ -90,7 +90,7 @@ namespace UXAV.AVnet.Core.WebScripting
             _handlers[finalPattern] = handlerType;
             _keyNames[finalPattern] = keyNames;
 
-            Logger.Log("Added handler type {0} for {1} at \"{2}\"", handlerType.Name, GetType().Name, routePattern);
+            Logger.Debug("Added handler type {0} for {1} at \"{2}\"", handlerType.Name, GetType().Name, routePattern);
         }
 
         private void CwsOnReceivedRequestEvent(object sender, HttpCwsRequestEventArgs args)
@@ -124,7 +124,7 @@ namespace UXAV.AVnet.Core.WebScripting
                     {
                         Logger.Debug("Redirect found!, Redirected to: \"{0}\"", redirect.Value);
                         Logger.Debug($"Query is {args.Context.Request.Url.Query}");
-                        args.Context.Response.Redirect(redirect.Value+args.Context.Request.Url.Query);
+                        args.Context.Response.Redirect(redirect.Value + args.Context.Request.Url.Query);
                     }
                     catch (Exception e)
                     {

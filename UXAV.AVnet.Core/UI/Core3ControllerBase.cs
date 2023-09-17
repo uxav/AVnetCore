@@ -125,6 +125,12 @@ namespace UXAV.AVnet.Core.UI
 
             HardButtons.ButtonEvent += OnHardButtonEvent;
 
+            if (this is Ch5UIController<Ch5ApiHandlerBase>)
+            {
+                Logger.Debug($"Skipping SGD file load for Ch5 UI Controller {Id:X2}");
+                return;
+            }
+
             var files = Directory.GetFiles(SystemBase.ProgramApplicationDirectory,
                 "*.sgd", SearchOption.AllDirectories);
             // Look for SGD files with priority given to file names containing the device type name... ie 'CrestronApp'
@@ -325,7 +331,7 @@ namespace UXAV.AVnet.Core.UI
                 {
                     extender.Use();
                     extender.DeviceExtenderSigChange += OnDeviceExtenderSigChange;
-                    Logger.Debug($"{this} has {extender.GetType().Name} \"{name}\"");
+                    //Logger.Debug($"{this} has {extender.GetType().Name} \"{name}\"");
                     _deviceExtenderNames[extender] = name;
                     return extender;
                 }
@@ -369,21 +375,21 @@ namespace UXAV.AVnet.Core.UI
 
         protected void OnDeviceExtenderSigChange(DeviceExtender extender, SigEventArgs args)
         {
-            var extenderName = _deviceExtenderNames.ContainsKey(extender)
-                ? _deviceExtenderNames[extender]
+            var extenderName = _deviceExtenderNames.TryGetValue(extender, out var name)
+                ? name
                 : extender.GetType().Name;
             var sigName = extender.GetSigPropertyName(args.Sig);
             if (string.IsNullOrEmpty(sigName)) return;
-            if (sigName != "LightSensorValueFeedback") Logger.Debug($"{Device} {extenderName}.{sigName} = {args.Sig}");
+            //if (sigName != "LightSensorValueFeedback") Logger.Debug($"{Device} {extenderName}.{sigName} = {args.Sig}");
 
             switch (sigName)
             {
                 case "IpAddressFeedback":
-                    Logger.Log($"{this} IP Address changed: {args.Sig.StringValue}");
+                    //Logger.Log($"{this} IP Address changed: {args.Sig.StringValue}");
                     IpAddress = args.Sig.StringValue;
                     break;
                 case "MacAddressFeedback":
-                    Logger.Log($"{this} MAC Address changed: {args.Sig.StringValue}");
+                    //Logger.Log($"{this} MAC Address changed: {args.Sig.StringValue}");
                     MacAddress = args.Sig.StringValue;
                     break;
                 case "LightSensorValueFeedback":

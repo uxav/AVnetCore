@@ -37,12 +37,10 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         public void Connect()
         {
-            if (DebugEnabled) Logger.Debug($"{GetType().Name}.Connect()");
-
             _remainConnected = true;
-            Logger.Log("Connect()");
             if (_client != null) throw new Exception("Already trying to connect or is connected");
 
+            Logger.Debug($"{GetType().Name}.Connect() to Address: {Address}");
             _client = new TcpClient();
 
             _connectTask = Task.Run(ConnectionProcess);

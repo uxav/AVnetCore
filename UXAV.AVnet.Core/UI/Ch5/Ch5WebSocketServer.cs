@@ -30,6 +30,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         public static void Init(int port, string workingDirectory = "./ch5", X509Certificate2 cert = null)
         {
+            Logger.AddCommand((argString, args, connection, respond) => { DebugIsOn = true; }, "WebSocketServerDebug",
+                "Set the debugging on the websocket server to on");
+
             if (_server != null)
             {
                 Logger.Warn("Init already called, will create new server!");
@@ -65,7 +68,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             var res = e.Response;
 
             var path = req.Url.LocalPath;
-            Logger.Debug($"GET {path}");
+            if (DebugIsOn)
+                Logger.Debug($"GET {path}");
             if (path == "/")
                 path += "index.html";
 
@@ -73,7 +77,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             if (path.StartsWith("/user/") && OnUserGet != null)
             {
-                Logger.Debug("User request: " + path);
+                if (DebugIsOn)
+                    Logger.Debug("User request: " + path);
                 OnUserGet?.Invoke(sender, e);
                 return;
             }
@@ -84,12 +89,14 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             if (!File.Exists(path) && File.Exists(_workingDirectory + "/index.html"))
             {
-                Logger.Debug("File not found, using index.html");
+                if (DebugIsOn) Logger.Debug("File not found, using index.html");
                 path = _workingDirectory + "/index.html";
             }
 
             if (!TryReadFile(path, out contents))
             {
+                if (DebugIsOn)
+                    Logger.Debug($"File not found: {path}");
                 res.StatusCode = (int)HttpStatusCode.NotFound;
                 res.Close();
                 return;
@@ -100,6 +107,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 var extension = match.Groups[1].Value;
                 res.ContentType = MimeMapping.GetMimeMapping(path);
+                if (DebugIsOn)
+                    Logger.Debug($"Setting content type to {res.ContentType}");
             }
 
             res.ContentLength64 = contents.LongLength;
@@ -188,8 +197,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             try
             {
-                //_server.Log.Output += OnLogOutput;
-                //_server.Log.Level = LogLevel.Trace;
+                _server.Log.Output += OnLogOutput;
+                _server.Log.Level = LogLevel.Trace;
                 _server?.Start();
             }
             catch (Exception e)
@@ -200,6 +209,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private static void OnLogOutput(LogData data, string s)
         {
+            if(!DebugIsOn) return;
             switch (data.Level)
             {
                 case LogLevel.Trace:
@@ -218,6 +228,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     break;
             }
         }
+
+        internal static bool DebugIsOn { get; private set; }
 
         public static event EventHandler<HttpRequestEventArgs> OnUserGet;
     }

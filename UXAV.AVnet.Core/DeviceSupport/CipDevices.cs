@@ -150,6 +150,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         private static void DeviceOnOnlineStatusChange(GenericBase currentdevice, OnlineOfflineEventArgs args)
         {
+            if (UxEnvironment.System.BootStatus != SystemBase.EBootStatus.Running) return;
             EventService.Notify(EventMessageType.DeviceConnectionChange, new
             {
                 Device = currentdevice.Name,
@@ -166,28 +167,26 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         private static Type GetType(string typeName)
         {
-            Logger.Debug($"Looking for assembly for {typeName}");
+            //Logger.Debug($"Looking for assembly for {typeName}");
             var search = Regex.Match(typeName, @"^(?:([\w\.]+)\.)([\w\.]+)$").Groups[1].Value;
             var directory = new DirectoryInfo(SystemBase.ProgramApplicationDirectory);
             while (true)
             {
-                Logger.Debug($"Looking at files matching pattern: {search}.dll");
+                //Logger.Debug($"Looking at files matching pattern: {search}.dll");
                 foreach (var file in directory.GetFiles($"{search}.dll"))
-                {
-                    Logger.Debug($"Will try load assembly file: {file.Name}");
+                    //Logger.Debug($"Will try load assembly file: {file.Name}");
                     try
                     {
                         var assembly = Assembly.LoadFile(file.FullName);
                         var type = assembly.GetType(typeName);
                         if (type == null) continue;
-                        Logger.Debug($"Found type: {type.Name}");
+                        //Logger.Debug($"Found type: {type.Name}");
                         return type;
                     }
                     catch (Exception e)
                     {
                         Logger.Warn($"Error trying to load assembly file: {file.Name}, {e.Message}");
                     }
-                }
 
                 if (search == "*") break;
                 if (!search.EndsWith("*"))
@@ -196,7 +195,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
                     continue;
                 }
 
-                Logger.Debug($"Could not find using search: {search}.dll");
+                //Logger.Debug($"Could not find using search: {search}.dll");
                 if (search != "Crestron.*")
                 {
                     search = "Crestron.*";
@@ -249,7 +248,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
                     var result = device.Register();
                     if (result == eDeviceRegistrationUnRegistrationResponse.Success)
                     {
-                        Logger.Success($"Registered device: {device}");
+                        Logger.Log($"Registered device: {device}");
                         continue;
                     }
 
