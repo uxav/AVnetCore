@@ -92,6 +92,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
                     Logger.Error(e);
                 }
 
+                if (System.BootStatus != SystemBase.EBootStatus.Running) return;
                 EventService.Notify(EventMessageType.DeviceConnectionChange, new
                 {
                     Device = Name,

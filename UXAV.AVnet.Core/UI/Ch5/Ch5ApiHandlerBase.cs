@@ -228,21 +228,23 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             object target = this;
             var namedArgs = args;
-            Logger.Debug("Looking for method: " + method);
+            if (Ch5WebSocketServer.DebugIsOn)
+                Logger.Debug("Looking for method: " + method);
 
             switch (method)
             {
                 case "Room.Invoke":
                 {
-                    Logger.Debug("Room.Invoke found");
+                    if (Ch5WebSocketServer.DebugIsOn)
+                        Logger.Debug("Room.Invoke found");
                     if (args["room"] == null || args["method"] == null)
                         throw new Exception("Room.Invoke requires a room and method parameter");
                     var roomId = args["room"].Value<uint>();
                     var room = UxEnvironment.GetRoom(roomId);
                     method = args["method"].Value<string>();
                     target = room;
-                    Logger.Debug("Target set to room: " + room);
-                    Logger.Debug("Args\n" + args);
+                    //Logger.Debug("Target set to room: " + room);
+                    //Logger.Debug("Args\n" + args);
                     namedArgs = args["roomParams"];
                     break;
                 }
@@ -294,7 +296,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         [ApiTargetMethod("Log")]
         public void Log(string message)
         {
-            Logger.Highlight($"WS Connection Log: {message}");
+            Logger.Log($"WS Connection Log: {message}");
         }
 
         [ApiTargetMethod("Subscribe")]
@@ -302,7 +304,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             try
             {
-                //Logger.Log($"Subscribe with id: {id}, name: {name}, params: {@params}");
+                if (Ch5WebSocketServer.DebugIsOn)
+                    Logger.Debug($"Subscribe with id: {id}, name: {name}, params: {@params}");
                 lock (_eventSubscriptions)
                 {
                     if (_eventSubscriptions.ContainsKey(id))
@@ -335,7 +338,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
         [ApiTargetMethod("Unsubscribe")]
         public void Unsubscribe(int id)
         {
-            //Logger.Log($"Unsubscribe with id: {id}");
+            if (Ch5WebSocketServer.DebugIsOn)
+                Logger.Debug($"Unsubscribe with id: {id}");
             lock (_eventSubscriptions)
             {
                 if (!_eventSubscriptions.ContainsKey(id))
@@ -376,6 +380,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
     }
 
     public delegate void SendEventHandler(string data);
+
     public delegate void SendBinaryEventHandler(byte[] data);
 
     public enum ControllerType

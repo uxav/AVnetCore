@@ -148,21 +148,22 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("ProgramIDTag: {0}", InitialParametersClass.ProgramIDTag);
             Logger.Log("ApplicationNumber: {0}", InitialParametersClass.ApplicationNumber);
             Logger.Log("FirmwareVersion: {0}", InitialParametersClass.FirmwareVersion);
-            Logger.Log("SerialNumber: {0}", CrestronEnvironment.SystemInfo.SerialNumber);
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+                Logger.Log("SerialNumber: {0}", CrestronEnvironment.SystemInfo.SerialNumber);
             Logger.Log("App Info: {0}", AppAssembly.GetName().FullName);
             Logger.Log("{0} Version: {1}", UxEnvironment.Name, UxEnvironment.Version);
             Logger.Log("{0} Assembly Version: {1}", UxEnvironment.Name, UxEnvironment.AssemblyVersion);
             Logger.Log("Starting app version {0}", AppAssembly.GetName().Version);
             Logger.Log($"Program Info states build time as: {ProgramBuildTime:R}");
-            Logger.Log("ProcessId: {0}", Process.GetCurrentProcess().Id);
+            Logger.Debug("ProcessId: {0}", Process.GetCurrentProcess().Id);
             Logger.Log("Room Name: {0}", InitialParametersClass.RoomName);
             Logger.Log("TimeZone: 🌍 {0}{1}", tz.Formatted, tz.InDayLightSavings ? " (DST)" : string.Empty);
-            Logger.Log("ProgramRootDirectory = {0}", ProgramRootDirectory);
-            Logger.Log("ProgramApplicationDirectory = {0}", ProgramApplicationDirectory);
-            Logger.Log("ProgramUserDirectory = {0}", ProgramUserDirectory);
-            Logger.Log("ProgramNvramDirectory = {0}", ProgramNvramDirectory);
-            Logger.Log("ProgramHtmlDirectory = {0}", ProgramHtmlDirectory);
-            Logger.Log("DevicePlatform = {0}", CrestronEnvironment.DevicePlatform);
+            Logger.Debug("ProgramRootDirectory = {0}", ProgramRootDirectory);
+            Logger.Debug("ProgramApplicationDirectory = {0}", ProgramApplicationDirectory);
+            Logger.Debug("ProgramUserDirectory = {0}", ProgramUserDirectory);
+            Logger.Debug("ProgramNvramDirectory = {0}", ProgramNvramDirectory);
+            Logger.Debug("ProgramHtmlDirectory = {0}", ProgramHtmlDirectory);
+            Logger.Debug("DevicePlatform = {0}", CrestronEnvironment.DevicePlatform);
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
                 try
                 {
@@ -446,6 +447,11 @@ namespace UXAV.AVnet.Core.Models
 
         public uint BootProgress { get; private set; }
 
+        /// <summary>
+        ///     Set this to true when you create the system if using Fusion so it registers everything needed for it
+        /// </summary>
+        protected bool UseFusion { get; set; }
+
         public IDevice GetDevice(uint id)
         {
             return DevicesDict[id];
@@ -721,6 +727,7 @@ namespace UXAV.AVnet.Core.Models
                         (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
                     Logger.Highlight("Initializing {0}", item.ToString());
                     item.Initialize();
+                    Thread.Sleep(50);
                 }
                 catch (Exception e)
                 {
@@ -760,61 +767,67 @@ namespace UXAV.AVnet.Core.Models
             }
 
             UpdateBootStatus(EBootStatus.Initializing, "Initializing sources done", targetPercentage);
-            Thread.Sleep(200);
-            UpdateBootStatus(EBootStatus.Initializing, "Setting up Fusion if required", 65);
-            try
-            {
-                CreateFusionRoomsAndAssets();
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
-            }
 
-            Thread.Sleep(200);
-            UpdateBootStatus(EBootStatus.Initializing, "Generating RVI file info for Fusion", 70);
-            Logger.Highlight("Generating Fusion RVI File");
-            try
+
+            if (UseFusion)
             {
-                FusionRVI.GenerateFileForAllFusionDevices();
-                Logger.Success("Generated Fusion RVI file");
+                Thread.Sleep(200);
+                UpdateBootStatus(EBootStatus.Initializing, "Setting up Fusion if required", 65);
                 try
                 {
-                    var dir = new DirectoryInfo(ProgramApplicationDirectory);
-                    var rviFile = dir.GetFiles("*.rvi").FirstOrDefault();
-                    if (rviFile != null)
+                    CreateFusionRoomsAndAssets();
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+
+                Thread.Sleep(200);
+                UpdateBootStatus(EBootStatus.Initializing, "Generating RVI file info for Fusion", 70);
+                Logger.Highlight("Generating Fusion RVI File");
+                try
+                {
+                    FusionRVI.GenerateFileForAllFusionDevices();
+                    Logger.Success("Generated Fusion RVI file");
+                    try
                     {
-                        Logger.Log($"RVI File found, checking contents to fix null endings, {rviFile.Name}");
-                        var lines = File.ReadAllLines(rviFile.FullName);
-                        File.Delete(rviFile.FullName);
-                        var newLines = new List<string>();
-                        foreach (var line in lines)
+                        var dir = new DirectoryInfo(ProgramApplicationDirectory);
+                        var rviFile = dir.GetFiles("*.rvi").FirstOrDefault();
+                        if (rviFile != null)
                         {
-                            if (line.Contains("</RoomViewInfo>"))
+                            Logger.Log($"RVI File found, checking contents to fix null endings, {rviFile.Name}");
+                            var lines = File.ReadAllLines(rviFile.FullName);
+                            File.Delete(rviFile.FullName);
+                            var newLines = new List<string>();
+                            foreach (var line in lines)
                             {
+                                if (line.Contains("</RoomViewInfo>"))
+                                {
+                                    newLines.Add(line);
+                                    break;
+                                }
+
                                 newLines.Add(line);
-                                break;
                             }
 
-                            newLines.Add(line);
+                            File.WriteAllLines(rviFile.FullName, newLines);
                         }
-
-                        File.WriteAllLines(rviFile.FullName, newLines);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error(e);
                     }
                 }
                 catch (Exception e)
                 {
                     Logger.Error(e);
                 }
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e);
+
+                Thread.Sleep(200);
+                UpdateBootStatus(EBootStatus.Initializing, "Registering Fusion", 80);
+                CipDevices.RegisterFusionRooms();
             }
 
-            Thread.Sleep(200);
-            UpdateBootStatus(EBootStatus.Initializing, "Registering Fusion", 80);
-            CipDevices.RegisterFusionRooms();
             Thread.Sleep(500);
             UpdateBootStatus(EBootStatus.Initializing, "Starting CH5 websocket services", 90);
             Thread.Sleep(500);
@@ -855,7 +868,13 @@ namespace UXAV.AVnet.Core.Models
         /// <returns></returns>
         protected abstract void SystemShouldAddItemsToInitialize(Action<IInitializable> addItem);
 
-        protected abstract void CreateFusionRoomsAndAssets();
+        /// <summary>
+        ///     This is now optional as virtual rather than abstract.
+        /// </summary>
+        protected virtual void CreateFusionRoomsAndAssets()
+        {
+            // optional fusion method
+        }
 
         private void AddItemToInitialize(IInitializable itemToInitialize)
         {
