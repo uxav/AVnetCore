@@ -10,6 +10,7 @@ namespace UXAV.AVnet.Core.UI
     {
         private readonly List<ActivityTimeOut> _timeOuts = new List<ActivityTimeOut>();
         private readonly DeviceExtender _touchDetectionExtender;
+        private readonly DeviceExtender _system3Extender;
 
         internal ControllerActivityMonitor(Core3ControllerBase controller, DeviceExtender touchDetectionExtender,
             DeviceExtender system3Extender)
@@ -24,7 +25,10 @@ namespace UXAV.AVnet.Core.UI
             }
 
             if (system3Extender != null)
+            {
+                _system3Extender = system3Extender;
                 system3Extender.DeviceExtenderSigChange += System3ExtenderOnDeviceExtenderSigChange;
+            }
         }
 
         public Core3ControllerBase Core3Controller { get; }
@@ -52,7 +56,7 @@ namespace UXAV.AVnet.Core.UI
             if (args.Event != eSigEvent.BoolChange) return;
             var sigName = touchDetectionExtender.GetSigPropertyName(args.Sig);
             if (sigName != "TouchActivityFeedback") return;
-            Logger.Debug($"Touch activity sig: {args.Sig.BoolValue}");
+            //Logger.Debug($"Touch activity sig: {args.Sig.BoolValue}");
             var touch = args.Sig.BoolValue;
             Task.Run(() =>
             {
