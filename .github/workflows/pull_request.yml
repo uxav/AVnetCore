@@ -2,6 +2,10 @@
   
   on:
     pull_request:
+    push:
+      branches:
+        - develop
+        - release/*
 
   env:
     SOLUTION_NAME: AVnetCore
@@ -12,16 +16,23 @@
     build:
       runs-on: windows-latest
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
           with:
             fetch-depth: 0
             lfs: true
+
+        - name: Get version
+          shell: powershell
+          run: |
+            $version = ./.github/scripts/GetVersionFromAssemblyInfo.ps1 -Path ${{env.PROJECT_NAME}}/Properties/AssemblyInfo.cs
+            Write-Output "Version is: $version"
+            echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
         - name: Setup MsBuild
           uses: microsoft/setup-msbuild@v1
           
         - name: Setup NuGet.exe
-          uses: NuGet/setup-nuget@v1.1.1
+          uses: NuGet/setup-nuget@v1
           
         - name: Nuget Add Source
           run: nuget sources Add -Name "uxav" -Source https://nuget.pkg.github.com/uxav/index.json -username uxav -password ${{ secrets.GITHUB_TOKEN }} -StorePasswordInClearText
