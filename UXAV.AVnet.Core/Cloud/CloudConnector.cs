@@ -256,15 +256,17 @@ namespace UXAV.AVnet.Core.Cloud
                             try
                             {
                                 Logger.Warn($"Received cloud action: {action}");
+                                var actionId = (action["id"] ?? "").Value<string>();
                                 var methodName = (action["method"] ?? "").Value<string>();
-                                if (action["args"] != null)
+                                var args = action["args"]?.ToObject<Dictionary<string, string>>();
+                                try
                                 {
-                                    var args = action["args"].Value<string[]>();
                                     UxEnvironment.System.RunCloudActionInternal(methodName, args);
                                 }
-                                else
+                                catch (Exception e)
                                 {
-                                    UxEnvironment.System.RunCloudActionInternal(methodName);
+                                    Logger.Warn($"Error running action with ID {actionId}");
+                                    Logger.Error(e);
                                 }
                             }
                             catch (Exception e)
