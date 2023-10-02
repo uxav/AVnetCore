@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -15,6 +17,7 @@ using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
+using Timeout = System.Threading.Timeout;
 
 namespace UXAV.AVnet.Core.Cloud
 {
@@ -32,6 +35,13 @@ namespace UXAV.AVnet.Core.Cloud
         private static bool _uploadConfig = true;
         private static bool _programStopping;
 
+        private static readonly ConcurrentDictionary<string, LoggerMessage> PendingLogs =
+            new ConcurrentDictionary<string, LoggerMessage>();
+
+        private static bool _loggingSuspended;
+        private static Timer _logHoldTimer;
+        private static bool _firstCheckin;
+
         static CloudConnector()
         {
             HttpClient = new HttpClient();
@@ -43,6 +53,8 @@ namespace UXAV.AVnet.Core.Cloud
         {
             get
             {
+                /*return new Uri("http://172.16.100.148:5001/avnet-cloud/us-central1/appInstanceCheckIn/api/checkin/v2" +
+                               $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");*/
                 if (_checkinUri == null)
                     _checkinUri = new Uri(
                         $"https://{Host}/api/checkin/v2" +
@@ -57,8 +69,8 @@ namespace UXAV.AVnet.Core.Cloud
             get
             {
                 /*return new Uri(
-                    "http://172.16.100.200:5001/avnet-cloud/us-central1/appInstanceConfigs/api/configs/v1/submit" +
-                    $"/{_applicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");*/
+                    "http://172.16.100.148:5001/avnet-cloud/us-central1/appInstanceConfigs/api/configs/v1/submit" +
+                    $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");*/
                 if (_configUploadUri == null)
                     _configUploadUri = new Uri(
                         $"https://{Host}/api/configs/v1/submit" +
@@ -133,12 +145,28 @@ namespace UXAV.AVnet.Core.Cloud
             _productVersion = FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
             _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
+            Logger.MessageLogged += LoggerOnMessageLogged;
             Task.Run(CheckInProcess);
+        }
+
+        private static void LoggerOnMessageLogged(LoggerMessage message)
+        {
+            if (_loggingSuspended) return;
+            if (PendingLogs.Count > 1000) _loggingSuspended = true;
+            var level = Logger.Level;
+            if (message.Level > level) return;
+            PendingLogs[message.Id] = message;
+            if (!_firstCheckin) return;
+            if (_logHoldTimer == null)
+                _logHoldTimer = new Timer(state => _waitHandle.Set(), null, TimeSpan.FromSeconds(1),
+                    Timeout.InfiniteTimeSpan);
+            else
+                _logHoldTimer.Change(TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
         }
 
         private static async void CheckInProcess()
         {
-            _waitHandle.WaitOne(TimeSpan.FromSeconds(10));
+            _waitHandle.WaitOne(TimeSpan.FromSeconds(30));
             if (_programStopping) return;
 
             while (true)
@@ -147,6 +175,8 @@ namespace UXAV.AVnet.Core.Cloud
                 //Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
 #endif
                 await CheckInAsync();
+                if (!_firstCheckin)
+                    _firstCheckin = true;
                 if (_uploadConfig)
                     try
                     {
@@ -184,6 +214,25 @@ namespace UXAV.AVnet.Core.Cloud
                     SystemMonitor.RamFreeMinimum,
                     SystemMonitor.TotalRamSize
                 };
+
+            var logIds = PendingLogs.Keys.ToArray();
+            var logData = new List<object>();
+            foreach (var id in logIds)
+            {
+                if (!PendingLogs.TryGetValue(id, out var log)) continue;
+                logData.Add(new
+                {
+                    id = log.Id,
+                    time = log.Time.ToUniversalTime(),
+                    level = log.Level.ToString(),
+                    message = log.Message,
+                    type = log.MessageType.ToString(),
+                    color = log.ColorClass,
+                    stackTrace = log.StackTrace,
+                    tracedName = log.TracedName,
+                    tracedNameFull = log.TracedNameFull
+                });
+            }
 
             try
             {
@@ -232,7 +281,8 @@ namespace UXAV.AVnet.Core.Cloud
                         },
                         longitude = CrestronEnvironment.Longitude,
                         latitude = CrestronEnvironment.Latitude
-                    }
+                    },
+                    logs = logData
                 };
                 var json = JToken.FromObject(data);
                 var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
@@ -273,6 +323,22 @@ namespace UXAV.AVnet.Core.Cloud
                             {
                                 Logger.Error(e);
                             }
+
+                    try
+                    {
+                        //Logger.Debug($"Uploaded {logIds.Length} logs successfully! Removing from pending...");
+                        foreach (var id in logIds) PendingLogs.TryRemove(id, out var _);
+                        //Logger.Debug($"Pending logs remaining: {PendingLogs.Count}");
+                        if (_loggingSuspended)
+                        {
+                            _loggingSuspended = false;
+                            Logger.Warn("Log uploading to cloud resumed after suspension!");
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error(e);
+                    }
 
                     result.Dispose();
                     _suppressWarning = false;
