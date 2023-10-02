@@ -276,6 +276,7 @@ namespace UXAV.AVnet.Core.Models
                                         try
                                         {
                                             if(fileInfo.FullName.StartsWith("/logs/core/")) continue;
+                                            if(fileInfo.FullName.StartsWith("/logs/MsgLog.")) continue;
                                             Logger.Debug("Creating zip entry for " + fileInfo.FullName);
                                             var zipPath = Regex.Replace(fileInfo.FullName, "^/logs/", "");
                                             var logEntry = archive.CreateEntry("Logs/" + zipPath);
