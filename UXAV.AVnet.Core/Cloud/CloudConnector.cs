@@ -386,22 +386,27 @@ namespace UXAV.AVnet.Core.Cloud
             try
             {
                 Logger.Highlight("Publishing logs to cloud...");
-                var zipStream = await DiagnosticsArchiveTool.CreateArchiveAsync();
-                using (var content = new MultipartFormDataContent())
+
+                using (var zipStream = await DiagnosticsArchiveTool.CreateArchiveAsync())
                 {
-                    zipStream.Position = 0;
-                    var fileContent = new StreamContent(zipStream);
-                    fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(MimeMapping.GetMimeMapping(".zip"));
-                    content.Add(fileContent, "logs",
-                        $"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip");
-                    Logger.Debug($"Content Headers:\r\n{fileContent.Headers}");
-                    Logger.Debug($"Request Headers:\r\n{content.Headers}");
-                    var result = HttpClient.PostAsync(LogsUploadUrl, content).Result;
-                    result.EnsureSuccessStatusCode();
-                    Logger.Highlight($"Logs submitted. Result = {result.StatusCode}");
-                    var response = await result.Content.ReadAsStringAsync();
-                    Logger.Debug($"Response: {response}");
-                    result.Dispose();
+                    using (var content = new MultipartFormDataContent())
+                    {
+                        zipStream.Position = 0;
+                        var fileContent = new StreamContent(zipStream);
+                        fileContent.Headers.ContentType =
+                            MediaTypeHeaderValue.Parse(MimeMapping.GetMimeMapping(".zip"));
+                        content.Add(fileContent, "logs",
+                            $"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip");
+                        Logger.Debug($"Content Headers:\r\n{fileContent.Headers}");
+                        Logger.Debug($"Request Headers:\r\n{content.Headers}");
+                        using (var result = HttpClient.PostAsync(LogsUploadUrl, content).Result)
+                        {
+                            result.EnsureSuccessStatusCode();
+                            Logger.Highlight($"Logs submitted. Result = {result.StatusCode}");
+                            var response = await result.Content.ReadAsStringAsync();
+                            Logger.Debug($"Response: {response}");
+                        }
+                    }
                 }
             }
             catch (Exception e)
