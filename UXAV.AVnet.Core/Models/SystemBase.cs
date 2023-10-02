@@ -969,7 +969,7 @@ namespace UXAV.AVnet.Core.Models
                 }
         }
 
-        internal void RunCloudActionInternal(string methodName, params string[] args)
+        internal void RunCloudActionInternal(string methodName, Dictionary<string, string> args)
         {
             switch (methodName)
             {
@@ -983,6 +983,12 @@ namespace UXAV.AVnet.Core.Models
                     break;
                 case "uploadLogs":
                     CloudConnector.PublishLogsAsync();
+                    break;
+                case "update":
+                    if(args.TryGetValue("fileName", out var fileName))
+                        UpdateHelper.UpdateRunningProgram(fileName);
+                    else
+                        throw new ArgumentException("No update file specified");
                     break;
             }
         }

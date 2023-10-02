@@ -5,6 +5,7 @@ using Crestron.SimplSharpPro;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Models;
+using UXAV.AVnet.Core.UI.ReservedJoins;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.UI.Ch5
@@ -18,11 +19,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
             string pathOfPanelArchiveFile)
             : base(system, roomId, typeName, ipId, description, pathOfPanelArchiveFile)
         {
-            Device.StringInput[11].StringValue = Device.ID.ToString("X2");
+            Device.StringInput[Serial.DeviceIdString].StringValue = Device.ID.ToString("X2");
 
             Device.SigChange += (device, args) =>
             {
-                if (args.Event == eSigEvent.StringChange && args.Sig.Number == 12)
+                if (args.Event == eSigEvent.StringChange && args.Sig.Number == Serial.LogSend)
                 {
                     Logger.Log($"Received log over CIP from Device {device}: {args.Sig.StringValue}");
                     return;
@@ -30,8 +31,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
                 if (args.Event != eSigEvent.BoolChange || args.Sig.Number != 10 || !args.Sig.BoolValue) return;
                 Logger.Log($"Device received high join on 10, sending websocket URL: {WebSocketUrl}");
-                device.StringInput[10].StringValue = WebSocketUrl;
-                device.StringInput[11].StringValue = device.ID.ToString("X2");
+                device.StringInput[Serial.WebsocketUrl].StringValue = WebSocketUrl;
+                device.StringInput[Serial.DeviceIdString].StringValue = device.ID.ToString("X2");
             };
         }
 
@@ -41,7 +42,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             internal set
             {
                 _webSocketUrl = value;
-                Device.StringInput[10].StringValue = _webSocketUrl;
+                Device.StringInput[Serial.WebsocketUrl].StringValue = _webSocketUrl;
             }
         }
 
@@ -52,8 +53,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             base.OnOnlineStatusChange(currentDevice, args);
             if (!args.DeviceOnLine) return;
             Logger.Log("Device online, sending websocket URL");
-            Device.StringInput[10].StringValue = WebSocketUrl;
-            Device.StringInput[11].StringValue = Device.ID.ToString("X2");
+            Device.StringInput[Serial.WebsocketUrl].StringValue = WebSocketUrl;
+            Device.StringInput[Serial.DeviceIdString].StringValue = Device.ID.ToString("X2");
         }
 
         internal override void WebsocketConnected(Ch5ApiHandlerBase ch5ApiHandlerBase)

@@ -16,5 +16,8 @@ namespace UXAV.AVnet.Core.UI.ReservedJoins
         public const uint ProcessorHostName = 12;
         public const uint ProcessorIpAddress = 13;
         public const uint Description = 14;
+        public const uint WebsocketUrl = 15;
+        public const uint DeviceIdString = 16;
+        public const uint LogSend = 16;
     }
 }

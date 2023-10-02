@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using UXAV.AVnet.Core.Config;
 using UXAV.Logging;
+using Directory = Crestron.SimplSharp.CrestronIO.Directory;
 
 namespace UXAV.AVnet.Core.Models
 {
@@ -242,6 +243,13 @@ namespace UXAV.AVnet.Core.Models
                             {
                                 case eDevicePlatform.Server:
                                 {
+                                    if(!Directory.Exists("/var/log/crestron"))
+                                    {
+                                        Logger.Warn(
+                                            "No log folder found on server at /var/log/crestron, " +
+                                            "Try setting up logging files to this server with associated permissions.");
+                                        break;
+                                    }
                                     var logFolder = new DirectoryInfo("/var/log/crestron");
                                     var logFiles = logFolder.GetFiles($"*{InitialParametersClass.RoomId}*.log")
                                         .ToList();
@@ -267,6 +275,8 @@ namespace UXAV.AVnet.Core.Models
                                     foreach (var fileInfo in logFiles)
                                         try
                                         {
+                                            if(fileInfo.FullName.StartsWith("/logs/core/")) continue;
+                                            if(fileInfo.FullName.StartsWith("/logs/MsgLog.")) continue;
                                             Logger.Debug("Creating zip entry for " + fileInfo.FullName);
                                             var zipPath = Regex.Replace(fileInfo.FullName, "^/logs/", "");
                                             var logEntry = archive.CreateEntry("Logs/" + zipPath);
