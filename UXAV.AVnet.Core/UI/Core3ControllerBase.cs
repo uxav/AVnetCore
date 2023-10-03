@@ -488,7 +488,9 @@ namespace UXAV.AVnet.Core.UI
             return $"{Device}";
         }
 
-        internal abstract void WebsocketConnected(Ch5ApiHandlerBase ch5ApiHandlerBase);
+        internal virtual void WebsocketConnected(Ch5ApiHandlerBase ch5ApiHandlerBase)
+        {
+        }
 
         internal event NotifyWebsocketEventHandler NotifyWebsocket;
 
@@ -497,8 +499,14 @@ namespace UXAV.AVnet.Core.UI
             NotifyWebsocket?.Invoke(this, new NotifyWebsocketEventArgs(method, data));
         }
 
-        internal abstract void SaveSettings(JToken args);
-        internal abstract JToken GetSettings();
+        internal virtual void SaveSettings(JToken args)
+        {
+        }
+
+        internal virtual JToken GetSettings()
+        {
+            return null;
+        }
     }
 
     public delegate void RoomChangeEventHandler(Core3ControllerBase controller, RoomBase newRoom);
