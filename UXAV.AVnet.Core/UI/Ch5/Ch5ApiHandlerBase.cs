@@ -372,7 +372,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 UpTime = SystemBase.UpTime.ToPrettyFormat(),
                 BooTime = SystemBase.BootTime,
                 Ch5WebSocketServer.WebSocketBaseUrl,
-                CrestronEnvironment.SystemInfo.SerialNumber,
+                SystemBase.SerialNumber,
                 AppVersion = UxEnvironment.System.AppVersion.ToString(),
                 AVNetVersion = UxEnvironment.Version.ToString()
             };

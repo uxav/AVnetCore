@@ -247,7 +247,7 @@ namespace UXAV.AVnet.Core.Cloud
                     system_monitor = sysmon,
                     firmware_version = CrestronEnvironment.OSVersion.Firmware,
                     model = InitialParametersClass.ControllerPromptName,
-                    serial_number = CrestronEnvironment.SystemInfo.SerialNumber,
+                    serial_number = SystemBase.SerialNumber,
                     app_number = InitialParametersClass.ApplicationNumber,
                     logger_port = Logger.ListenPort,
                     version = _version,
