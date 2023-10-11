@@ -51,6 +51,7 @@ namespace UXAV.AVnet.Core.Models
         private static string _systemName;
         private static string _runtimeGuid;
         private static bool _appIsUpdated;
+        private static string _serialNumber;
         private readonly string _initialConfig;
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
         internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
@@ -167,9 +168,14 @@ namespace UXAV.AVnet.Core.Models
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
                 try
                 {
+                    dynamic deviceInfo = Vc4WebApi.GetDeviceInfoAsync().Result;
                     dynamic programInstance = Vc4WebApi.GetProgramInstanceAsync().Result;
                     dynamic programLibrary = Vc4WebApi.GetProgramLibraryAsync().Result;
                     var programInfo = programLibrary[programInstance.ProgramLibraryId.ToString()];
+                    Logger.Log("Server Name: {0}", deviceInfo.Name);
+                    Logger.Log("Server Serial Number: {0}", deviceInfo.DeviceId);
+                    Logger.Log("Server Version: {0}", deviceInfo.ApplicationVersion);
+                    Logger.Log("Server Build Date: {0}", deviceInfo.BuildDate);
                     Logger.Log("Server ProgramInstanceId = {0}", programInstance.ProgramInstanceId);
                     Logger.Log("Server ProgramLibraryId = {0}", programInstance.ProgramLibraryId);
                     Logger.Log("Server Program FriendlyName = {0}", programInfo.FriendlyName);
@@ -326,6 +332,19 @@ namespace UXAV.AVnet.Core.Models
                 CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_MAC_ADDRESS,
                 CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
                     .EthernetLANAdapter));
+
+        public static string SerialNumber
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_serialNumber))
+                    _serialNumber = CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance
+                        ? CrestronEnvironment.SystemInfo.SerialNumber
+                        : (string)((dynamic)Vc4WebApi.GetDeviceInfoAsync().Result).DeviceId;
+
+                return _serialNumber;
+            }
+        }
 
         public virtual string AppName => AppAssembly.GetName().Name;
 
@@ -985,7 +1004,7 @@ namespace UXAV.AVnet.Core.Models
                     CloudConnector.PublishLogsAsync();
                     break;
                 case "update":
-                    if(args.TryGetValue("fileName", out var fileName))
+                    if (args.TryGetValue("fileName", out var fileName))
                         UpdateHelper.UpdateRunningProgram(fileName);
                     else
                         throw new ArgumentException("No update file specified");

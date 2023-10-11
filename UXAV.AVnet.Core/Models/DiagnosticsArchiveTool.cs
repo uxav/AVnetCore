@@ -189,7 +189,7 @@ namespace UXAV.AVnet.Core.Models
                                     infoStream.WriteLine("FirmwareVersion: {0}",
                                         InitialParametersClass.FirmwareVersion);
                                     infoStream.WriteLine("SerialNumber: {0}",
-                                        CrestronEnvironment.SystemInfo.SerialNumber);
+                                        SystemBase.SerialNumber);
                                     infoStream.WriteLine("App Info: {0}", SystemBase.AppAssembly.GetName().FullName);
                                     infoStream.WriteLine("{0} Version: {1}", UxEnvironment.Name, UxEnvironment.Version);
                                     infoStream.WriteLine("{0} Assembly Version: {1}", UxEnvironment.Name,
@@ -243,13 +243,14 @@ namespace UXAV.AVnet.Core.Models
                             {
                                 case eDevicePlatform.Server:
                                 {
-                                    if(!Directory.Exists("/var/log/crestron"))
+                                    if (!Directory.Exists("/var/log/crestron"))
                                     {
                                         Logger.Warn(
                                             "No log folder found on server at /var/log/crestron, " +
                                             "Try setting up logging files to this server with associated permissions.");
                                         break;
                                     }
+
                                     var logFolder = new DirectoryInfo("/var/log/crestron");
                                     var logFiles = logFolder.GetFiles($"*{InitialParametersClass.RoomId}*.log")
                                         .ToList();
@@ -275,8 +276,8 @@ namespace UXAV.AVnet.Core.Models
                                     foreach (var fileInfo in logFiles)
                                         try
                                         {
-                                            if(fileInfo.FullName.StartsWith("/logs/core/")) continue;
-                                            if(fileInfo.FullName.StartsWith("/logs/MsgLog.")) continue;
+                                            if (fileInfo.FullName.StartsWith("/logs/core/")) continue;
+                                            if (fileInfo.FullName.StartsWith("/logs/MsgLog.")) continue;
                                             Logger.Debug("Creating zip entry for " + fileInfo.FullName);
                                             var zipPath = Regex.Replace(fileInfo.FullName, "^/logs/", "");
                                             var logEntry = archive.CreateEntry("Logs/" + zipPath);

@@ -79,7 +79,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     SystemBase.SystemName,
                     SystemBase.IpAddress,
                     SystemBase.MacAddress,
-                    CrestronEnvironment.SystemInfo.SerialNumber,
+                    SystemBase.SerialNumber,
                     Firmware = InitialParametersClass.FirmwareVersion,
                     AVNetName = UxEnvironment.Name,
                     AVNetVersion = UxEnvironment.Version.ToString(),
