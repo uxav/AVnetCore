@@ -52,6 +52,13 @@ namespace UXAV.AVnet.Core.Models
         private static string _runtimeGuid;
         private static bool _appIsUpdated;
         private static string _serialNumber;
+        private static short _adapterIdForLan;
+        private static bool _adapterIdSet;
+        private static string _macAddress;
+        private static string _ipAddress;
+        private static string _dhcpStatus;
+        private static string _domainName;
+        private static string _hostName;
         private readonly string _initialConfig;
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
         internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
@@ -303,35 +310,72 @@ namespace UXAV.AVnet.Core.Models
 
         public static TimeSpan UpTime => DateTime.Now - BootTime;
 
-        public static string HostName =>
-            CrestronEthernetHelper.GetEthernetParameter(
-                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_HOSTNAME,
-                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
-                    .EthernetLANAdapter));
+        private static short AdapterIdForLan
+        {
+            get
+            {
+                if (!_adapterIdSet) return _adapterIdForLan;
+                _adapterIdForLan =
+                    CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType.EthernetLANAdapter);
+                _adapterIdSet = true;
+                return _adapterIdForLan;
+            }
+        }
 
-        public static string DomainName =>
-            CrestronEthernetHelper.GetEthernetParameter(
-                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_DOMAIN_NAME,
-                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
-                    .EthernetLANAdapter));
+        public static string HostName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_hostName))
+                    _hostName = CrestronEthernetHelper.GetEthernetParameter(
+                        CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_HOSTNAME, AdapterIdForLan);
+                return _hostName;
+            }
+        }
 
-        public static string DhcpStatus =>
-            CrestronEthernetHelper.GetEthernetParameter(
-                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_STARTUP_DHCP_STATUS,
-                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
-                    .EthernetLANAdapter));
+        public static string DomainName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_domainName))
+                    _domainName = CrestronEthernetHelper.GetEthernetParameter(
+                        CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_DOMAIN_NAME, AdapterIdForLan);
+                return _domainName;
+            }
+        }
 
-        public static string IpAddress =>
-            CrestronEthernetHelper.GetEthernetParameter(
-                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_CURRENT_IP_ADDRESS,
-                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
-                    .EthernetLANAdapter));
+        public static string DhcpStatus
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_dhcpStatus))
+                    _dhcpStatus = CrestronEthernetHelper.GetEthernetParameter(
+                        CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_STARTUP_DHCP_STATUS, AdapterIdForLan);
+                return _dhcpStatus;
+            }
+        }
 
-        public static string MacAddress =>
-            CrestronEthernetHelper.GetEthernetParameter(
-                CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_MAC_ADDRESS,
-                CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType
-                    .EthernetLANAdapter));
+        public static string IpAddress
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_ipAddress))
+                    _ipAddress = CrestronEthernetHelper.GetEthernetParameter(
+                        CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_CURRENT_IP_ADDRESS, AdapterIdForLan);
+                return _ipAddress;
+            }
+        }
+
+        public static string MacAddress
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_macAddress))
+                    _macAddress = CrestronEthernetHelper.GetEthernetParameter(
+                        CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_MAC_ADDRESS, AdapterIdForLan);
+                return _macAddress;
+            }
+        }
 
         public static string SerialNumber
         {
