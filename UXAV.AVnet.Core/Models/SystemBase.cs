@@ -373,7 +373,7 @@ namespace UXAV.AVnet.Core.Models
                 if (string.IsNullOrEmpty(_macAddress))
                     _macAddress = CrestronEthernetHelper.GetEthernetParameter(
                         CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_MAC_ADDRESS, AdapterIdForLan);
-                return _macAddress;
+                return _macAddress.ToLower();
             }
         }
 
@@ -644,6 +644,9 @@ namespace UXAV.AVnet.Core.Models
 
         public string RestartApp()
         {
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
+                return Vc4WebApi.RestartApp().Result.ToString();
+
             var response = "";
             CrestronConsole.SendControlSystemCommand($"progres -P:{InitialParametersClass.ApplicationNumber}",
                 ref response);
@@ -1038,11 +1041,20 @@ namespace UXAV.AVnet.Core.Models
             {
                 case "restart":
                     Logger.Warn("Remote restart requested from cloud service");
-                    UxEnvironment.System.RestartApp();
+
+                    Task.Run(() =>
+                    {
+                        Task.Delay(TimeSpan.FromSeconds(5)).Wait();
+                        UxEnvironment.System.RestartApp();
+                    });
                     break;
                 case "reboot":
                     Logger.Warn("Remote reboot requested from cloud service");
-                    UxEnvironment.System.RebootAppliance();
+                    Task.Run(() =>
+                    {
+                        Task.Delay(TimeSpan.FromSeconds(5)).Wait();
+                        UxEnvironment.System.RebootAppliance();
+                    });
                     break;
                 case "uploadLogs":
                     CloudConnector.PublishLogsAsync();
