@@ -117,5 +117,17 @@ namespace UXAV.AVnet.Core
                 return await PutAsync("/ProgramLibrary", content);
             }
         }
+
+        public static async Task<object> RestartApp(string roomId = null)
+        {
+            if (roomId == null)
+            {
+                roomId = InitialParametersClass.RoomId;
+            }
+            var content = new MultipartFormDataContent();
+            content.Add(new StringContent(roomId), "ProgramInstanceId");
+            content.Add(new StringContent("true"), "Restart");
+            return await PutAsync("/ProgramInstance", content);
+        }
     }
 }
