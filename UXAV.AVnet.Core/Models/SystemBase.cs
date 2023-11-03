@@ -373,7 +373,7 @@ namespace UXAV.AVnet.Core.Models
                 if (string.IsNullOrEmpty(_macAddress))
                     _macAddress = CrestronEthernetHelper.GetEthernetParameter(
                         CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_MAC_ADDRESS, AdapterIdForLan);
-                return _macAddress;
+                return _macAddress.ToLower();
             }
         }
 
