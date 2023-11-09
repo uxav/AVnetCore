@@ -57,10 +57,7 @@ jobs:
         run: nuget push *.nupkg -source "uxav"
 
       - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: v${{ env.VERSION }}
-          release_name: Release v${{ env.VERSION }}
-          draft: false
+          tag: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
