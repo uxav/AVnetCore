@@ -28,6 +28,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         internal static bool Running => _server != null && _server.IsListening;
 
+        internal static bool DebugIsOn { get; private set; }
+
         public static void Init(int port, string workingDirectory = "./ch5", X509Certificate2 cert = null)
         {
             Logger.AddCommand((argString, args, connection, respond) => { DebugIsOn = true; }, "WebSocketServerDebug",
@@ -93,6 +95,15 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 path = _workingDirectory + "/index.html";
             }
 
+            if (!TestPathIsSecure(_workingDirectory, path))
+            {
+                if (DebugIsOn)
+                    Logger.Warn($"Path not secure: {_workingDirectory} -> {path}");
+                res.StatusCode = (int)HttpStatusCode.Forbidden;
+                res.Close();
+                return;
+            }
+
             if (!TryReadFile(path, out contents))
             {
                 if (DebugIsOn)
@@ -114,6 +125,13 @@ namespace UXAV.AVnet.Core.UI.Ch5
             res.ContentLength64 = contents.LongLength;
 
             res.Close(contents, true);
+        }
+
+        private static bool TestPathIsSecure(string path1, string path2)
+        {
+            var directory1 = new DirectoryInfo(path1);
+            var directory2 = new DirectoryInfo(path2);
+            return directory2.FullName.Contains(directory1.FullName);
         }
 
         private static bool TryReadFile(string path, out byte[] contents)
@@ -209,7 +227,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private static void OnLogOutput(LogData data, string s)
         {
-            if(!DebugIsOn) return;
+            if (!DebugIsOn) return;
             switch (data.Level)
             {
                 case LogLevel.Trace:
@@ -228,8 +246,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     break;
             }
         }
-
-        internal static bool DebugIsOn { get; private set; }
 
         public static event EventHandler<HttpRequestEventArgs> OnUserGet;
     }
