@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("A Crestron Simpl# Pro Library")]
 [assembly: AssemblyCompany("UXAV")]
 [assembly: AssemblyProduct("UXAV.AVnet.Core Library")]
-[assembly: AssemblyCopyright("Copyright © UXAV Solutions Limited 2023")]
+[assembly: AssemblyCopyright("Copyright © UXAV Solutions Limited 2024")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
@@ -20,5 +20,5 @@ using System.Runtime.InteropServices;
 [assembly: Guid("9B3BAD80-9F92-4687-915E-C02F3910DCEF")]
 
 [assembly: AssemblyVersion("1.11.*")]
-[assembly: AssemblyFileVersion("1.11.1")]
-[assembly: AssemblyInformationalVersion("1.11.1")]
+[assembly: AssemblyFileVersion("1.11.2")]
+[assembly: AssemblyInformationalVersion("1.11.2")]
