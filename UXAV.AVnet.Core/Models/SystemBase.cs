@@ -52,8 +52,6 @@ namespace UXAV.AVnet.Core.Models
         private static string _runtimeGuid;
         private static bool _appIsUpdated;
         private static string _serialNumber;
-        private static short _adapterIdForLan;
-        private static bool _adapterIdSet;
         private static string _macAddress;
         private static string _ipAddress;
         private static string _dhcpStatus;
@@ -310,17 +308,8 @@ namespace UXAV.AVnet.Core.Models
 
         public static TimeSpan UpTime => DateTime.Now - BootTime;
 
-        private static short AdapterIdForLan
-        {
-            get
-            {
-                if (!_adapterIdSet) return _adapterIdForLan;
-                _adapterIdForLan =
-                    CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType.EthernetLANAdapter);
-                _adapterIdSet = true;
-                return _adapterIdForLan;
-            }
-        }
+        private static short AdapterIdForLan =>
+            CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType.EthernetLANAdapter);
 
         public static string HostName
         {
@@ -359,9 +348,17 @@ namespace UXAV.AVnet.Core.Models
         {
             get
             {
-                if (string.IsNullOrEmpty(_ipAddress))
-                    _ipAddress = CrestronEthernetHelper.GetEthernetParameter(
-                        CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_CURRENT_IP_ADDRESS, AdapterIdForLan);
+                if (!string.IsNullOrEmpty(_ipAddress) && _ipAddress != "0.0.0.0") return _ipAddress;
+                var value = CrestronEthernetHelper.GetEthernetParameter(
+                    CrestronEthernetHelper.ETHERNET_PARAMETER_TO_GET.GET_CURRENT_IP_ADDRESS, AdapterIdForLan);
+                if (value.ToUpper() == "INVALID VALUE")
+                {
+                    Logger.Error("IP Address is invalid, returning");
+                    return value;
+                }
+
+                _ipAddress = value;
+
                 return _ipAddress;
             }
         }
