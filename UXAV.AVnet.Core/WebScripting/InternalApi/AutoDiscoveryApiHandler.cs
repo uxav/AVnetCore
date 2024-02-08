@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using UXAV.AVnet.Core.DeviceSupport;
+using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
@@ -32,9 +33,30 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             {
                 HandleError(503, "Service Unavailable", e.Message);
             }
+            catch (AggregateException e)
+            {
+                LogInnerExceptions(e);
+                HandleError(500, "Server Error", e.Message);
+            }
             catch (Exception e)
             {
                 HandleError(500, "Server Error", e.Message);
+                Logger.Error(e);
+            }
+        }
+        
+        private void LogInnerExceptions(Exception ex)
+        {
+            if (ex is AggregateException aggEx)
+            {
+                foreach (var innerEx in aggEx.InnerExceptions)
+                {
+                    LogInnerExceptions(innerEx);
+                }
+            }
+            else
+            {
+                Logger.Error(ex);
             }
         }
     }

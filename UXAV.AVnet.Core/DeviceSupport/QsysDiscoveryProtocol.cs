@@ -41,7 +41,8 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
             await Task.WhenAll(tasks);
 
-            foreach (var jToken in data)
+            var dataArray = data.ToArray();
+            foreach (var jToken in dataArray)
             {
                 if (!(jToken is JObject jObject)) continue;
                 foreach (var property in jObject.Properties())
@@ -72,9 +73,9 @@ namespace UXAV.AVnet.Core.DeviceSupport
                     device.ControlInfo = controlInfo;
 
             return deviceData.Values
-                .OrderByDescending(d => d.ControlInfo.DesignName ?? string.Empty)
-                .ThenBy(d => d.PartNumber)
-                .ThenBy(d => d.IpAddress)
+                .OrderByDescending(d => d.ControlInfo?.DesignName ?? string.Empty)
+                .ThenBy(d => d.PartNumber ?? string.Empty)
+                .ThenBy(d => d.IpAddress ?? string.Empty)
                 .ToArray();
         }
 
