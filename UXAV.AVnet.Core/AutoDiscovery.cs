@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Crestron.SimplSharp;
 
 namespace UXAV.AVnet.Core
@@ -16,6 +17,11 @@ namespace UXAV.AVnet.Core
                 .OrderBy(e => e.Model)
                 .ThenBy(e => e.Hostname)
                 .ToArray();
+        }
+        
+        public static async Task<AutoDiscoveryResult[]> GetAsync()
+        {
+            return await Task.Run(() => Get());
         }
     }
 }

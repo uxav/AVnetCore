@@ -1,4 +1,6 @@
 using System;
+using System.Threading.Tasks;
+using UXAV.AVnet.Core.DeviceSupport;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
@@ -12,7 +14,18 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         {
             try
             {
-                var results = AutoDiscovery.Get();
+                var results = Task.Run(() =>
+                {
+                    var crestronAutoDiscovery = AutoDiscovery.GetAsync();
+                    var qsysDiscovery = QsysDiscoveryProtocol.DiscoverAsync();
+                    Task.WaitAll(crestronAutoDiscovery, qsysDiscovery);
+                    return Task.FromResult(new
+                    {
+                        crestron = crestronAutoDiscovery.Result,
+                        qsys = qsysDiscovery.Result
+                    });
+                }).Result;
+
                 WriteResponse(results);
             }
             catch (OperationCanceledException e)
