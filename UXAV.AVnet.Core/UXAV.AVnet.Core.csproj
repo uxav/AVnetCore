@@ -275,6 +275,7 @@
         <Compile Include="DeviceSupport\IHoistControl.cs"/>
         <Compile Include="DeviceSupport\IPowerDevice.cs"/>
         <Compile Include="DeviceSupport\ISigProvider.cs"/>
+        <Compile Include="DeviceSupport\QsysDiscoveryProtocol.cs" />
         <Compile Include="DeviceSupport\SigProviderDevice.cs"/>
         <Compile Include="DeviceSupport\TcpConnectionBase.cs"/>
         <Compile Include="Fusion\FusionHelper.cs"/>

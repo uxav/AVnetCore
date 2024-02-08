@@ -30,10 +30,10 @@ jobs:
           echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Setup MsBuild
-        uses: microsoft/setup-msbuild@v1
+        uses: microsoft/setup-msbuild@v2
 
       - name: Setup NuGet.exe
-        uses: NuGet/setup-nuget@v1
+        uses: NuGet/setup-nuget@v2
 
       - name: Add Nuget API Key for nuget.org
         run: nuget setapikey ${{ secrets.NUGET_UXAV_API_KEY }}
@@ -57,10 +57,7 @@ jobs:
         run: nuget push *.nupkg -source "uxav"
 
       - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: v${{ env.VERSION }}
-          release_name: Release v${{ env.VERSION }}
-          draft: false
+          tag: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
