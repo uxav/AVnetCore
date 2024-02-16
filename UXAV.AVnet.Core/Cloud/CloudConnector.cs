@@ -346,7 +346,7 @@ namespace UXAV.AVnet.Core.Cloud
                 catch (Exception e)
                 {
                     if (_suppressWarning) return;
-                    Logger.Warn($"Could not checkin at {CheckinUri}, {e.Message}");
+                    Logger.Debug($"Could not checkin at {CheckinUri}, {e.Message}");
                     _suppressWarning = true;
                 }
             }
