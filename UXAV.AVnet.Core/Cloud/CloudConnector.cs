@@ -145,6 +145,11 @@ namespace UXAV.AVnet.Core.Cloud
             _productVersion = FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
             _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
+            foreach (var message in Logger.GetHistory())
+            {
+                if(message.Level > Logger.Level) continue;
+                PendingLogs[message.Id] = message;
+            }
             Logger.MessageLogged += LoggerOnMessageLogged;
             Task.Run(CheckInProcess);
         }
