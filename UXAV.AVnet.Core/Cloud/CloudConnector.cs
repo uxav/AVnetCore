@@ -145,6 +145,11 @@ namespace UXAV.AVnet.Core.Cloud
             _productVersion = FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
             _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
+            foreach (var message in Logger.GetHistory())
+            {
+                if(message.Level > Logger.Level) continue;
+                PendingLogs[message.Id] = message;
+            }
             Logger.MessageLogged += LoggerOnMessageLogged;
             Task.Run(CheckInProcess);
         }
@@ -346,7 +351,7 @@ namespace UXAV.AVnet.Core.Cloud
                 catch (Exception e)
                 {
                     if (_suppressWarning) return;
-                    Logger.Warn($"Could not checkin at {CheckinUri}, {e.Message}");
+                    Logger.Debug($"Could not checkin at {CheckinUri}, {e.Message}");
                     _suppressWarning = true;
                 }
             }

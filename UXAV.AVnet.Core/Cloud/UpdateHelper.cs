@@ -35,9 +35,9 @@ namespace UXAV.AVnet.Core.Cloud
             {
                 var uri = new Uri($"https://{CloudConnector.Host}/api/updates/v1/" +
                                   $"{HttpUtility.UrlEncode(CloudConnector.ApplicationName)}?token={CloudConnector.Token}");
-                Logger.Debug($"Looking for software updates from: {uri}");
+                //Logger.Debug($"Looking for software updates from: {uri}");
                 var response = await CloudConnector.HttpClient.GetAsync(uri);
-                Logger.Debug($"Response: {response.StatusCode}");
+                //Logger.Debug($"Response: {response.StatusCode}");
                 response.EnsureSuccessStatusCode();
                 try
                 {
@@ -76,7 +76,7 @@ namespace UXAV.AVnet.Core.Cloud
             bool onlyNew = true)
         {
             var currentVersion = UxEnvironment.System.AppAssemblyVersion;
-            Logger.Debug($"Current version = {currentVersion}");
+            //Logger.Debug($"Current version = {currentVersion}");
             return updates?.Where(x => x.AssemblyVersion > currentVersion || !onlyNew);
         }
 
@@ -100,9 +100,9 @@ namespace UXAV.AVnet.Core.Cloud
             var uri = new Uri(
                 $"https://{CloudConnector.Host}/api/updates/v1/{HttpUtility.UrlEncode(CloudConnector.ApplicationName)}" +
                 $"/{fileName}?token={CloudConnector.Token}");
-            Logger.Debug($"Looking info on update from: {uri}");
+            Logger.Log($"Looking info on update from: {uri}");
             var response = await CloudConnector.HttpClient.GetAsync(uri);
-            Logger.Debug($"Response: {response.StatusCode}");
+            Logger.Log($"Response: {response.StatusCode}");
             response.EnsureSuccessStatusCode();
             try
             {
@@ -115,7 +115,7 @@ namespace UXAV.AVnet.Core.Cloud
                     var targetPath = SystemBase.ProgramUserDirectory + "/updates";
                     if (!Directory.Exists(targetPath))
                     {
-                        Logger.Debug("Created directory: " + targetPath);
+                        Logger.Log("Created directory: " + targetPath);
                         Directory.CreateDirectory(targetPath);
                     }
 
@@ -149,14 +149,14 @@ namespace UXAV.AVnet.Core.Cloud
 
         private static async Task<string> DownloadFile(string url, string targetPath)
         {
-            Logger.Debug($"Downloading from: {url}");
+            Logger.Log($"Downloading from: {url}");
             var response = await CloudConnector.HttpClient.GetAsync(new Uri(url));
-            Logger.Debug($"Response: {response.StatusCode}");
+            Logger.Log($"Response: {response.StatusCode}");
             response.EnsureSuccessStatusCode();
             var fileName = response.Headers.GetValues("x-goog-meta-app-filename").FirstOrDefault();
             if (string.IsNullOrEmpty(fileName))
                 throw new OperationCanceledException("No file name found in download metadata");
-            Logger.Debug("File name: " + fileName);
+            Logger.Log("File name: " + fileName);
             var path = Path.Combine(targetPath, fileName);
             try
             {
