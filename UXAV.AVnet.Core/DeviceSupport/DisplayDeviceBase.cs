@@ -110,6 +110,30 @@ namespace UXAV.AVnet.Core.DeviceSupport
         {
             _deviceHoist = hoistDevice;
         }
+        
+        public bool HasScreenHoist => _screenHoist != null;
+        
+        public bool HasDeviceHoist => _deviceHoist != null;
+        
+        public void ScreenHoistUp()
+        {
+            _screenHoist?.Up();
+        }
+        
+        public void ScreenHoistDown()
+        {
+            _screenHoist?.Down();
+        }
+        
+        public void DeviceHoistUp()
+        {
+            _deviceHoist?.Up();
+        }
+        
+        public void DeviceHoistDown()
+        {
+            _deviceHoist?.Down();
+        }
 
         protected abstract void PowerRequested(bool requested, bool actualState);
 
