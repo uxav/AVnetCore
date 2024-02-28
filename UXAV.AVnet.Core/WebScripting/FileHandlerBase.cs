@@ -1,6 +1,5 @@
 using System;
 using System.Text.RegularExpressions;
-using System.Web;
 using Crestron.SimplSharp.CrestronIO;
 using Crestron.SimplSharp.Reflection;
 using UXAV.Logging;
@@ -53,7 +52,7 @@ namespace UXAV.AVnet.Core.WebScripting
 
                 var fileInfo = new FileInfo(filePath);
                 Logger.Debug($"File found: {fileInfo.FullName}");
-                Response.ContentType = MimeMapping.GetMimeMapping(fileInfo.Extension);
+                Response.ContentType = MimeKit.MimeTypes.GetMimeType(fileInfo.Extension);
                 Response.Headers.Add("Last-Modified", fileInfo.LastWriteTime.ToUniversalTime().ToString("R"));
                 try
                 {
@@ -81,7 +80,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 var resourcePath = RootFilePath + "." + fPath + fName;
                 Logger.Log("Looking for resource stream: {0}", resourcePath);
                 Response.ContentType =
-                    MimeMapping.GetMimeMapping(Regex.Match(resourcePath, @".+(\.\w+)$").Groups[1].Value);
+                    MimeKit.MimeTypes.GetMimeType(Regex.Match(resourcePath, @".+(\.\w+)$").Groups[1].Value);
                 try
                 {
                     foreach (var resourceName in assembly.GetManifestResourceNames())

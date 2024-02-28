@@ -1,0 +1,9 @@
+<Project DefaultTargets="Build">
+    <Target Name="SimplSharpNewtonsoft" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
+        <ItemGroup>
+            <ReferencePath Condition="'%(FileName)' == 'SimplSharpNewtonsoft'">
+                <Aliases>doNotUse</Aliases>
+            </ReferencePath>
+        </ItemGroup>
+    </Target>
+</Project>

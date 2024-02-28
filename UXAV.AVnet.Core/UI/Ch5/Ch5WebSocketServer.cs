@@ -3,7 +3,6 @@ using System.IO;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
-using System.Web;
 using UXAV.AVnet.Core.Models;
 using WebSocketSharp;
 using WebSocketSharp.Net;
@@ -117,7 +116,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             if (match.Success && match.Groups[1].Success)
             {
                 var extension = match.Groups[1].Value;
-                res.ContentType = MimeMapping.GetMimeMapping(path);
+                res.ContentType = MimeKit.MimeTypes.GetMimeType(path);
                 if (DebugIsOn)
                     Logger.Debug($"Setting content type to {res.ContentType}");
             }

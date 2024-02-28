@@ -1,0 +1,14 @@
+<Project>
+    <PropertyGroup>
+        <Company>UXAV</Company>
+        <Copyright>©Copyright UXAV 2024</Copyright>
+        <Authors>Mike Jobson</Authors>
+        <PackageTags>Crestron;AVnet;SimplSharp</PackageTags>
+        <AssemblyTitle>UXAV.AVnet.Core Library</AssemblyTitle>
+        <AssemblyDescription>A Crestron Simpl# Pro Framework</AssemblyDescription>
+        <RepositoryUrl>https://github.com/uxav/AVnetCore</RepositoryUrl>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <AssemblyVersion>2.0.0.0</AssemblyVersion>
+        <FileVersion>2.0.0</FileVersion>
+    </PropertyGroup>    
+</Project>

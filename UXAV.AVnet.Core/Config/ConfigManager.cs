@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using CsvHelper;
+using CsvHelper.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
@@ -498,11 +499,7 @@ namespace UXAV.AVnet.Core.Config
             var response = (HttpWebResponse)request.GetResponse();
             Logger.Debug($"Cloud template data response: {response.StatusCode}");
             var reader = new StreamReader(response.GetResponseStream() ?? throw new NullReferenceException());
-            var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-            var ti = CultureInfo.CurrentCulture.TextInfo;
-            csv.Configuration.HasHeaderRecord = true;
-            csv.Configuration.PrepareHeaderForMatch = (header, i) =>
-                ti.ToTitleCase(Regex.Replace(header, @"[\W_]", " ").ToLower()).Replace(" ", string.Empty);
+            var csv = new CsvReader(reader, ReaderConfiguration);
             return csv.GetRecords<dynamic>();
         }
 
@@ -513,12 +510,21 @@ namespace UXAV.AVnet.Core.Config
 
             var stream = await _client.GetStreamAsync(url);
             var reader = new StreamReader(stream);
-            var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-            var ti = CultureInfo.CurrentCulture.TextInfo;
-            csv.Configuration.HasHeaderRecord = true;
-            csv.Configuration.PrepareHeaderForMatch = (header, i) =>
-                ti.ToTitleCase(Regex.Replace(header, @"[\W_]", " ").ToLower()).Replace(" ", string.Empty);
+            var csv = new CsvReader(reader, ReaderConfiguration);
             return csv.GetRecords<dynamic>();
+        }
+
+        private static IReaderConfiguration ReaderConfiguration
+        {
+            get
+            {
+                return new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HasHeaderRecord = true,
+                    PrepareHeaderForMatch = (header) =>
+                        CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(header.Header, @"[\W_]", " ").ToLower()).Replace(" ", string.Empty),
+                };
+            }
         }
 
         public static IEnumerable<dynamic> GetCsvData(string filePath)
@@ -526,11 +532,7 @@ namespace UXAV.AVnet.Core.Config
             Logger.Debug($"Getting template data from: {filePath}");
             var stream = File.OpenRead(filePath);
             var reader = new StreamReader(stream);
-            var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-            var ti = CultureInfo.CurrentCulture.TextInfo;
-            csv.Configuration.HasHeaderRecord = true;
-            csv.Configuration.PrepareHeaderForMatch = (header, i) =>
-                ti.ToTitleCase(Regex.Replace(header, @"[\W_]", " ").ToLower()).Replace(" ", string.Empty);
+            var csv = new CsvReader(reader, ReaderConfiguration);
             return csv.GetRecords<dynamic>();
         }
 

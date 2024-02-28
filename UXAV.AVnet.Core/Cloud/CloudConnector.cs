@@ -399,7 +399,7 @@ namespace UXAV.AVnet.Core.Cloud
                         zipStream.Position = 0;
                         var fileContent = new StreamContent(zipStream);
                         fileContent.Headers.ContentType =
-                            MediaTypeHeaderValue.Parse(MimeMapping.GetMimeMapping(".zip"));
+                            MediaTypeHeaderValue.Parse(MimeKit.MimeTypes.GetMimeType(".zip"));
                         content.Add(fileContent, "logs",
                             $"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip");
                         Logger.Debug($"Content Headers:\r\n{fileContent.Headers}");
