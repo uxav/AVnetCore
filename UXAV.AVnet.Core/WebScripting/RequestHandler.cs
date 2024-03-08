@@ -56,6 +56,10 @@ namespace UXAV.AVnet.Core.WebScripting
             if (cookie == null)
             {
                 Logger.Debug("ValidateSession: No session cookie found!");
+                foreach (var requestCookie in Request.Cookies)
+                {
+                    Logger.Debug($"ValidateSession: Cookie: {requestCookie.Name} = {requestCookie.Value}");
+                }
                 return null;
             }
             Logger.Debug($"ValidateSession: Session cookie found: {cookie.Value}");
