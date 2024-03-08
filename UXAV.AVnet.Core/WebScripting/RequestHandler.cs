@@ -53,10 +53,16 @@ namespace UXAV.AVnet.Core.WebScripting
         protected Session ValidateSession(bool renew)
         {
             var cookie = Request.Cookies["sessionId"];
-            if (cookie == null) return null;
+            if (cookie == null)
+            {
+                Logger.Debug("ValidateSession: No session cookie found!");
+                return null;
+            }
+            Logger.Debug($"ValidateSession: Session cookie found: {cookie.Value}");
             var session = AppAuthentication.ValidateSession(cookie.Value, renew);
             if (session == null || session.ExpiryTime < DateTime.Now)
             {
+                Logger.Debug("ValidateSession: Session not valid or expired!");
                 Response.SetCookie(new HttpCwsCookie("sessionId")
                 {
                     Value = string.Empty,
@@ -65,6 +71,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 });
                 return null;
             }
+            Logger.Debug("ValidateSession: Session valid!");
 
             Response.SetCookie(new HttpCwsCookie("sessionId")
             {
