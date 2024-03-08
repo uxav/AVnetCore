@@ -373,7 +373,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 BooTime = SystemBase.BootTime,
                 Ch5WebSocketServer.WebSocketBaseUrl,
                 SystemBase.SerialNumber,
-                AppVersion = UxEnvironment.System.AppVersion.ToString(),
+                UxEnvironment.System.AppVersion,
                 AVNetVersion = UxEnvironment.Version.ToString()
             };
         }
