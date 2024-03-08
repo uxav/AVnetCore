@@ -81,11 +81,8 @@
         - name: Create Release
           if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'release/') && github.base_ref == 'main'
           id: create_release
-          uses: actions/create-release@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          uses: ncipollo/release-action@v1
           with:
-            tag_name: v${{ env.VERSION }}
-            release_name: ${{ env.VERSION_TITLE }}
-            draft: false
+            tag: v${{ env.VERSION }}
+            name: ${{ env.VERSION_TITLE }}
             prerelease: ${{ env.PRERELEASE }}
