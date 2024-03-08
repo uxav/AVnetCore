@@ -44,7 +44,9 @@
 
         - name: Update AssemblyInfo.cs
           shell: powershell
-          run: ./.github/scripts/UpdateAssemblyVersion.ps1 -Path ${{env.PROJECT_NAME}}/Properties/AssemblyInfo.cs -Version ${{ env.VERSION }}
+          run: |
+            echo "Updating ${{env.PROJECT_NAME}}/Properties/AssemblyInfo.cs with version: ${{ env.VERSION }}"
+            ./.github/scripts/UpdateAssemblyVersion.ps1 -Path ${{env.PROJECT_NAME}}/Properties/AssemblyInfo.cs -Version ${{ env.VERSION }}
 
         - name: Setup MsBuild
           uses: microsoft/setup-msbuild@v2
