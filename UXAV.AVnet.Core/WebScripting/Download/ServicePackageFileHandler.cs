@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using System.Web;
 using Crestron.SimplSharp;
+using MimeKit;
 using UXAV.AVnet.Core.Cloud;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
@@ -28,7 +28,7 @@ namespace UXAV.AVnet.Core.WebScripting.Download
 
                 Logger.Log("Generated zip package, {0} bytes", zipStream.Length);
 
-                Response.ContentType = MimeMapping.GetMimeMapping(".zip");
+                Response.ContentType = MimeTypes.GetMimeType(".zip");
                 Response.Headers.Add("Content-Length", zipStream.Length.ToString());
 
                 var headerContents = Response.Headers.Cast<string>().Aggregate(string.Empty,

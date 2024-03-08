@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
@@ -14,6 +15,7 @@ using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.X509;
 using UXAV.Logging;
+using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 using X509Certificate2 = System.Security.Cryptography.X509Certificates.X509Certificate2;
 using X509KeyStorageFlags = System.Security.Cryptography.X509Certificates.X509KeyStorageFlags;
 using X509ContentType = System.Security.Cryptography.X509Certificates.X509ContentType;
@@ -151,7 +153,8 @@ namespace UXAV.AVnet.Core
             if (subjectAlternativeNames != null && subjectAlternativeNames.Any())
                 AddSubjectAlternativeNames(certificateGenerator, subjectAlternativeNames);
 
-            ISignatureFactory signatureFactory = new Asn1SignatureFactory("SHA256WithRSA", issuerKeyPair.Private, random);
+            ISignatureFactory signatureFactory =
+                new Asn1SignatureFactory("SHA256WithRSA", issuerKeyPair.Private, random);
             // The certificate is signed with the issuer's private key.
             //var certificate = certificateGenerator.Generate(issuerKeyPair.Private, random);
             var certificate = certificateGenerator.Generate(signatureFactory);
@@ -160,9 +163,9 @@ namespace UXAV.AVnet.Core
         }
 
         /// <summary>
-        /// The certificate needs a serial number. This is used for revocation,
-        /// and usually should be an incrementing index (which makes it easier to revoke a range of certificates).
-        /// Since we don't have anywhere to store the incrementing index, we can just use a random number.
+        ///     The certificate needs a serial number. This is used for revocation,
+        ///     and usually should be an incrementing index (which makes it easier to revoke a range of certificates).
+        ///     Since we don't have anywhere to store the incrementing index, we can just use a random number.
         /// </summary>
         /// <param name="random"></param>
         /// <returns></returns>
@@ -170,15 +173,18 @@ namespace UXAV.AVnet.Core
         {
             var serialNumber =
                 BigIntegers.CreateRandomInRange(
-                    BigInteger.One, BigInteger.ValueOf(Int64.MaxValue), random);
+                    BigInteger.One, BigInteger.ValueOf(long.MaxValue), random);
             return serialNumber;
         }
 
         /// <summary>
-        /// Generate a key pair.
+        ///     Generate a key pair.
         /// </summary>
         /// <param name="random">The random number generator.</param>
-        /// <param name="strength">The key length in bits. For RSA, 2048 bits should be considered the minimum acceptable these days.</param>
+        /// <param name="strength">
+        ///     The key length in bits. For RSA, 2048 bits should be considered the minimum acceptable these
+        ///     days.
+        /// </param>
         /// <returns></returns>
         private static AsymmetricCipherKeyPair GenerateKeyPair(SecureRandom random, int strength)
         {
@@ -191,11 +197,13 @@ namespace UXAV.AVnet.Core
         }
 
         /// <summary>
-        /// Add the Authority Key Identifier. According to http://www.alvestrand.no/objectid/2.5.29.35.html, this
-        /// identifies the public key to be used to verify the signature on this certificate.
-        /// In a certificate chain, this corresponds to the "Subject Key Identifier" on the *issuer* certificate.
-        /// The Bouncy Castle documentation, at http://www.bouncycastle.org/wiki/display/JA1/X.509+Public+Key+Certificate+and+Certification+Request+Generation,
-        /// shows how to create this from the issuing certificate. Since we're creating a self-signed certificate, we have to do this slightly differently.
+        ///     Add the Authority Key Identifier. According to http://www.alvestrand.no/objectid/2.5.29.35.html, this
+        ///     identifies the public key to be used to verify the signature on this certificate.
+        ///     In a certificate chain, this corresponds to the "Subject Key Identifier" on the *issuer* certificate.
+        ///     The Bouncy Castle documentation, at
+        ///     http://www.bouncycastle.org/wiki/display/JA1/X.509+Public+Key+Certificate+and+Certification+Request+Generation,
+        ///     shows how to create this from the issuing certificate. Since we're creating a self-signed certificate, we have to
+        ///     do this slightly differently.
         /// </summary>
         /// <param name="certificateGenerator"></param>
         /// <param name="issuerDN"></param>
@@ -216,8 +224,8 @@ namespace UXAV.AVnet.Core
         }
 
         /// <summary>
-        /// Add the "Subject Alternative Names" extension. Note that you have to repeat
-        /// the value from the "Subject Name" property.
+        ///     Add the "Subject Alternative Names" extension. Note that you have to repeat
+        ///     the value from the "Subject Name" property.
         /// </summary>
         /// <param name="certificateGenerator"></param>
         /// <param name="subjectAlternativeNames"></param>
@@ -234,7 +242,7 @@ namespace UXAV.AVnet.Core
         }
 
         /// <summary>
-        /// Add the "Extended Key Usage" extension, specifying (for example) "server authentication".
+        ///     Add the "Extended Key Usage" extension, specifying (for example) "server authentication".
         /// </summary>
         /// <param name="certificateGenerator"></param>
         /// <param name="usages"></param>
@@ -245,7 +253,7 @@ namespace UXAV.AVnet.Core
         }
 
         /// <summary>
-        /// Add the "Basic Constraints" extension.
+        ///     Add the "Basic Constraints" extension.
         /// </summary>
         /// <param name="certificateGenerator"></param>
         /// <param name="isCertificateAuthority"></param>
@@ -257,7 +265,7 @@ namespace UXAV.AVnet.Core
         }
 
         /// <summary>
-        /// Add the Subject Key Identifier.
+        ///     Add the Subject Key Identifier.
         /// </summary>
         /// <param name="certificateGenerator"></param>
         /// <param name="subjectKeyPair"></param>
@@ -278,10 +286,10 @@ namespace UXAV.AVnet.Core
             // Now to convert the Bouncy Castle certificate to a .NET certificate.
             // See http://web.archive.org/web/20100504192226/http://www.fkollmann.de/v2/post/Creating-certificates-using-BouncyCastle.aspx
             // ...but, basically, we create a PKCS12 store (a .PFX file) in memory, and add the public and private key to that.
-            var store = new Pkcs12Store();
+            var store = new Pkcs12StoreBuilder().Build();
 
             // What Bouncy Castle calls "alias" is the same as what Windows terms the "friendly name".
-            string friendlyName = certificate.SubjectDN.ToString();
+            var friendlyName = certificate.SubjectDN.ToString();
 
             // Add the certificate.
             var certificateEntry = new X509CertificateEntry(certificate);
@@ -333,15 +341,15 @@ namespace UXAV.AVnet.Core
             }
         }
 
-        public static bool AddCertToStore(X509Certificate2 cert, System.Security.Cryptography.X509Certificates.StoreName st,
-            System.Security.Cryptography.X509Certificates.StoreLocation sl)
+        public static bool AddCertToStore(X509Certificate2 cert, StoreName st,
+            StoreLocation sl)
         {
-            bool bRet = false;
+            var bRet = false;
 
             try
             {
-                var store = new System.Security.Cryptography.X509Certificates.X509Store(st, sl);
-                store.Open(System.Security.Cryptography.X509Certificates.OpenFlags.ReadWrite);
+                var store = new X509Store(st, sl);
+                store.Open(OpenFlags.ReadWrite);
                 store.Add(cert);
 
                 store.Close();

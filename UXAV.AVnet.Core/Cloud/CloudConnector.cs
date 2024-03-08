@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -10,9 +11,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
+using MimeKit;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
@@ -53,12 +54,10 @@ namespace UXAV.AVnet.Core.Cloud
         {
             get
             {
-                /*return new Uri("http://172.16.100.148:5001/avnet-cloud/us-central1/appInstanceCheckIn/api/checkin/v2" +
-                               $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");*/
                 if (_checkinUri == null)
                     _checkinUri = new Uri(
                         $"https://{Host}/api/checkin/v2" +
-                        $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
+                        $"/{ApplicationName}/{WebUtility.UrlEncode(InstanceId)}?token={Token}");
 
                 return _checkinUri;
             }
@@ -68,13 +67,10 @@ namespace UXAV.AVnet.Core.Cloud
         {
             get
             {
-                /*return new Uri(
-                    "http://172.16.100.148:5001/avnet-cloud/us-central1/appInstanceConfigs/api/configs/v1/submit" +
-                    $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");*/
                 if (_configUploadUri == null)
                     _configUploadUri = new Uri(
                         $"https://{Host}/api/configs/v1/submit" +
-                        $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");
+                        $"/{ApplicationName}/{WebUtility.UrlEncode(InstanceId)}?token={Token}");
 
                 return _configUploadUri;
             }
@@ -106,7 +102,7 @@ namespace UXAV.AVnet.Core.Cloud
             {
                 if (string.IsNullOrEmpty(Host) || string.IsNullOrEmpty(Token)) return null;
                 return $"https://{Host}/api/uploadlogs/v1" +
-                       $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}";
+                       $"/{ApplicationName}/{WebUtility.UrlEncode(InstanceId)}?token={Token}";
             }
         }
 
@@ -147,9 +143,10 @@ namespace UXAV.AVnet.Core.Cloud
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
             foreach (var message in Logger.GetHistory())
             {
-                if(message.Level > Logger.Level) continue;
+                if (message.Level > Logger.Level) continue;
                 PendingLogs[message.Id] = message;
             }
+
             Logger.MessageLogged += LoggerOnMessageLogged;
             Task.Run(CheckInProcess);
         }
@@ -399,7 +396,7 @@ namespace UXAV.AVnet.Core.Cloud
                         zipStream.Position = 0;
                         var fileContent = new StreamContent(zipStream);
                         fileContent.Headers.ContentType =
-                            MediaTypeHeaderValue.Parse(MimeMapping.GetMimeMapping(".zip"));
+                            MediaTypeHeaderValue.Parse(MimeTypes.GetMimeType(".zip"));
                         content.Add(fileContent, "logs",
                             $"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip");
                         Logger.Debug($"Content Headers:\r\n{fileContent.Headers}");

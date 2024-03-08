@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
-using System.Web;
 using Crestron.SimplSharp;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
@@ -34,7 +34,7 @@ namespace UXAV.AVnet.Core.Cloud
             try
             {
                 var uri = new Uri($"https://{CloudConnector.Host}/api/updates/v1/" +
-                                  $"{HttpUtility.UrlEncode(CloudConnector.ApplicationName)}?token={CloudConnector.Token}");
+                                  $"{WebUtility.UrlEncode(CloudConnector.ApplicationName)}?token={CloudConnector.Token}");
                 //Logger.Debug($"Looking for software updates from: {uri}");
                 var response = await CloudConnector.HttpClient.GetAsync(uri);
                 //Logger.Debug($"Response: {response.StatusCode}");
@@ -98,7 +98,7 @@ namespace UXAV.AVnet.Core.Cloud
         public static async void UpdateRunningProgram(string fileName)
         {
             var uri = new Uri(
-                $"https://{CloudConnector.Host}/api/updates/v1/{HttpUtility.UrlEncode(CloudConnector.ApplicationName)}" +
+                $"https://{CloudConnector.Host}/api/updates/v1/{WebUtility.UrlEncode(CloudConnector.ApplicationName)}" +
                 $"/{fileName}?token={CloudConnector.Token}");
             Logger.Log($"Looking info on update from: {uri}");
             var response = await CloudConnector.HttpClient.GetAsync(uri);
