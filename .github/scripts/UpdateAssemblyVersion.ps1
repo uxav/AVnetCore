@@ -9,16 +9,32 @@ if(!$Version)
     exit(1);
 }
 
-$r = [Regex]::Match($Version, '(\d+)\.(\d+)\.(\d+)');
+$versionMatch = [Regex]::Match($Version, "^(\d+\.\d+\.\d+)(?:-([\w-]+))?$");
 
-$major = [int]$r.Groups[1].Value;
-$minor = [int]$r.Groups[2].Value;
+if (!$versionMatch.Success) {
+    Write-Output("Version should be formatted x.x.x(-beta-1) etc");
+    exit(1);
+}
 
-$newAssemblyVersion = 'AssemblyVersion("' + $major + '.' + $minor + '.*")'
+$baseVersion = $versionMatch.Captures.Groups[1].Value;
+if($versionMatch.Captures.Groups[2].Success)
+{
+    $preReleaseTag = $versionMatch.Captures.Groups[2].Value;
+}
+
+Write-Output "baseVersion = $baseVersion"
+$newAssemblyVersion = 'AssemblyVersion("' + $baseVersion + '.*")'
 Write-Output "AssemblyVersion = $NewAssemblyVersion"
-$newAssemblyFileVersion = 'AssemblyFileVersion("' + $Version + '")'
+$newAssemblyFileVersion = 'AssemblyFileVersion("' + $baseVersion + '")'
 Write-Output "AssemblyFileVersion = $newAssemblyFileVersion"
-$newAssemblyInformationalVersion = 'AssemblyInformationalVersion("' + $Version + '")'
+if($preReleaseTag)
+{
+    $newAssemblyInformationalVersion = 'AssemblyInformationalVersion("' + $baseVersion + '-' + $preReleaseTag + '")'
+}
+else
+{
+    $newAssemblyInformationalVersion = 'AssemblyInformationalVersion("' + $baseVersion + '")'
+}
 Write-Output "AssemblyInformationalVersion = $newAssemblyInformationalVersion"
 
 $TmpFile = $file.FullName + ".tmp"

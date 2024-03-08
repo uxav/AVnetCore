@@ -26,7 +26,25 @@
           run: |
             $version = ./.github/scripts/GetVersionFromAssemblyInfo.ps1 -Path ${{env.PROJECT_NAME}}/Properties/AssemblyInfo.cs
             Write-Output "Version is: $version"
+            $versionTitle = ./.github/scripts/CreateVersionTitle.ps1 -Version $version
+            Write-Output "Version title is: $version"
             echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            
+        - name: Create pre-release tag
+          if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'release/') && github.base_ref == 'main'
+          shell: powershell
+          run: |
+            $version = ./.github/scripts/CreateAvailablePreReleaseVersion.ps1 -Version ${{ env.VERSION }} -PreReleaseName beta
+            Write-Output "Version is: $version"
+            $versionTitle = ./.github/scripts/CreateVersionTitle.ps1 -Version $version
+            Write-Output "Version title is: $versionTitle"
+            echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            echo "VERSION_TITLE=$versionTitle" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            echo "PRERELEASE=true" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+        - name: Update AssemblyInfo.cs
+          shell: powershell
+          run: ./.github/scripts/UpdateAssemblyVersion.ps1 -Path ${{env.PROJECT_NAME}}/Properties/AssemblyInfo.cs -Version ${{ env.VERSION }}
 
         - name: Setup MsBuild
           uses: microsoft/setup-msbuild@v2
