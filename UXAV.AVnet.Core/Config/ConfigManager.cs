@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
@@ -301,6 +300,21 @@ namespace UXAV.AVnet.Core.Config
         public static DateTime LastRevisionTime =>
             File.Exists(ConfigPath) ? File.GetLastWriteTime(ConfigPath) : new DateTime();
 
+        private static IReaderConfiguration ReaderConfiguration
+        {
+            get
+            {
+                return new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HasHeaderRecord = true,
+                    PrepareHeaderForMatch = header =>
+                        CultureInfo.CurrentCulture.TextInfo
+                            .ToTitleCase(Regex.Replace(header.Header, @"[\W_]", " ").ToLower())
+                            .Replace(" ", string.Empty)
+                };
+            }
+        }
+
         public static T GetConfig<T>() where T : ConfigBase, new()
         {
             if (Schema == null)
@@ -492,39 +506,14 @@ namespace UXAV.AVnet.Core.Config
             return string.Empty;
         }
 
-        public static IEnumerable<dynamic> GetCloudCsvData(string url)
-        {
-            Logger.Debug($"Getting cloud template data from: {url}");
-            var request = WebRequest.CreateHttp(url);
-            var response = (HttpWebResponse)request.GetResponse();
-            Logger.Debug($"Cloud template data response: {response.StatusCode}");
-            var reader = new StreamReader(response.GetResponseStream() ?? throw new NullReferenceException());
-            var csv = new CsvReader(reader, ReaderConfiguration);
-            return csv.GetRecords<dynamic>();
-        }
-
         public static async Task<IEnumerable<dynamic>> GetCloudCsvDataAsync(string url)
         {
             Logger.Debug($"Getting cloud template data from: {url}");
-            if (_client == null) _client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-
+            _client ??= new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             var stream = await _client.GetStreamAsync(url);
             var reader = new StreamReader(stream);
             var csv = new CsvReader(reader, ReaderConfiguration);
             return csv.GetRecords<dynamic>();
-        }
-
-        private static IReaderConfiguration ReaderConfiguration
-        {
-            get
-            {
-                return new CsvConfiguration(CultureInfo.InvariantCulture)
-                {
-                    HasHeaderRecord = true,
-                    PrepareHeaderForMatch = (header) =>
-                        CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(header.Header, @"[\W_]", " ").ToLower()).Replace(" ", string.Empty),
-                };
-            }
         }
 
         public static IEnumerable<dynamic> GetCsvData(string filePath)

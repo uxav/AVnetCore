@@ -302,36 +302,25 @@ namespace UXAV.AVnet.Core.UI.Ch5
         [ApiTargetMethod("Subscribe")]
         public void Subscribe(int id, string name, JToken @params)
         {
-            try
+            if (Ch5WebSocketServer.DebugIsOn)
+                Logger.Debug($"Subscribe with id: {id}, name: {name}, params: {@params}");
+            lock (_eventSubscriptions)
             {
-                if (Ch5WebSocketServer.DebugIsOn)
-                    Logger.Debug($"Subscribe with id: {id}, name: {name}, params: {@params}");
-                lock (_eventSubscriptions)
-                {
-                    if (_eventSubscriptions.ContainsKey(id))
-                        throw new InvalidOperationException($"Event ID {id} already registered");
-                }
+                if (_eventSubscriptions.ContainsKey(id))
+                    throw new InvalidOperationException($"Event ID {id} already registered");
+            }
 
-                var obj = FindAndInvokeMethod<ApiTargetEventAttribute>(name, @params);
-                var attribute = GetType().GetMethods()
-                    .First(m => m.GetCustomAttribute<ApiTargetEventAttribute>()?.Name == name)
-                    .GetCustomAttribute<ApiTargetEventAttribute>();
-                var ctor =
-                    attribute.SubscriptionType.GetConstructor(new[]
-                        { typeof(Ch5ApiHandlerBase), typeof(int), typeof(string), typeof(object), typeof(string) });
-                var sub = (EventSubscription)ctor.Invoke(new[] { this, id, name, obj, attribute.EventName });
-                lock (_eventSubscriptions)
-                {
-                    _eventSubscriptions[id] = sub;
-                }
-            }
-            catch (TargetInvocationException e)
+            var obj = FindAndInvokeMethod<ApiTargetEventAttribute>(name, @params);
+            var attribute = GetType().GetMethods()
+                .First(m => m.GetCustomAttribute<ApiTargetEventAttribute>()?.Name == name)
+                .GetCustomAttribute<ApiTargetEventAttribute>();
+            var ctor =
+                attribute!.SubscriptionType.GetConstructor(new[]
+                    { typeof(Ch5ApiHandlerBase), typeof(int), typeof(string), typeof(object), typeof(string) });
+            var sub = (EventSubscription)ctor!.Invoke(new[] { this, id, name, obj, attribute.EventName });
+            lock (_eventSubscriptions)
             {
-                throw e.InnerException ?? e;
-            }
-            catch (Exception e)
-            {
-                throw e;
+                _eventSubscriptions[id] = sub;
             }
         }
 
@@ -373,7 +362,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 BooTime = SystemBase.BootTime,
                 Ch5WebSocketServer.WebSocketBaseUrl,
                 SystemBase.SerialNumber,
-                AppVersion = UxEnvironment.System.AppVersion.ToString(),
+                UxEnvironment.System.AppVersion,
                 AVNetVersion = UxEnvironment.Version.ToString()
             };
         }

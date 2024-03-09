@@ -4,7 +4,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Crestron.SimplSharpPro;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -47,61 +46,32 @@ namespace UXAV.AVnet.Core
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += CurrentDomainOnReflectionOnlyAssemblyResolve;
             try
             {
+                Logger.Debug("Loading assembly paths from application directory to resolve dependencies...");
+                var paths = Directory
+                    .GetFiles(SystemBase.ProgramApplicationDirectory, "*.dll", SearchOption.AllDirectories)
+                    .Where(CheckFileNameForPotentialAssembly);
+                var resolver = new PathAssemblyResolver(paths);
+                using var metadataLoadContext = new MetadataLoadContext(resolver);
                 Logger.Debug($"Looking for Zip/Cpz archive at: {cpzPath} ...");
-                using (var file = File.OpenRead(cpzPath))
+                using var archive = new ZipArchive(File.OpenRead(cpzPath));
+                foreach (var entry in archive.Entries)
                 {
-                    using (var zipFile = new ZipArchive(file, ZipArchiveMode.Read))
+                    if (!entry.FullName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) continue;
+                    Logger.Debug($"Loading assembly from {entry.FullName} ...");
+                    using var stream = entry.Open();
+                    var assembly = metadataLoadContext.LoadFromStream(stream);
+                    foreach (var type in assembly.GetTypes())
                     {
-                        Logger.Debug(
-                            $"Checking contents of Zip for assembly containing {nameof(CrestronControlSystem)} ...");
-                        var entries = zipFile.Entries
-                            .Where(e => CheckFileNameForPotentialAssembly(e.FullName));
-                        foreach (var entry in entries)
-                            try
-                            {
-                                Logger.Debug($"Checking \"{entry.FullName}\" ...");
-                                using (var entryStream = entry.Open())
-                                {
-                                    var tmpFilePath = SystemBase.TempFileDirectory + "/" + entry.FullName;
-                                    Logger.Debug($"Writing file to temp file: {tmpFilePath}");
-                                    using (var tmpFile = File.Open(tmpFilePath, FileMode.Create, FileAccess.ReadWrite,
-                                               FileShare.None))
-                                    {
-                                        entryStream.CopyTo(tmpFile);
-                                        var assembly = Assembly.ReflectionOnlyLoadFrom(tmpFilePath);
-                                        var types = assembly.GetTypes();
-                                        foreach (var type in types)
-                                            try
-                                            {
-                                                if (!type.IsClass || type.IsNotPublic) continue;
-                                                if (type.BaseType == null ||
-                                                    type.BaseType != typeof(CrestronControlSystem))
-                                                    continue;
-                                                Logger.Debug(
-                                                    $"Found class \"{type}\" which derives from {nameof(CrestronControlSystem)}");
-
-                                                result.Name = assembly.GetName().Name;
-                                                result.Version = assembly.GetName().Version;
-                                                break;
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Logger.Warn(
-                                                    $"Error looking at {type}, {e.GetType().Name}: {e.Message}");
-                                            }
-                                    }
-
-                                    Logger.Debug($"Deleting temp file: {tmpFilePath}");
-                                    File.Delete(tmpFilePath);
-
-                                    if (!string.IsNullOrEmpty(result.Name)) break;
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Logger.Warn($"Could not read entry: {entry.FullName}, {e.GetType().Name}");
-                            }
+                        var baseType = type.BaseType;
+                        if (baseType == null) continue;
+                        if (!baseType.Name.Equals("CrestronControlSystem", StringComparison.Ordinal)) continue;
+                        Console.WriteLine(
+                            $"Type {type.FullName} in {entry.FullName} derives from CrestronControlSystem");
+                        break;
                     }
+
+                    result.Name = assembly.GetName().Name;
+                    result.Version = assembly.GetName().Version;
                 }
             }
             catch (Exception e)

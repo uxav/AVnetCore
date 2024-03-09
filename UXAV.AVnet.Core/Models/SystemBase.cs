@@ -389,14 +389,7 @@ namespace UXAV.AVnet.Core.Models
 
         public virtual string AppName => AppAssembly.GetName().Name;
 
-        public virtual Version AppVersion
-        {
-            get
-            {
-                var fileVersionInfo = FileVersionInfo.GetVersionInfo(AppAssembly.Location);
-                return new Version(fileVersionInfo.ProductVersion);
-            }
-        }
+        public virtual string AppVersion => FileVersionInfo.GetVersionInfo(AppAssembly.Location).FileVersion;
 
         public static string RuntimeGuid
         {

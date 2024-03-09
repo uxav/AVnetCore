@@ -3,31 +3,32 @@
         <OutputType>Library</OutputType>
         <RootNamespace>UXAV.AVnet.Core</RootNamespace>
         <AssemblyName>UXAV.AVnet.Core</AssemblyName>
-        <TargetFramework>net6.0</TargetFramework>
-        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <TargetFrameworks>net6.0;net472</TargetFrameworks>
+        <LangVersion>8</LangVersion>
+        <Copyright>©Copyright Mike Jobson 2024</Copyright>
+        <Authors>Mike Jobson</Authors>
+        <PackageTags>Crestron;AVnet;SimplSharp</PackageTags>
+        <AssemblyTitle>AVnet Core Library</AssemblyTitle>
+        <AssemblyDescription>A Crestron Simpl# Pro Framework</AssemblyDescription>
+        <RepositoryUrl>https://github.com/uxav/AVnetCore</RepositoryUrl>
+        <Version>2.0.0-beta-3</Version>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-        <DebugType>full</DebugType>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-        <DebugType>portable</DebugType>
-    </PropertyGroup>
+
     <ItemGroup>
-      <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.0" />
-      <PackageReference Include="Crestron.SimplSharp.SDK.ProgramLibrary" Version="2.20.52" />
-      <PackageReference Include="Cronos" Version="0.8.4" />
-      <PackageReference Include="CsvHelper" Version="31.0.0" />
-      <PackageReference Include="Figgle" Version="0.5.1" />
-      <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-      <PackageReference Include="MimeKit" Version="4.3.0" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.15" />
-      <PackageReference Include="System.IO.Compression" Version="4.3.0" />
-      <PackageReference Include="System.Net.Http" Version="4.3.4" />
-      <PackageReference Include="System.Net.Http.Formatting.Extension" Version="5.2.3" />
-      <PackageReference Include="System.Runtime.Serialization.Json" Version="4.3.0" />
-      <PackageReference Include="System.Web.Http.Common" Version="4.0.20126.16343" />
-      <PackageReference Include="UXAV.Logging" Version="1.3.0" />
-      <PackageReference Include="WebSocketSharp-netstandard" Version="1.0.1" />
+        <PackageReference Include="Crestron.SimplSharp.SDK.ProgramLibrary" Version="2.20.52"/>
+        <PackageReference Include="Cronos" Version="0.8.4"/>
+        <PackageReference Include="CsvHelper" Version="31.0.2"/>
+        <PackageReference Include="Figgle" Version="0.5.1"/>
+        <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0"/>
+        <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
+        <PackageReference Include="MimeKit" Version="4.4.0"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.15"/>
+        <PackageReference Include="System.IO.Compression" Version="4.3.0"/>
+        <PackageReference Include="System.Net.Http" Version="4.3.4"/>
+        <PackageReference Include="System.Reflection.MetadataLoadContext" Version="8.0.0"/>
+        <PackageReference Include="System.Runtime.Serialization.Json" Version="4.3.0"/>
+        <PackageReference Include="UXAV.Logging" Version="2.0.0-rc-2"/>
+        <PackageReference Include="WebSocketSharp-netstandard" Version="1.0.1"/>
     </ItemGroup>
 </Project>
