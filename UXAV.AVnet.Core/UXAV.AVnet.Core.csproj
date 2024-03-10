@@ -12,7 +12,9 @@
         <AssemblyDescription>A Crestron Simpl# Pro Framework</AssemblyDescription>
         <RepositoryUrl>https://github.com/uxav/AVnetCore</RepositoryUrl>
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-        <Version>2.0.0-beta-3</Version>
+        <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Version>2.0.0-beta</Version>
     </PropertyGroup>
 
     <ItemGroup>
@@ -31,5 +33,10 @@
         <PackageReference Include="System.Runtime.Serialization.Json" Version="4.3.0"/>
         <PackageReference Include="UXAV.Logging" Version="2.0.0-rc-2"/>
         <PackageReference Include="WebSocketSharp-netstandard" Version="1.0.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="README.md"/>
+        <None Include="..\LICENSE.md" Pack="true" PackagePath="LICENSE.md"/>
     </ItemGroup>
 </Project>
