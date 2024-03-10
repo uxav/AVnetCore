@@ -7,7 +7,7 @@
 [![NuGet Downloads](https://img.shields.io/nuget/dt/UXAV.AVnet.Core?style=flat&logo=nuget)](https://www.nuget.org/packages/UXAV.AVnet.Core)
 [![GitHub License](https://img.shields.io/github/license/uxav/AVnetCore?style=flat)](LICENSE)
 
-![Logo](logo@2x.png)
+![Logo](avnet_logo.svg)
 
 A Crestron SimplSharp Pro framework for Crestron control system programs
 
