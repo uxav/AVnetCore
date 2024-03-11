@@ -35,7 +35,7 @@ To use this test library in your project, follow these steps:
    using UXAV.Logging;
    ```
 
-3. Create a class of SystemBase:
+3. Create a class that inherits from SystemBase:
    ```csharp
    public class MySystem : SystemBase
    {
