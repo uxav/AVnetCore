@@ -30,8 +30,9 @@ github_username:  uxav
 color_scheme: dark
 
 # Build settings
-theme: just-the-docs
+remote_theme: just-the-docs/just-the-docs
 plugins:
+  - jekyll-remote-theme
   - jekyll-feed
 
 # Exclude from processing.
