@@ -22,13 +22,13 @@ title: AVnet Core
 email: mike@uxav.co.uk
 description: >- # this means to ignore newlines until "baseurl:"
   A SimplSharp Pro library for Crestron control systems
-baseurl: "/avnetcore" # the subpath of your site, e.g. /blog
+baseurl: "/AVnetCore" # the subpath of your site, e.g. /blog
 url: "https://uxav.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: mikejobson
 github_username:  uxav
 
 # Build settings
-theme: minima
+theme: jekyll-theme-minimal
 plugins:
   - jekyll-feed
 
