@@ -1,9 +1,8 @@
 <p align="center">
    <img src="docs/assets/avnet_logo.svg">
-   
 </p>
 
-<h1 align="center"><a href="https://uxav.github.io/AVnetCore">AVnet Core</a></h1>
+<h1 align="center">AVnet Core</a></h1>
 
 <p align="center">An open-source Crestron SimplSharp Pro framework for Crestron control systems</p>
 
@@ -15,6 +14,8 @@
    <img alt="Pull Requests" src="https://img.shields.io/github/issues-pr/uxav/AVnetCore?style=flat&logo=github">
    <img alt="Licnse" src="https://img.shields.io/github/license/uxav/AVnetCore?style=flat">
 </p>
+
+<p align="center"><a href="https://uxav.github.io/AVnetCore">Explore Docs</a></p>
 
 ## Index
 

@@ -1,9 +1,4 @@
----
-layout: page
-title: "Getting Started"
-permalink: /
----
-# Getting Started
+## Getting Started
 
 To use this test library in your project, follow these steps:
 
