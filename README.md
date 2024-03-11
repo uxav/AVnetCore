@@ -1,23 +1,31 @@
-# AVnet Core Framework
+<p align="center">
+   <img src="avnet_logo.svg">
+   
+</p>
 
-[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/uxav/AVnetCore/test.yml?branch=main&style=flat&logo=github&label=status)](https://github.com/uxav/AVnetCore/actions)
-[![GitHub Issues](https://img.shields.io/github/issues/uxav/AVnetCore?style=flat&logo=github)](https://github.com/uxav/AVnetCore/issues)
-[![Pull Requests](https://img.shields.io/github/issues-pr/uxav/AVnetCore?style=flat&logo=github)](https://github.com/uxav/AVnetCore/pulls)
-[![NuGet Version](https://img.shields.io/nuget/v/UXAV.AVnet.Core?style=flat&logo=nuget)](https://www.nuget.org/packages/UXAV.AVnet.Core)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/UXAV.AVnet.Core?style=flat&logo=nuget)](https://www.nuget.org/packages/UXAV.AVnet.Core)
-[![GitHub License](https://img.shields.io/github/license/uxav/AVnetCore?style=flat)](LICENSE)
+<h1 align="center"><a href="https://uxav.github.io/AVnetCore">AVnet Core</a></h1>
 
-![Logo](avnet_logo.svg)
+<p align="center">An open-source Crestron SimplSharp Pro framework for Crestron control systems</p>
 
-A Crestron SimplSharp Pro framework for Crestron control system programs
+<p align="center">
+   <img alt="Status" src="https://img.shields.io/github/actions/workflow/status/uxav/AVnetCore/test.yml?branch=main&style=flat&logo=github&label=status">
+   <img alt="NuGet Version" src="https://img.shields.io/nuget/v/UXAV.AVnet.Core?style=flat&logo=nuget">
+   <img alt="Downloads" src="https://img.shields.io/nuget/dt/UXAV.AVnet.Core?style=flat&logo=nuget">
+   <img alt="Issues" src="https://img.shields.io/github/issues/uxav/AVnetCore?style=flat&logo=github">
+   <img alt="Pull Requests" src="https://img.shields.io/github/issues-pr/uxav/AVnetCore?style=flat&logo=github">
+   <img alt="Licnse" src="https://img.shields.io/github/license/uxav/AVnetCore?style=flat">
+</p>
 
-## Links
+## Index
 
-GitHub Repository: [AVnetCore](https://github.com/uxav/AVnetCore)
+- [Quick start](#quick-start)
+- [Links](#links)
+- [Dependencies](#dependencies)
+- [Release Notes](#release-notes)
+- [Contributing](#contributing)
+- [License](LICENSE)
 
-NuGet Package: [UXAV.AVnet.Core](https://www.nuget.org/packages/UXAV.AVnet.Core/)
-
-## Usage
+## Quick Start
 
 To use this test library in your project, follow these steps:
 
@@ -113,6 +121,12 @@ To use this test library in your project, follow these steps:
       }
    }
    ```
+
+## Links
+
+GitHub Repository: [AVnetCore](https://github.com/uxav/AVnetCore)
+
+NuGet Package: [UXAV.AVnet.Core](https://www.nuget.org/packages/UXAV.AVnet.Core/)
 
 ## Dependencies
 
