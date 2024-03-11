@@ -17,6 +17,14 @@
         <Version>2.0.0-beta</Version>
     </PropertyGroup>
 
+
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <DebugType>full</DebugType>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <DebugType>pdbonly</DebugType>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="Crestron.SimplSharp.SDK.ProgramLibrary" Version="2.20.52"/>
         <PackageReference Include="Cronos" Version="0.8.4"/>
