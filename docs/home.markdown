@@ -22,4 +22,6 @@ nav_order: 1
 
 Welcome to the docs!
 
+These docs are built from the [GitHub repository](https://github.com/uxav/AVnetCore)
+
 {% include getting-started.md %}
