@@ -1,5 +1,5 @@
 <p align="center">
-   <img src="avnet_logo.svg">
+   <img src="docs/assets/avnet_logo.svg">
    
 </p>
 
@@ -21,6 +21,7 @@
 - [Quick start](#quick-start)
 - [Links](#links)
 - [Dependencies](#dependencies)
+- [Documentation](#documentation)
 - [Release Notes](#release-notes)
 - [Contributing](#contributing)
 - [License](LICENSE)
@@ -130,7 +131,23 @@ NuGet Package: [UXAV.AVnet.Core](https://www.nuget.org/packages/UXAV.AVnet.Core/
 
 ## Dependencies
 
-
+- [UXAV.Logging](https://www.nuget.org/packages/UXAV.Logging)
+- [Crestron.SimpleSharp.SDK.ProgramLibrary](https://www.nuget.org/packages/Crestron.SimplSharp.SDK.ProgramLibrary)
+- [Crestron.SimplSharp.SDK.ProgramLibrary](https://www.nuget.org/packages/)
+- [Cronos](https://www.nuget.org/packages/Cronos)
+- [CsvHelper](https://www.nuget.org/packages/CsvHelper)
+- [Figgle](https://www.nuget.org/packages/Figgle)
+- [Microsoft.AspNet.WebApi.Client](https://www.nuget.org/packages/Microsoft.AspNet.WebApi.Client)
+- [Microsoft.CSharp](https://www.nuget.org/packages/Microsoft.CSharp)
+- [MimeKit](https://www.nuget.org/packages/MimeKit)
+- [Newtonsoft.Json](https://www.nuget.org/packages/Newtonsoft.Json)
+- [Newtonsoft.Json.Schema](https://www.nuget.org/packages/Newtonsoft.Json.Schema)
+- [System.IO.Compression](https://www.nuget.org/packages/System.IO.Compression)
+- [System.Net.Http](https://www.nuget.org/packages/System.Net.Http)
+- [System.Reflection.MetadataLoadContext](https://www.nuget.org/packages/System.Reflection.MetadataLoadContext)
+- [System.Runtime.Serialization.Json](https://www.nuget.org/packages/System.Runtime.Serialization.Json)
+- [UXAV.Logging](https://www.nuget.org/packages/UXAV.Logging)
+- [WebSocketSharp-netstandard](https://www.nuget.org/packages/WebSocketSharp-netstandard)
 
 ## Release Notes
 
@@ -142,7 +159,7 @@ NuGet Package: [UXAV.AVnet.Core](https://www.nuget.org/packages/UXAV.AVnet.Core/
 
 ## Documentation
 
-TBC
+Documentation can be viewed in [GitHub Pages](https://uxav.github.io/AVnetCore)
 
 ## Contributing
 
