@@ -10,7 +10,6 @@
     </Target>
 
     <!-- Ignore crestron post process targets as they don't work right now -->
-    <Target Name="SimplSharpPostProcess" BeforeTargets="AfterBuild">
-    </Target>
+    <Target Name="SimplSharpPostProcess" BeforeTargets="AfterBuild"/>
 
 </Project>
