@@ -1,9 +1,9 @@
 ---
-layout: home
-title: "Home"
-permalink: /
-nav_order: 1
+_layout: landing
 ---
+<p align="center">
+   <img src="assets/avnet_logo.svg">
+</p>
 
 <h1 align="center">AVnet Core</h1>
 
@@ -23,5 +23,3 @@ nav_order: 1
 Welcome to the docs!
 
 These docs are built from the [GitHub repository](https://github.com/uxav/AVnetCore)
-
-{% include getting-started.md %}
