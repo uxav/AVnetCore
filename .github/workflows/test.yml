@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/*
   pull_request:
     branches:
       - main
@@ -34,7 +33,7 @@ jobs:
       - name: Check version number
         id: check-version
         run: |
-          version=$(grep -o '<Version>.*</Version>' **/${{ env.PROJECT_NAME }}.csproj | sed 's/<Version>\(.*\)<\/Version>/\1/')
+          version=$(grep -o '<Version>.*</Version>' ${{ env.PROJECT_NAME }}/Directory.Build.props | sed 's/<Version>\(.*\)<\/Version>/\1/')
           versionTagToCheck="v$version"
           echo "Version tag to check is $versionTagToCheck"
           git fetch --tags
