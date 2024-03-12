@@ -1,5 +1,3 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Release
 
 on:
@@ -23,7 +21,7 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - name: Setup .NET Core
+      - name: Dotnet Setup
         id: setup-dotnet
         uses: actions/setup-dotnet@v4
         with:
