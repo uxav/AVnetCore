@@ -30,7 +30,7 @@ jobs:
       - name: Get version number
         id: get-version
         run: |
-          version=$(grep -o '<Version>.*</Version>' **/${{ env.PROJECT_NAME }}.csproj | sed 's/<Version>\(.*\)<\/Version>/\1/')
+          version=$(grep -o '<Version>.*</Version>' ${{ env.PROJECT_NAME }}/Directory.Build.props | sed 's/<Version>\(.*\)<\/Version>/\1/')
           echo "Version is $version"
           if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Invalid version format: $version"
