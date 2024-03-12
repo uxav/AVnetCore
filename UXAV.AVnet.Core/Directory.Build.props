@@ -1,0 +1,19 @@
+<Project>
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <RootNamespace>UXAV.AVnet.Core</RootNamespace>
+        <AssemblyName>UXAV.AVnet.Core</AssemblyName>
+        <TargetFrameworks>net6.0;net472</TargetFrameworks>
+        <LangVersion>default</LangVersion>
+        <Copyright>©Copyright Mike Jobson 2024</Copyright>
+        <Authors>Mike Jobson</Authors>
+        <PackageTags>Crestron;AVnet;SimplSharp</PackageTags>
+        <AssemblyTitle>AVnet Core Library</AssemblyTitle>
+        <AssemblyDescription>A Crestron Simpl# Pro Framework</AssemblyDescription>
+        <RepositoryUrl>https://github.com/uxav/AVnetCore</RepositoryUrl>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Version>2.0.0</Version>
+    </PropertyGroup>
+</Project>
