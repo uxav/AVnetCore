@@ -68,7 +68,7 @@ jobs:
         with:
           tag: ${{ env.TAG }}
           name: Release ${{ env.VERSION_TITLE }}
-          draft: true
+          draft: false
           prerelease: true
           artifacts: |
             nupkgs/*.nupkg
