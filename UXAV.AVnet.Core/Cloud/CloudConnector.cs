@@ -29,7 +29,7 @@ namespace UXAV.AVnet.Core.Cloud
         private static string _version;
         private static string _productVersion;
         private static bool _init;
-        private static EventWaitHandle _waitHandle;
+        private static EventWaitHandle _waitHandle = new(false, EventResetMode.AutoReset);
         private static Uri _checkinUri;
         private static bool _suppressWarning;
         private static Uri _configUploadUri;
