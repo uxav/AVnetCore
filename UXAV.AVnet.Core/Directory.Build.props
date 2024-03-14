@@ -5,6 +5,8 @@
         <AssemblyName>UXAV.AVnet.Core</AssemblyName>
         <TargetFrameworks>net6.0;net472</TargetFrameworks>
         <LangVersion>default</LangVersion>
+        <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+        <Deterministic>false</Deterministic>
 
         <Copyright>©Copyright Mike Jobson 2024</Copyright>
         <Authors>Mike Jobson</Authors>
@@ -24,6 +26,7 @@
 
         <!--Set the version as X.X.X  ... DO NOT PUSH WITH -beta, -rc etc-->
         <Version>2.0.0</Version>
+        <AssemblyVersion>2.0.*</AssemblyVersion>
 
     </PropertyGroup>
 </Project>

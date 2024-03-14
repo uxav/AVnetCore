@@ -57,6 +57,7 @@ namespace UXAV.AVnet.Core.Models
         private static string _dhcpStatus;
         private static string _domainName;
         private static string _hostName;
+        private static string _appVersion;
         private readonly string _initialConfig;
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
         internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
@@ -157,7 +158,16 @@ namespace UXAV.AVnet.Core.Models
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
                 Logger.Log("SerialNumber: {0}", CrestronEnvironment.SystemInfo.SerialNumber);
             Logger.Log("App Info: {0}", AppAssembly.GetName().FullName);
+            var versionInfo = FileVersionInfo.GetVersionInfo(AppAssembly.Location);
+            var versionInfo2 = AppAssembly.GetName().Version;
+            Logger.Log("App Version: {0}", versionInfo2.ToString());
+            Logger.Log("App File Version: {0}", versionInfo.FileVersion);
+            Logger.Log("App Product Version: {0}", versionInfo.ProductVersion);
+            Logger.Log("App Product Build Part: {0}", versionInfo.ProductBuildPart);
+            Logger.Log("App is debug: {0}", versionInfo.IsDebug);
+            Logger.Log("App Assembly Version: {0}", AppAssembly.GetName().Version);
             Logger.Log("{0} Version: {1}", UxEnvironment.Name, UxEnvironment.Version);
+            Logger.Log("{0} Product Version: {1}", UxEnvironment.Name, UxEnvironment.ProductVersion);
             Logger.Log("{0} Assembly Version: {1}", UxEnvironment.Name, UxEnvironment.AssemblyVersion);
 #if DEBUG
             Logger.Log("AVnetCore running is DEBUG build! 🕷️");
@@ -392,7 +402,16 @@ namespace UXAV.AVnet.Core.Models
 
         public virtual string AppName => AppAssembly.GetName().Name;
 
-        public virtual string AppVersion => FileVersionInfo.GetVersionInfo(AppAssembly.Location).FileVersion;
+        public virtual string AppVersion
+        {
+            get
+            {
+                if (_appVersion != null) return _appVersion;
+                var vi = FileVersionInfo.GetVersionInfo(AppAssembly.Location);
+                _appVersion = $"{vi.ProductMajorPart}.{vi.ProductMinorPart}.{vi.ProductBuildPart}";
+                return _appVersion;
+            }
+        }
 
         public static string RuntimeGuid
         {

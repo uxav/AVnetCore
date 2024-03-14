@@ -143,8 +143,8 @@ namespace UXAV.AVnet.Core.Cloud
                 }
 
             _version = assembly.GetName().Version.ToString();
-            _productVersion = FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
-            _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
+            var vi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            _productVersion = $"{vi.ProductMajorPart}.{vi.ProductMinorPart}.{vi.ProductBuildPart}";
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
             foreach (var message in Logger.GetHistory())
             {
@@ -173,7 +173,7 @@ namespace UXAV.AVnet.Core.Cloud
 
         private static async void CheckInProcess()
         {
-            _waitHandle.WaitOne(TimeSpan.FromSeconds(30));
+            _waitHandle?.WaitOne(TimeSpan.FromSeconds(30));
             if (_programStopping) return;
 
             while (true)
@@ -195,7 +195,7 @@ namespace UXAV.AVnet.Core.Cloud
                         if (!_suppressWarning) Logger.Error(e);
                     }
 
-                _waitHandle.WaitOne(TimeSpan.FromMinutes(1));
+                _waitHandle?.WaitOne(TimeSpan.FromMinutes(1));
                 if (!_programStopping) continue;
                 Logger.Warn($"{nameof(CloudConnector)} leaving checkin process!");
                 return;
