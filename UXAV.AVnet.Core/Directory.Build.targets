@@ -1,5 +1,5 @@
 <Project DefaultTargets="Build">
-    
+
     <!-- This target is used to ignore SimplSharpNewtonsoft.dll -->
     <Target Name="SimplSharpNewtonsoft" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
         <ItemGroup>
@@ -10,6 +10,12 @@
     </Target>
 
     <!-- Ignore crestron post process targets as they don't work right now -->
-    <Target Name="SimplSharpPostProcess" BeforeTargets="AfterBuild"/>
+    <Target Name="SimplSharpPostProcess" BeforeTargets="AfterBuild" />
+
+    <!-- Upload the project to the processor -->
+    <Target Name="UploadProject" AfterTargets="AfterBuild" Condition="'$(OS)'=='Unix' And $(Configuration) == 'Debug'">
+        <Exec Command="bash '$(ProjectDir)Scripts/upload.sh' $(TargetFramework) $(OutputPath) $(TargetName)" />
+    </Target>
+
 
 </Project>
