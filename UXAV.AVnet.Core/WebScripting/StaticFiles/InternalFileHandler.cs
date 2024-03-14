@@ -1,6 +1,6 @@
 using System;
-using Crestron.SimplSharp.CrestronIO;
-using Crestron.SimplSharp.Reflection;
+using System.IO;
+using System.Reflection;
 
 namespace UXAV.AVnet.Core.WebScripting.StaticFiles
 {

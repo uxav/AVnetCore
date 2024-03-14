@@ -13,7 +13,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
-using MimeKit;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;

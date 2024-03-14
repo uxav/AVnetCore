@@ -116,7 +116,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             if (match.Success && match.Groups[1].Success)
             {
                 var extension = match.Groups[1].Value;
-                res.ContentType = MimeKit.MimeTypes.GetMimeType(path);
+                res.ContentType = MimeTypes.GetMimeType(path);
                 if (DebugIsOn)
                     Logger.Debug($"Setting content type to {res.ContentType}");
             }

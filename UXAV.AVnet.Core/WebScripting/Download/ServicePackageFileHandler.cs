@@ -22,12 +22,13 @@ namespace UXAV.AVnet.Core.WebScripting.Download
                 if (!string.IsNullOrEmpty(CloudConnector.LogsUploadUrl))
                     Response.Headers.Add("X-App-CloudUploadUrl", CloudConnector.LogsUploadUrl);
                 Response.Headers.Add("Access-Control-Expose-Headers", "Content-Disposition, X-App-CloudUploadUrl");
+                var fileName = $"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip";
                 Response.Headers.Add("Content-Disposition",
-                    $"attachment; filename=\"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip\"");
+                    $"attachment; filename=\"{fileName}\"");
 
                 Logger.Log("Generated zip package, {0} bytes", zipStream.Length);
 
-                Response.ContentType = MimeKit.MimeTypes.GetMimeType(".zip");
+                Response.ContentType = MimeTypes.GetMimeType(fileName);
                 Response.Headers.Add("Content-Length", zipStream.Length.ToString());
 
                 var headerContents = Response.Headers.Cast<string>().Aggregate(string.Empty,

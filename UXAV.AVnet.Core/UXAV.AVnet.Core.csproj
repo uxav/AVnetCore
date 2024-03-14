@@ -7,25 +7,25 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Crestron.SimplSharp.SDK.ProgramLibrary" Version="2.20.52"/>
-        <PackageReference Include="Cronos" Version="0.8.4"/>
-        <PackageReference Include="CsvHelper" Version="31.0.2"/>
-        <PackageReference Include="Figgle" Version="0.5.1"/>
-        <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0"/>
-        <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
-        <PackageReference Include="MimeKit" Version="4.4.0"/>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
-        <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.15"/>
-        <PackageReference Include="System.IO.Compression" Version="4.3.0"/>
-        <PackageReference Include="System.Net.Http" Version="4.3.4"/>
-        <PackageReference Include="System.Reflection.MetadataLoadContext" Version="8.0.0"/>
-        <PackageReference Include="System.Runtime.Serialization.Json" Version="4.3.0"/>
-        <PackageReference Include="UXAV.Logging" Version="2.0.0-rc-2"/>
-        <PackageReference Include="WebSocketSharp-netstandard" Version="1.0.1"/>
+        <PackageReference Include="Crestron.SimplSharp.SDK.ProgramLibrary" Version="2.20.52" />
+        <PackageReference Include="Cronos" Version="0.8.4" />
+        <PackageReference Include="CsvHelper" Version="31.0.2" />
+        <PackageReference Include="Figgle" Version="0.5.1" />
+        <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
+        <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+        <PackageReference Include="MimeTypes" Version="2.4.1" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.15" />
+        <PackageReference Include="System.IO.Compression" Version="4.3.0" />
+        <PackageReference Include="System.Net.Http" Version="4.3.4" />
+        <PackageReference Include="System.Reflection.MetadataLoadContext" Version="8.0.0" />
+        <PackageReference Include="System.Runtime.Serialization.Json" Version="4.3.0" />
+        <PackageReference Include="UXAV.Logging" Version="2.0.0-rc-2" />
+        <PackageReference Include="WebSocketSharp-netstandard" Version="1.0.1" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\README.md" Pack="true" PackagePath="README.md"/>
-        <None Include="..\LICENSE.md" Pack="true" PackagePath="LICENSE.md"/>
+        <None Include="..\README.md" Pack="true" PackagePath="README.md" />
+        <None Include="..\LICENSE.md" Pack="true" PackagePath="LICENSE.md" />
     </ItemGroup>
 </Project>
