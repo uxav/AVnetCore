@@ -5,7 +5,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class AutoDiscoveryApiHandler : ApiRequestHandler
+    internal class AutoDiscoveryApiHandler : ApiRequestHandler
     {
         public AutoDiscoveryApiHandler(WebScriptingServer server, WebScriptingRequest request) : base(server, request)
         {
@@ -44,7 +44,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 Logger.Error(e);
             }
         }
-        
+
         private void LogInnerExceptions(Exception ex)
         {
             if (ex is AggregateException aggEx)

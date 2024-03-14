@@ -10,7 +10,7 @@ using s = System;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class StatusApiHandler : ApiRequestHandler
+    internal class StatusApiHandler : ApiRequestHandler
     {
         public StatusApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request, true)

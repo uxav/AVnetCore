@@ -7,7 +7,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class EventsSession : IDisposable
+    internal class EventsSession : IDisposable
     {
         private static int _count;
         private readonly BlockingCollection<EventMessage> _queue;

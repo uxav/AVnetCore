@@ -8,7 +8,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class EventsApiHandler : ApiRequestHandler
+    internal class EventsApiHandler : ApiRequestHandler
     {
         private static readonly Dictionary<int, EventsSession> Sessions = new Dictionary<int, EventsSession>();
         private static readonly AutoResetEvent ThreadWait = new AutoResetEvent(false);

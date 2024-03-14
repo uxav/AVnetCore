@@ -11,7 +11,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class FileUploadApiHandler : ApiRequestHandler
+    internal class FileUploadApiHandler : ApiRequestHandler
     {
         public static readonly Dictionary<string, Dictionary<int, MemoryStream>> UploadStreams =
             new Dictionary<string, Dictionary<int, MemoryStream>>();

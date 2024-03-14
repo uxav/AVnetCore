@@ -6,7 +6,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class PasswordsApiHandler : ApiRequestHandler
+    internal class PasswordsApiHandler : ApiRequestHandler
     {
         public PasswordsApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)

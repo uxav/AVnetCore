@@ -3,7 +3,7 @@ using UXAV.AVnet.Core.Models.Diagnostics;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class DiagnosticsApiHandler : ApiRequestHandler
+    internal class DiagnosticsApiHandler : ApiRequestHandler
     {
         public DiagnosticsApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)

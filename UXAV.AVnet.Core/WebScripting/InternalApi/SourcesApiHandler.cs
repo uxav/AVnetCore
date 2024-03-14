@@ -6,7 +6,7 @@ using UXAV.AVnet.Core.Models;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class SourcesApiHandler : ApiRequestHandler
+    internal class SourcesApiHandler : ApiRequestHandler
     {
         public SourcesApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)

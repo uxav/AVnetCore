@@ -50,7 +50,7 @@ namespace UXAV.AVnet.Core.WebScripting
         public void AddRedirect(string routePattern, string redirectUrl)
         {
             var finalPattern = Regex.Replace(routePattern, @"\/([^\s<\/]+)|\/<(\w*)(?::([^\s>]+))?>|\/",
-                delegate(Match match)
+                delegate (Match match)
                 {
                     if (!string.IsNullOrEmpty(match.Groups[1].Value)) return @"\/" + match.Groups[1].Value;
 
@@ -71,10 +71,10 @@ namespace UXAV.AVnet.Core.WebScripting
 
             var keyNames =
                 (from Match match in Regex.Matches(routePattern, @"\/<(\w*)(?::([^\s>]+))?>")
-                    select match.Groups[1].Value).ToList();
+                 select match.Groups[1].Value).ToList();
 
             var finalPattern = Regex.Replace(routePattern, @"\/([^\s<\/]+)|\/<(\w*)(?::([^\s>]+))?>|\/",
-                delegate(Match match)
+                delegate (Match match)
                 {
                     if (!string.IsNullOrEmpty(match.Groups[1].Value)) return @"\/" + match.Groups[1].Value;
 
@@ -115,10 +115,10 @@ namespace UXAV.AVnet.Core.WebScripting
                 //Logger.Debug("Headers:" + headerContents);
 
                 foreach (var redirect in from redirect in _redirects
-                         let pattern = redirect.Key
-                         let match = Regex.Match(decodedPath, pattern)
-                         where match.Success
-                         select redirect)
+                                         let pattern = redirect.Key
+                                         let match = Regex.Match(decodedPath, pattern)
+                                         where match.Success
+                                         select redirect)
                 {
                     try
                     {
@@ -161,8 +161,8 @@ namespace UXAV.AVnet.Core.WebScripting
 
                         var requestType = keyValuePair.Value;
 
-                        var ctor = requestType.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null,
-                            new[] { typeof(WebScriptingServer), typeof(WebScriptingRequest) }, null);
+                        var ctor = requestType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null,
+                            [typeof(WebScriptingServer), typeof(WebScriptingRequest)], null);
 
                         if (ctor == null)
                         {
@@ -171,10 +171,9 @@ namespace UXAV.AVnet.Core.WebScripting
                             return;
                         }
 
-                        var instance = ctor.Invoke(BindingFlags.Public | BindingFlags.Instance, null,
-                            new object[] { this, request }, CultureInfo.InvariantCulture) as RequestHandler;
 
-                        if (instance == null)
+                        if (ctor.Invoke(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null,
+                            [this, request], CultureInfo.InvariantCulture) is not RequestHandler instance)
                         {
                             HandleError(request, 500, "Server Error",
                                 "Could not invoke ctor for handler type: " + requestType.FullName);

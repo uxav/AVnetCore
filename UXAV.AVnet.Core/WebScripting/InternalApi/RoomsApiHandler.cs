@@ -5,7 +5,7 @@ using UXAV.AVnet.Core.Models.Rooms;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class RoomsApiHandler : ApiRequestHandler
+    internal class RoomsApiHandler : ApiRequestHandler
     {
         public RoomsApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)

@@ -5,7 +5,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.StaticFiles
 {
-    public class WebAppFileHandler : FileHandlerBase
+    internal class WebAppFileHandler : FileHandlerBase
     {
         public WebAppFileHandler(WebScriptingServer server, WebScriptingRequest request) : base(server, request)
         {

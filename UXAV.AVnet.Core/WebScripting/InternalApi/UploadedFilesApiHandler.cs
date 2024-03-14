@@ -6,7 +6,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class UploadedFilesApiHandler : ApiRequestHandler
+    internal class UploadedFilesApiHandler : ApiRequestHandler
     {
         public UploadedFilesApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)

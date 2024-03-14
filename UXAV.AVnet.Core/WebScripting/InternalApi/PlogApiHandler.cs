@@ -8,7 +8,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class PlogApiHandler : ApiRequestHandler
+    internal class PlogApiHandler : ApiRequestHandler
     {
         public PlogApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)
@@ -25,17 +25,17 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 switch (CrestronEnvironment.DevicePlatform)
                 {
                     case eDevicePlatform.Server:
-                    {
-                        var logFolder = new DirectoryInfo("/var/log/crestron");
-                        files = logFolder.GetFiles($"*{InitialParametersClass.RoomId}*.log");
-                        break;
-                    }
+                        {
+                            var logFolder = new DirectoryInfo("/var/log/crestron");
+                            files = logFolder.GetFiles($"*{InitialParametersClass.RoomId}*.log");
+                            break;
+                        }
                     case eDevicePlatform.Appliance:
-                    {
-                        var logFolder = new DirectoryInfo("/logs/CurrentBoot");
-                        files = logFolder.EnumerateFiles("Crestron_*.log", SearchOption.TopDirectoryOnly);
-                        break;
-                    }
+                        {
+                            var logFolder = new DirectoryInfo("/logs/CurrentBoot");
+                            files = logFolder.EnumerateFiles("Crestron_*.log", SearchOption.TopDirectoryOnly);
+                            break;
+                        }
                     default:
                         throw new ArgumentOutOfRangeException();
                 }

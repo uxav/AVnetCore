@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class ConsoleApiHandler : ApiRequestHandler
+    internal class ConsoleApiHandler : ApiRequestHandler
     {
         public ConsoleApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request, true)

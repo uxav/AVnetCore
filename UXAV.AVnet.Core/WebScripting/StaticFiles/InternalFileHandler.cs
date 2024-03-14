@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace UXAV.AVnet.Core.WebScripting.StaticFiles
 {
-    public class InternalFileHandler : FileHandlerBase
+    internal class InternalFileHandler : FileHandlerBase
     {
         public InternalFileHandler(WebScriptingServer server, WebScriptingRequest request) : base(server, request)
         {

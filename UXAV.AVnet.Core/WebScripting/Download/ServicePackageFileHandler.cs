@@ -7,7 +7,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.Download
 {
-    public class ServicePackageFileHandler : RequestHandler
+    internal class ServicePackageFileHandler : RequestHandler
     {
         public ServicePackageFileHandler(WebScriptingServer server, WebScriptingRequest request) : base(server, request)
         {
