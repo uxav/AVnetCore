@@ -159,6 +159,9 @@ namespace UXAV.AVnet.Core.Models
             Logger.Log("App Info: {0}", AppAssembly.GetName().FullName);
             Logger.Log("{0} Version: {1}", UxEnvironment.Name, UxEnvironment.Version);
             Logger.Log("{0} Assembly Version: {1}", UxEnvironment.Name, UxEnvironment.AssemblyVersion);
+#if DEBUG
+            Logger.Log("AVnetCore running is DEBUG build! 🕷️");
+#endif
             Logger.Log("Starting app version {0}", AppAssembly.GetName().Version);
             Logger.Log($"Program Info states build time as: {ProgramBuildTime:R}");
             Logger.Debug("ProcessId: {0}", Process.GetCurrentProcess().Id);
