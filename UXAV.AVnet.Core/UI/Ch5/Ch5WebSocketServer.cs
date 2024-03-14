@@ -29,6 +29,30 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         internal static bool DebugIsOn { get; private set; }
 
+        /// <summary>
+        /// Initialize the websocket server for the UI
+        /// </summary>
+        /// <param name="port">
+        /// Port for the server to run on
+        /// Set this to be something like 8080 + the application number (e.g. 8081 for app 1)
+        /// If you are running multiple instances of the application, you will need to change the port
+        /// for each instance
+        /// </param>
+        /// <param name="workingDirectory">
+        /// The working diretcory for the server to use
+        /// Defaults to "./ch5" which would then be relative to the application directory with a ch5 directory
+        /// If you want to use an absolute path, you can do so by setting this to the absolute path
+        /// </param>
+        /// <param name="cert">
+        /// An optional certificate to use for the server to run in secure mode
+        /// </param>
+        /// <example>
+        /// Initialize the server on port 8081 with the working directory of "./ch5" and a certificate
+        /// assuming the application number is 1
+        /// <code>
+        /// Ch5WebSocketServer.Init(8080 + InitialParametersClass.ApplicationNumber, "./ch5", cert);
+        /// </code>
+        /// </example>
         public static void Init(int port, string workingDirectory = "./ch5", X509Certificate2 cert = null)
         {
             Logger.AddCommand((argString, args, connection, respond) => { DebugIsOn = true; }, "WebSocketServerDebug",
@@ -70,7 +94,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             var path = req.Url.LocalPath;
             if (DebugIsOn)
-                Logger.Debug($"GET {path}");
+                Logger.Debug($"GET {path}, working directory: {_workingDirectory}");
             if (path == "/")
                 path += "index.html";
 
@@ -83,8 +107,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 OnUserGet?.Invoke(sender, e);
                 return;
             }
-
-            byte[] contents;
 
             path = _workingDirectory + path;
 
@@ -103,7 +125,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 return;
             }
 
-            if (!TryReadFile(path, out contents))
+            if (!TryReadFile(path, out byte[] contents))
             {
                 if (DebugIsOn)
                     Logger.Debug($"File not found: {path}");
