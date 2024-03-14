@@ -106,6 +106,9 @@ namespace UXAV.AVnet.Core.Models
                             case XmlNodeType.Text:
                                 switch (elementName)
                                 {
+                                    case "TargetFramework":
+                                        TargetFramework = reader.Value;
+                                        break;
                                     case "Include4.dat":
                                         Include4DatInfo = reader.Value;
                                         break;
@@ -158,13 +161,10 @@ namespace UXAV.AVnet.Core.Models
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
                 Logger.Log("SerialNumber: {0}", CrestronEnvironment.SystemInfo.SerialNumber);
             Logger.Log("App Info: {0}", AppAssembly.GetName().FullName);
+            Logger.Log("App Version: {0}", AppAssembly.GetName().Version);
             var versionInfo = FileVersionInfo.GetVersionInfo(AppAssembly.Location);
-            var versionInfo2 = AppAssembly.GetName().Version;
-            Logger.Log("App Version: {0}", versionInfo2.ToString());
             Logger.Log("App File Version: {0}", versionInfo.FileVersion);
             Logger.Log("App Product Version: {0}", versionInfo.ProductVersion);
-            Logger.Log("App Product Build Part: {0}", versionInfo.ProductBuildPart);
-            Logger.Log("App is debug: {0}", versionInfo.IsDebug);
             Logger.Log("App Assembly Version: {0}", AppAssembly.GetName().Version);
             Logger.Log("{0} Version: {1}", UxEnvironment.Name, UxEnvironment.Version);
             Logger.Log("{0} Product Version: {1}", UxEnvironment.Name, UxEnvironment.ProductVersion);
@@ -172,7 +172,7 @@ namespace UXAV.AVnet.Core.Models
 #if DEBUG
             Logger.Log("AVnetCore running is DEBUG build! 🕷️");
 #endif
-            Logger.Log("Starting app version {0}", AppAssembly.GetName().Version);
+            Logger.Log($"Target framework: {TargetFramework}");
             Logger.Log($"Program Info states build time as: {ProgramBuildTime:R}");
             Logger.Debug("ProcessId: {0}", Process.GetCurrentProcess().Id);
             Logger.Log("Room Name: {0}", InitialParametersClass.RoomName);
@@ -501,6 +501,8 @@ namespace UXAV.AVnet.Core.Models
         }
 
         public DateTime ProgramBuildTime { get; }
+
+        public string TargetFramework { get; }
 
         public string Include4DatInfo { get; }
 

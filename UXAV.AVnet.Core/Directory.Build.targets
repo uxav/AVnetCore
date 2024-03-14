@@ -17,5 +17,4 @@
         <Exec Command="bash '$(ProjectDir)Scripts/upload.sh' $(TargetFramework) $(OutputPath) $(TargetName)" />
     </Target>
 
-
 </Project>
