@@ -26,6 +26,10 @@ using UXAV.Logging.Console;
 
 namespace UXAV.AVnet.Core.Config
 {
+    /// <summary>
+    ///    Manages the config file for the program
+    ///    <para>Config file is a json file with a schema</para>
+    /// </summary>
     public static class ConfigManager
     {
         private static JToken _config;
@@ -49,6 +53,13 @@ namespace UXAV.AVnet.Core.Config
                 "ConfigWriteToDefault", $"Writes current loaded config to {DefaultConfigPath}");
         }
 
+        /// <summary>
+        ///    The directory where the config file is stored
+        /// </summary>
+        /// <remarks>
+        ///   <para>For a server, this is the program user directory <see cref="SystemBase.ProgramUserDirectory"/></para>
+        ///   <para>For a processor, this is the program nvram app instance directory <see cref="SystemBase.ProgramNvramAppInstanceDirectory"/></para>
+        ///  </remarks>
         public static string ConfigDirectory
         {
             get
@@ -60,8 +71,22 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        /// <summary>
+        ///   The namespace of the config file
+        ///   <para>Defaults to the calling assembly name in lowercase</para>
+        ///  </summary>
         public static string ConfigNameSpace { get; }
 
+        /// <summary>
+        ///   The default config file path
+        ///   <para>Defaults to the calling assembly name</para>
+        ///   <para>Will be in the config directory with the namespace and "config.json" appended</para>
+        ///   <example>
+        ///   <code>
+        ///     /NVRAM/app_01/myapp.config.json
+        ///   </code>
+        ///   </example>
+        /// </summary>
         public static string DefaultConfigPath
         {
             get
@@ -77,7 +102,10 @@ namespace UXAV.AVnet.Core.Config
         private static Regex FilePattern => new Regex($"(?:(\\w+)\\.)?{ConfigNameSpace}\\.config\\.json");
 
         /// <summary>
-        ///     The config path for the json formatted config file
+        ///     The current config file path
+        ///     <para>Will be in the config directory with the namespace and "config.json" appended</para>
+        ///     <para>Will be set to the default path if no path is set</para>
+        ///     <para>Use <seealso cref="SetConfigPath" /> to change the current config file path</para>
         /// </summary>
         public static string ConfigPath
         {
@@ -134,6 +162,9 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        /// <summary>
+        ///   Returns true if the current config file is the default file
+        /// </summary>
         public static bool ConfigIsDefaultFile
         {
             get
@@ -144,9 +175,6 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
-        /// <summary>
-        ///     Config file contents as string
-        /// </summary>
         private static string ConfigData
         {
             get
@@ -246,6 +274,9 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        /// <summary>
+        ///    Get or the current config data schema
+        /// </summary>
         public static JSchema Schema { get; private set; }
 
         internal static JObject PropertyList
@@ -315,6 +346,10 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        /// <summary>
+        ///    Get the current config as a specific type which inherits from <see cref="ConfigBase" />
+        /// </summary>
+        /// <typeparam name="T">The type of the config which should be of base type ConfigBase</typeparam>
         public static T GetConfig<T>() where T : ConfigBase, new()
         {
             if (Schema == null)
@@ -343,12 +378,24 @@ namespace UXAV.AVnet.Core.Config
             return newConfig;
         }
 
+        /// <summary>
+        ///    Set and save an updated config to the current config file
+        /// </summary>
+        /// <param name="config">The config class to save</param>
         public static void SetConfig(ConfigBase config)
         {
             Logger.Highlight(nameof(SetConfig));
             JConfig = JToken.FromObject(config);
         }
 
+        /// <summary>
+        ///   Set and save an updated config to a specific file
+        /// </summary>
+        /// <param name="config">The config class to save</param>
+        /// <param name="filePath">The file path of the config file to use</param>
+        /// <remarks>
+        ///   Note the current file path will not be changed if saving to another file
+        /// </remarks>
         public static void SetConfig(ConfigBase config, string filePath)
         {
             Logger.Highlight(nameof(SetConfig));
@@ -369,6 +416,12 @@ namespace UXAV.AVnet.Core.Config
             if (filePath == ConfigPath) _config = null;
         }
 
+        /// <summary>
+        ///   Save the current config to the default file
+        /// </summary>
+        /// <exception cref="Exception">
+        ///   Thrown if could not write to the default config file
+        /// </exception>
         public static void WriteCurrentConfigToDefaultPath()
         {
             if (_filePath == DefaultConfigPath) throw new Exception("Cannot write from default config");
@@ -387,6 +440,10 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        /// <summary>
+        ///   Get the details of all the config files in the config directory
+        /// </summary>
+        /// <return>An array of <see cref="ConfigFileDetails" /> objects</return>
         public static ConfigFileDetails[] GetFileDetails()
         {
             var directory = new DirectoryInfo(ConfigDirectory);
@@ -412,6 +469,12 @@ namespace UXAV.AVnet.Core.Config
             return files.OrderByDescending(f => f.CreationDate).ToArray();
         }
 
+        /// <summary>
+        ///   Set the current config file to a specific file path which then
+        ///   will null the current config causing it to load from this new path
+        ///   on next access using <seealso cref="GetConfig" />
+        /// </summary>
+        /// <param name="filePath"></param>
         public static void SetConfigPath(string filePath)
         {
             try
@@ -427,6 +490,11 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        /// <summary>
+        ///   Create a new config file with a specific name
+        /// </summary>
+        /// <param name="configName">The name of the config, not the file path. Path will be generated dynamically</param>
+        /// <exception cref="InvalidOperationException">Thrown if config already exists</exception>
         public static void CreateNewFileWithName(string configName)
         {
             var name = Regex.Replace(configName, " ", "_");
@@ -440,6 +508,12 @@ namespace UXAV.AVnet.Core.Config
             SaveConfig();
         }
 
+        /// <summary>
+        ///   Delete the current config file
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        ///   Thrown if the current config file is the default file
+        /// </exception>
         public static void DeleteCurrentFile()
         {
             if (ConfigIsDefaultFile) throw new InvalidOperationException("You cannot delete the default config file");
@@ -467,6 +541,13 @@ namespace UXAV.AVnet.Core.Config
             return !PropertyList.ContainsKey(key) ? null : PropertyList[key].ToObject<object>();
         }
 
+        /// <summary>
+        ///    Get a PList item object from the current config defined by a string key name
+        /// </summary>
+        /// <typeparam name="T">The type of the default value</typeparam>
+        /// <param name="key">Unique key name for the item</param>
+        /// <param name="defaultValue">The default value stored and returned if it does not exist</param>
+        /// <returns></returns>
         public static T GetOrCreatePropertyListItem<T>(string key, T defaultValue)
         {
             try
@@ -506,6 +587,11 @@ namespace UXAV.AVnet.Core.Config
             return string.Empty;
         }
 
+        /// <summary>
+        ///    Get a dynamic object from a csv file in the cloud
+        /// </summary>
+        /// <param name="url">The url of the csv file to get</param>
+        /// <returns>A dynamic data type of the values in the csv path</returns>
         public static async Task<IEnumerable<dynamic>> GetCloudCsvDataAsync(string url)
         {
             Logger.Debug($"Getting cloud template data from: {url}");
@@ -516,6 +602,11 @@ namespace UXAV.AVnet.Core.Config
             return csv.GetRecords<dynamic>();
         }
 
+        /// <summary>
+        ///   Get a dynamic object from a csv file
+        /// </summary>
+        /// <param name="filePath">The file path of the csv file</param>
+        /// <returns>A dynamic data type of the values in the csv file</returns>
         public static IEnumerable<dynamic> GetCsvData(string filePath)
         {
             Logger.Debug($"Getting template data from: {filePath}");
@@ -563,9 +654,6 @@ namespace UXAV.AVnet.Core.Config
             _saveTimer.Change(TimeSpan.FromSeconds(seconds), TimeSpan.Zero);
         }
 
-        /// <summary>
-        ///     Save the current config to file
-        /// </summary>
         private static void SaveConfig()
         {
             Logger.Log("Saving config!");
@@ -636,6 +724,14 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        /// <summary>
+        ///   Get a password from the current config / secure storage defined by a string key name
+        ///   <para>Will use secure storage if supported, otherwise will use the config plist</para>
+        /// </summary>
+        /// <param name="passwordKey">The key name of the password</param>
+        /// <returns>The string value of the password</returns>
+        /// <exception cref="KeyNotFoundException">The key does not exist</exception>
+        /// <exception cref="Exception">An error thrown retrieving the value</exception>
         public static string PasswordGet(string passwordKey)
         {
             if (!CrestronSecureStorage.Supported)
@@ -663,6 +759,13 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        /// <summary>
+        ///   As <seealso cref="PasswordGet" /> but will save and return a default value if the key does not exist
+        ///   <para>Will use secure storage if supported, otherwise will use the config plist</para>
+        /// </summary>
+        /// <param name="passwordKey">The key name of the password</param>
+        /// <param name="defaultValue">The default value to be saved and returned if the value is not already stored</param>
+        /// <returns>The string value of the password</returns>
         public static string PasswordGetOrCreate(string passwordKey, string defaultValue)
         {
             if (!CrestronSecureStorage.Supported)
@@ -690,6 +793,12 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
+        /// <summary>
+        ///   Set a password to the current config / secure storage defined by a string key name
+        /// </summary>
+        /// <param name="passwordKey">The key name of the password</param>
+        /// <param name="value">The new value of the password to store</param>
+        /// <exception cref="Exception">Thrown if the password could not be stored</exception>
         public static void PasswordSet(string passwordKey, string value)
         {
             if (!CrestronSecureStorage.Supported)
@@ -746,6 +855,9 @@ namespace UXAV.AVnet.Core.Config
         }
     }
 
+    /// <summary>
+    ///   Details of a config file
+    /// </summary>
     public class ConfigFileDetails
     {
         internal ConfigFileDetails(string name, string filepath, bool isDefault, DateTime creationDate,
@@ -758,12 +870,35 @@ namespace UXAV.AVnet.Core.Config
             ModifiedDate = modifiedDate;
         }
 
+        /// <summary>
+        ///  The name of the config
+        /// </summary>
         public string Name { get; }
+
+        /// <summary>
+        ///   The file path of the config
+        /// </summary>
         public string Filepath { get; }
+
+        /// <summary>
+        ///   True if the config is the default file
+        /// </summary>
         public bool IsDefault { get; }
+
+        /// <summary>
+        ///  The creation date of the config file
+        /// </summary>
         public DateTime CreationDate { get; }
+
+        /// <summary>
+        ///   The last modified date of the config file
+        /// </summary>
         public DateTime ModifiedDate { get; }
 
+        /// <summary>
+        ///   True if the config file is the active file
+        ///   <para>Active file is the file currently set as the ConfigPath <see cref="ConfigManager.ConfigPath"/></para>
+        /// </summary>
         public bool ActiveFile => Filepath == ConfigManager.ConfigPath;
     }
 }
