@@ -20,7 +20,8 @@ namespace UXAV.AVnet.Core.Models
         private static readonly DisplayCollection<DisplayControllerBase> DisplayCollection =
             new DisplayCollection<DisplayControllerBase>();
 
-        private static Version _version;
+        private static string _version;
+        private static string _productVersion;
 
         static UxEnvironment()
         {
@@ -34,15 +35,27 @@ namespace UXAV.AVnet.Core.Models
         public static string Name { get; }
         public static Version AssemblyVersion { get; }
 
-        public static Version Version
+        public static string Version
         {
             get
             {
                 if (_version != null) return _version;
-                var assembly = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
-                _version = new Version(assembly.FileVersion);
+                var versionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
+                _version = versionInfo.FileVersion;
 
                 return _version;
+            }
+        }
+
+        public static string ProductVersion
+        {
+            get
+            {
+                if (_productVersion != null) return _productVersion;
+                var versionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
+                _productVersion = versionInfo.ProductVersion;
+
+                return _productVersion;
             }
         }
 

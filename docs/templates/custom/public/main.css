@@ -1,0 +1,21 @@
+#logo {
+  max-height: 40px;
+}
+
+h1,
+h2 {
+  font-weight: lighter !important;
+}
+
+a {
+  text-decoration: none;
+}
+
+p {
+  font-weight: 200;
+}
+
+body {
+  /*--bs-link-color-rgb: 159, 255, 3 !important;
+  --bs-link-hover-color-rgb: 64, 180, 128 !important;*/
+}

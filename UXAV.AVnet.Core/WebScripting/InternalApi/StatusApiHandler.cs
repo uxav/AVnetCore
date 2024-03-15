@@ -10,7 +10,7 @@ using s = System;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class StatusApiHandler : ApiRequestHandler
+    internal class StatusApiHandler : ApiRequestHandler
     {
         public StatusApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request, true)
@@ -87,6 +87,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     CloudInstanceId = CloudConnector.InstanceId,
                     Server.System.AppVersion,
                     AppAssemblyVersion = Server.System.AppAssemblyVersion.ToString(),
+                    Server.System.TargetFramework,
                     AppBuildTime = System.ProgramBuildTime,
                     UpdateHelper.UpdatesAvailable,
                     Include4Dat = System.Include4DatInfo,

@@ -3,7 +3,7 @@ using UXAV.AVnet.Core.Models;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class Ch5StatusApiHandler : ApiRequestHandler
+    internal class Ch5StatusApiHandler : ApiRequestHandler
     {
         public Ch5StatusApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request, true)

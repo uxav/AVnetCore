@@ -7,7 +7,7 @@ using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class AppControlApiHandler : ApiRequestHandler
+    internal class AppControlApiHandler : ApiRequestHandler
     {
         public AppControlApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)

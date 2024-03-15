@@ -1,0 +1,85 @@
+name: Beta Release
+
+on:
+  push:
+    branches:
+      - feature/*
+
+env:
+  PROJECT_NAME: UXAV.AVnet.Core
+  VERSION: 0.0.0
+  VERSION_TITLE: ""
+  TAG: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Dotnet Setup
+        id: setup-dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+          cache: true
+          cache-dependency-path: "${{ env.PROJECT_NAME }}/packages.lock.json"
+
+      - name: Get version number
+        id: get-version
+        run: |
+          version=$(grep -o '<Version>.*</Version>' ${{ env.PROJECT_NAME }}/Directory.Build.props | sed 's/<Version>\(.*\)<\/Version>/\1/')
+          echo "Version is $version"
+          if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format: $version"
+            exit 1
+          fi
+          git fetch --tags
+          tags=$(git tag --list)
+          count=$(echo $tags | grep -o $version-beta- | wc -l)
+          count=$((count+1))
+          echo "Next beta tag is $count"
+          echo "VERSION=$version-beta-$count" >> $GITHUB_ENV
+          echo "TAG=v$version-beta-$count" >> $GITHUB_ENV
+          echo "VERSION_TITLE=v$version Beta $count" >> $GITHUB_ENV
+
+      - name: Rewrite version number
+        id: rewrite-version
+        run: |
+          sed -i 's/<Version>.*<\/Version>/<Version>${{ env.VERSION }}<\/Version>/' ${{ env.PROJECT_NAME }}/Directory.Build.props
+
+      - name: Restore nuget packages
+        id: restore
+        run: dotnet restore ${{ env.PROJECT_NAME }}
+
+      - name: Build
+        id: build
+        run: dotnet build ${{ env.PROJECT_NAME }} -c Release -v m --no-restore
+
+      - name: Pack
+        id: pack
+        run: dotnet pack ${{ env.PROJECT_NAME }} -c Release -v m --no-build --output nupkgs
+
+      - name: Create release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.TAG }}
+          name: Release ${{ env.VERSION_TITLE }}
+          draft: false
+          prerelease: true
+          artifacts: |
+            nupkgs/*.nupkg
+
+      - name: Publish to GitHub
+        id: publish_github
+        run: dotnet nuget push nupkgs/*.nupkg --source https://nuget.pkg.github.com/uxav/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to NuGet
+        id: publish_nuget
+        run: dotnet nuget push nupkgs/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_UXAV_API_KEY }}

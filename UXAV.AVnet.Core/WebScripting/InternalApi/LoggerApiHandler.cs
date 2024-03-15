@@ -5,7 +5,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
     public class LoggerApiHandler : ApiRequestHandler
     {
-        public LoggerApiHandler(WebScriptingServer server, WebScriptingRequest request)
+        internal LoggerApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request, true)
         {
         }

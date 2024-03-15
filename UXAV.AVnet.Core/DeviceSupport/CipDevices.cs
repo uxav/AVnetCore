@@ -77,21 +77,11 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 throw new Exception(
                     "Could not find ctor in the form of (uint, CrestronControlSystem)");
 
-            try
-            {
-                var device = (GenericDevice)ctor.Invoke(new object[] { ipId, ControlSystem });
-                device.Description = description;
-                Devices[device.ID] = device;
-                device.OnlineStatusChange += DeviceOnOnlineStatusChange;
-                return device;
-            }
-            catch (TargetInvocationException e)
-            {
-                if (e.InnerException != null) throw e.InnerException;
-
-                // ReSharper disable once PossibleIntendedRethrow
-                throw e;
-            }
+            var device = (GenericDevice)ctor.Invoke(new object[] { ipId, ControlSystem });
+            device.Description = description;
+            Devices[device.ID] = device;
+            device.OnlineStatusChange += DeviceOnOnlineStatusChange;
+            return device;
         }
 
         public static GenericDevice CreateXPanelForSmartGraphics(uint ipId, string description, string pathOfVtzFile)
@@ -118,21 +108,11 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 throw new Exception(
                     "Could not find ctor in the form of (uint, string, CrestronControlSystem)");
 
-            try
-            {
-                var device = (GenericDevice)ctor.Invoke(new object[] { ipId, ipAddressOrHostname, ControlSystem });
+            var device = (GenericDevice)ctor.Invoke(new object[] { ipId, ipAddressOrHostname, ControlSystem });
 
-                device.Description = description;
-                Devices[device.ID] = device;
-                return device;
-            }
-            catch (TargetInvocationException e)
-            {
-                if (e.InnerException != null) throw e.InnerException;
-
-                // ReSharper disable once PossibleIntendedRethrow
-                throw e;
-            }
+            device.Description = description;
+            Devices[device.ID] = device;
+            return device;
         }
 
         internal static FusionRoom CreateFusionRoom(uint ipId, string roomName, string description)

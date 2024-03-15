@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class AuthenticationApiHandler : ApiRequestHandler
+    internal class AuthenticationApiHandler : ApiRequestHandler
     {
         public AuthenticationApiHandler(WebScriptingServer server, WebScriptingRequest request) : base(server, request)
         {

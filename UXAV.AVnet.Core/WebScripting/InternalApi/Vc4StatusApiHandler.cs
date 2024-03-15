@@ -2,7 +2,7 @@ using Crestron.SimplSharp;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class Vc4StatusApiHandler : ApiRequestHandler
+    internal class Vc4StatusApiHandler : ApiRequestHandler
     {
         public Vc4StatusApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request, true)

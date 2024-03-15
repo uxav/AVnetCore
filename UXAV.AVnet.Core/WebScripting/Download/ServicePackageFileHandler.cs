@@ -1,14 +1,13 @@
 using System;
 using System.Linq;
 using Crestron.SimplSharp;
-using MimeKit;
 using UXAV.AVnet.Core.Cloud;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting.Download
 {
-    public class ServicePackageFileHandler : RequestHandler
+    internal class ServicePackageFileHandler : RequestHandler
     {
         public ServicePackageFileHandler(WebScriptingServer server, WebScriptingRequest request) : base(server, request)
         {
@@ -23,12 +22,13 @@ namespace UXAV.AVnet.Core.WebScripting.Download
                 if (!string.IsNullOrEmpty(CloudConnector.LogsUploadUrl))
                     Response.Headers.Add("X-App-CloudUploadUrl", CloudConnector.LogsUploadUrl);
                 Response.Headers.Add("Access-Control-Expose-Headers", "Content-Disposition, X-App-CloudUploadUrl");
+                var fileName = $"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip";
                 Response.Headers.Add("Content-Disposition",
-                    $"attachment; filename=\"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip\"");
+                    $"attachment; filename=\"{fileName}\"");
 
                 Logger.Log("Generated zip package, {0} bytes", zipStream.Length);
 
-                Response.ContentType = MimeTypes.GetMimeType(".zip");
+                Response.ContentType = MimeTypes.GetMimeType(fileName);
                 Response.Headers.Add("Content-Length", zipStream.Length.ToString());
 
                 var headerContents = Response.Headers.Cast<string>().Aggregate(string.Empty,

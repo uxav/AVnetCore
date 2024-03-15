@@ -9,7 +9,7 @@ using UXAV.AVnet.Core.UI;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
-    public class XPanelDetailsApiHandler : ApiRequestHandler
+    internal class XPanelDetailsApiHandler : ApiRequestHandler
     {
         public XPanelDetailsApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request)

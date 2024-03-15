@@ -1,12 +1,13 @@
+extern alias doNotUse;
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
+using doNotUse::Newtonsoft.Json;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -14,7 +15,7 @@ namespace UXAV.AVnet.Core.WebScripting
 {
     public static class AppAuthentication
     {
-        private static readonly Hashtable Sessions;
+        private static readonly Dictionary<string, Session> Sessions;
         private static readonly EventWaitHandle WaitHandle;
         private static bool _updated;
         private static readonly ReaderWriterLockSlim Lock = new ReaderWriterLockSlim();
@@ -63,11 +64,11 @@ namespace UXAV.AVnet.Core.WebScripting
             lock (Sessions)
             {
                 //Logger.Debug("Cleaning up sessions...");
-                var keys = Sessions.Keys.Cast<string>().ToArray();
+                var keys = Sessions.Keys.ToArray();
                 var now = DateTime.Now;
                 var expiredSessions =
                     (from key in keys
-                        let date = ((Session)Sessions[key]).ExpiryTime
+                        let date = Sessions[key].ExpiryTime
                         let expired = now > date
                         where expired
                         select key).ToArray();
@@ -89,7 +90,7 @@ namespace UXAV.AVnet.Core.WebScripting
             lock (Sessions)
             {
                 if (!Sessions.ContainsKey(sessionId)) return null;
-                session = (Session)Sessions[sessionId];
+                session = Sessions[sessionId];
             }
 
             try
@@ -123,39 +124,44 @@ namespace UXAV.AVnet.Core.WebScripting
             }
         }
 
-        private static Hashtable LoadData()
+        private static Dictionary<string, Session> LoadData()
         {
-            if (!File.Exists(@"/nvram/sessions.bin")) return new Hashtable();
-            Hashtable data = null;
+            if (!File.Exists(@"/nvram/sessions.json")) return new Dictionary<string, Session>();
             Lock.EnterReadLock();
             try
             {
-                var formatter = new BinaryFormatter();
-                using (var fs = File.OpenRead(@"/nvram/sessions.bin"))
-                {
-                    data = (Hashtable)formatter.Deserialize(fs);
-                }
+                using var fs = File.OpenText(@"/nvram/sessions.json");
+                var content = fs.ReadToEnd();
+                return JsonConvert.DeserializeObject<Dictionary<string, Session>>(content);
             }
-            catch
+            catch (Exception e)
             {
-                data = new Hashtable();
+                Logger.Error($"Error loading sessions: {e.Message}");
+                return new Dictionary<string, Session>();
             }
-
-            Lock.ExitReadLock();
-            return data;
+            finally
+            {
+                Lock.ExitReadLock();
+            }
         }
 
-        private static void SaveData(Hashtable data)
+        private static void SaveData(Dictionary<string, Session> data)
         {
-            Lock.EnterWriteLock();
-            var formatter = new BinaryFormatter();
-            using (var fs = File.Create(@"/nvram/sessions.bin"))
+            try
             {
-                formatter.Serialize(fs, data);
+                Lock.EnterWriteLock();
+                var json = JsonConvert.SerializeObject(data);
+                File.WriteAllText(@"/nvram/sessions.json", json);
+                _updated = false;
             }
-
-            _updated = false;
-            Lock.ExitWriteLock();
+            catch (Exception e)
+            {
+                Logger.Error($"Error saving sessions: {e.Message}");
+            }
+            finally
+            {
+                Lock.ExitWriteLock();
+            }
         }
 
         public static Session StartSession(string username, string password, bool stayLoggedIn = false)

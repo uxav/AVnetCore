@@ -1,8 +1,7 @@
 using System;
+using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
-using Crestron.SimplSharp.CrestronIO;
-using Crestron.SimplSharp.Reflection;
-using MimeKit;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting
@@ -28,7 +27,7 @@ namespace UXAV.AVnet.Core.WebScripting
                     return;
                 }
 
-                Response.Write(stream, true);
+                Response.Write(stream.GetCrestronStream(), true);
             }
             catch (Exception e)
             {
@@ -48,24 +47,20 @@ namespace UXAV.AVnet.Core.WebScripting
             {
                 var filePath = RootFilePath + Path.DirectorySeparatorChar +
                                fileName.Replace('/', Path.DirectorySeparatorChar);
-
+#if DEBUG
                 Logger.Debug($"Looking for file: {filePath}");
-
+#endif
+                if (!File.Exists(filePath))
+                {
+                    return null;
+                }
                 var fileInfo = new FileInfo(filePath);
+#if DEBUG
                 Logger.Debug($"File found: {fileInfo.FullName}");
+#endif
                 Response.ContentType = MimeTypes.GetMimeType(fileInfo.Extension);
                 Response.Headers.Add("Last-Modified", fileInfo.LastWriteTime.ToUniversalTime().ToString("R"));
-                try
-                {
-                    return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                }
-                catch (Exception e)
-                {
-                    if (e is FileNotFoundException)
-                        return null;
-                    // ReSharper disable once PossibleIntendedRethrow
-                    throw e;
-                }
+                return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             }
 
             if (RootFilePath.Contains("."))
@@ -79,24 +74,30 @@ namespace UXAV.AVnet.Core.WebScripting
                 fPath = Regex.Replace(fPath, @"\/", ".");
 
                 var resourcePath = RootFilePath + "." + fPath + fName;
-                Logger.Log("Looking for resource stream: {0}", resourcePath);
+#if DEBUG
+                Logger.Debug("Looking for resource stream: {0}", resourcePath);
+#endif
                 Response.ContentType =
                     MimeTypes.GetMimeType(Regex.Match(resourcePath, @".+(\.\w+)$").Groups[1].Value);
                 try
                 {
+#if DEBUG
                     foreach (var resourceName in assembly.GetManifestResourceNames())
-                        Logger.Log("Possible resource: {0}", resourceName);
-
+                    {
+                        Logger.Debug("Possible resource: {0}", resourceName);
+                    }
+#endif
                     var result = assembly.GetManifestResourceStream(resourcePath);
                     if (result != null)
                     {
-                        Logger.Success("Resource File Found");
+#if DEBUG
+                        Logger.Debug("Resource File Found");
+#endif
                         return result;
                     }
                 }
                 catch
                 {
-                    Logger.Warn("Resource Not Found");
                     return null;
                 }
             }

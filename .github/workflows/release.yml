@@ -1,5 +1,5 @@
-name: Build and Release
-  
+name: Release
+
 on:
   pull_request:
     branches:
@@ -8,56 +8,82 @@ on:
       - closed
 
 env:
-  SOLUTION_NAME: AVnetCore
   PROJECT_NAME: UXAV.AVnet.Core
-  CONFIG: Release
-  
+
 jobs:
   build:
-    if: startsWith(github.head_ref, 'release/')
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
 
-      - name: Get version
-        shell: powershell
+      - name: Dotnet Setup
+        id: setup-dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+          cache: true
+          cache-dependency-path: "${{ env.PROJECT_NAME }}/packages.lock.json"
+
+      - name: Check version number
+        id: check-version
+        if: startsWith(github.head_ref, 'release/')
         run: |
-          $version = ./.github/scripts/GetVersionFromAssemblyInfo.ps1 -Path ${{env.PROJECT_NAME}}/Properties/AssemblyInfo.cs
-          Write-Output "Version is: $version"
-          echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          version=$(grep -o '<Version>.*</Version>' ${{ env.PROJECT_NAME }}/Directory.Build.props | sed 's/<Version>\(.*\)<\/Version>/\1/')
+          if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format: $version"
+            exit 1
+          fi
+          versionTagToCheck="v$version"
+          echo "Version tag to check is $versionTagToCheck"
+          git fetch --tags
+          tags=$(git tag --list)
+          echo "Looking at tags:\n$tags"
+          for tag in $tags; do
+          if [[ "$tag" == "$versionTagToCheck" ]]; then
+            echo "Version tag $versionTagToCheck exists"
+            exit 1
+          fi
+          done
+          echo "Version tag $versionTagToCheck does not exist"
+          echo "TAG=$versionTagToCheck" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "VERSION_TITLE=Release v$version" >> $GITHUB_ENV
 
-      - name: Setup MsBuild
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Setup NuGet.exe
-        uses: NuGet/setup-nuget@v2
-
-      - name: Add Nuget API Key for nuget.org
-        run: nuget setapikey ${{ secrets.NUGET_UXAV_API_KEY }}
-
-      - name: Nuget Add Source
-        run: nuget sources Add -Name "uxav" -Source https://nuget.pkg.github.com/uxav/index.json -username uxav -password ${{ secrets.GITHUB_TOKEN }} -StorePasswordInClearText
-
-      - name: Restore Nuget Packages
-        run: nuget restore ${{env.SOLUTION_NAME}}.sln
+      - name: Restore nuget packages
+        id: restore
+        run: dotnet restore ${{ env.PROJECT_NAME }}
 
       - name: Build
-        run: msbuild ${{env.SOLUTION_NAME}}.sln /p:Configuration=${{env.CONFIG}}
+        id: build
+        run: dotnet build ${{ env.PROJECT_NAME }} -c Release -v m --no-restore
 
-      - name: Pack Nuget
-        run: nuget pack ${{env.PROJECT_NAME}}/${{env.PROJECT_NAME}}.csproj -Properties Configuration=${{env.CONFIG}}
+      - name: Pack
+        id: pack
+        run: dotnet pack ${{ env.PROJECT_NAME }} -c Release -v m --no-build --output nupkgs
 
-      - name: Push generated package to nuget.org
-        run: nuget push *.nupkg -source https://api.nuget.org/v3/index.json
-
-      - name: Push generated package to GitHub registry
-        run: nuget push *.nupkg -source "uxav"
-
-      - name: Create Release
+      - name: Create release
+        id: create_release
+        if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ env.VERSION }}
-          name: Release v${{ env.VERSION }}
+          tag: ${{ env.TAG }}
+          name: Release ${{ env.VERSION_TITLE }}
+          draft: false
+          prerelease: false
+          artifacts: |
+            nupkgs/*.nupkg
+
+      - name: Publish to GitHub
+        id: publish_github
+        if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
+        run: dotnet nuget push nupkgs/*.nupkg --source https://nuget.pkg.github.com/uxav/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to NuGet
+        id: publish_nuget
+        if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')
+        run: dotnet nuget push nupkgs/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_UXAV_API_KEY }}

@@ -13,7 +13,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
-using MimeKit;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
@@ -29,7 +28,7 @@ namespace UXAV.AVnet.Core.Cloud
         private static string _version;
         private static string _productVersion;
         private static bool _init;
-        private static EventWaitHandle _waitHandle;
+        private static EventWaitHandle _waitHandle = new(false, EventResetMode.AutoReset);
         private static Uri _checkinUri;
         private static bool _suppressWarning;
         private static Uri _configUploadUri;
@@ -138,8 +137,8 @@ namespace UXAV.AVnet.Core.Cloud
                 }
 
             _version = assembly.GetName().Version.ToString();
-            _productVersion = FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
-            _waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
+            var vi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            _productVersion = $"{vi.ProductMajorPart}.{vi.ProductMinorPart}.{vi.ProductBuildPart}";
             CrestronEnvironment.ProgramStatusEventHandler += CrestronEnvironmentOnProgramStatusEventHandler;
             foreach (var message in Logger.GetHistory())
             {
@@ -157,6 +156,10 @@ namespace UXAV.AVnet.Core.Cloud
             if (PendingLogs.Count > 1000) _loggingSuspended = true;
             var level = Logger.Level;
             if (message.Level > level) return;
+#if DEBUG
+            // don't log debug messages to cloud
+            if (message.Level == Logger.LoggerLevel.Debug) return;
+#endif
             PendingLogs[message.Id] = message;
             if (!_firstCheckin) return;
             if (_logHoldTimer == null)
@@ -168,13 +171,13 @@ namespace UXAV.AVnet.Core.Cloud
 
         private static async void CheckInProcess()
         {
-            _waitHandle.WaitOne(TimeSpan.FromSeconds(30));
+            _waitHandle?.WaitOne(TimeSpan.FromSeconds(30));
             if (_programStopping) return;
 
             while (true)
             {
 #if DEBUG
-                //Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
+                Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
 #endif
                 await CheckInAsync();
                 if (!_firstCheckin)
@@ -190,7 +193,7 @@ namespace UXAV.AVnet.Core.Cloud
                         if (!_suppressWarning) Logger.Error(e);
                     }
 
-                _waitHandle.WaitOne(TimeSpan.FromMinutes(1));
+                _waitHandle?.WaitOne(TimeSpan.FromMinutes(1));
                 if (!_programStopping) continue;
                 Logger.Warn($"{nameof(CloudConnector)} leaving checkin process!");
                 return;
@@ -291,16 +294,16 @@ namespace UXAV.AVnet.Core.Cloud
                 try
                 {
 #if DEBUG
-                    //Logger.Debug($"Cloud checkin URL is {CheckinUri}");
+                    Logger.Debug($"Cloud checkin URL is {CheckinUri}");
 #endif
                     var result = await HttpClient.PostAsync(CheckinUri, content);
 #if DEBUG
-                    //Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
+                    Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
 #endif
                     result.EnsureSuccessStatusCode();
                     var contents = await result.Content.ReadAsStringAsync();
 #if DEBUG
-                    //Logger.Debug($"Cloud Rx:\r\n{contents}");
+                    Logger.Debug($"Cloud Rx:\r\n{contents}");
 #endif
                     var responseData = JToken.Parse(contents);
                     if (responseData["actions"] != null)
@@ -328,9 +331,9 @@ namespace UXAV.AVnet.Core.Cloud
 
                     try
                     {
-                        //Logger.Debug($"Uploaded {logIds.Length} logs successfully! Removing from pending...");
+                        Logger.Debug($"Uploaded {logIds.Length} logs successfully! Removing from pending...");
                         foreach (var id in logIds) PendingLogs.TryRemove(id, out var _);
-                        //Logger.Debug($"Pending logs remaining: {PendingLogs.Count}");
+                        Logger.Debug($"Pending logs remaining: {PendingLogs.Count}");
                         if (_loggingSuspended)
                         {
                             _loggingSuspended = false;

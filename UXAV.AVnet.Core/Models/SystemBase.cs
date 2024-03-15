@@ -57,6 +57,7 @@ namespace UXAV.AVnet.Core.Models
         private static string _dhcpStatus;
         private static string _domainName;
         private static string _hostName;
+        private static string _appVersion;
         private readonly string _initialConfig;
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
         internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
@@ -105,6 +106,9 @@ namespace UXAV.AVnet.Core.Models
                             case XmlNodeType.Text:
                                 switch (elementName)
                                 {
+                                    case "TargetFramework":
+                                        TargetFramework = reader.Value;
+                                        break;
                                     case "Include4.dat":
                                         Include4DatInfo = reader.Value;
                                         break;
@@ -157,9 +161,18 @@ namespace UXAV.AVnet.Core.Models
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
                 Logger.Log("SerialNumber: {0}", CrestronEnvironment.SystemInfo.SerialNumber);
             Logger.Log("App Info: {0}", AppAssembly.GetName().FullName);
+            Logger.Log("App Version: {0}", AppAssembly.GetName().Version);
+            var versionInfo = FileVersionInfo.GetVersionInfo(AppAssembly.Location);
+            Logger.Log("App File Version: {0}", versionInfo.FileVersion);
+            Logger.Log("App Product Version: {0}", versionInfo.ProductVersion);
+            Logger.Log("App Assembly Version: {0}", AppAssembly.GetName().Version);
             Logger.Log("{0} Version: {1}", UxEnvironment.Name, UxEnvironment.Version);
+            Logger.Log("{0} Product Version: {1}", UxEnvironment.Name, UxEnvironment.ProductVersion);
             Logger.Log("{0} Assembly Version: {1}", UxEnvironment.Name, UxEnvironment.AssemblyVersion);
-            Logger.Log("Starting app version {0}", AppAssembly.GetName().Version);
+#if DEBUG
+            Logger.Log("AVnetCore running is DEBUG build! 🕷️");
+#endif
+            Logger.Log($"Target framework: {TargetFramework}");
             Logger.Log($"Program Info states build time as: {ProgramBuildTime:R}");
             Logger.Debug("ProcessId: {0}", Process.GetCurrentProcess().Id);
             Logger.Log("Room Name: {0}", InitialParametersClass.RoomName);
@@ -298,19 +311,31 @@ namespace UXAV.AVnet.Core.Models
 
         internal static Assembly AppAssembly { get; private set; }
 
+        /// <summary>
+        ///  The name of the system
+        /// </summary>
         public static string SystemName
         {
             get => string.IsNullOrEmpty(_systemName) ? InitialParametersClass.RoomName : _systemName;
             set => _systemName = value;
         }
 
+        /// <summary>
+        ///  The time the app was started
+        /// </summary>
         public static DateTime BootTime { get; } = DateTime.Now;
 
+        /// <summary>
+        ///  The uptime of the system
+        /// </summary>
         public static TimeSpan UpTime => DateTime.Now - BootTime;
 
         private static short AdapterIdForLan =>
             CrestronEthernetHelper.GetAdapterdIdForSpecifiedAdapterType(EthernetAdapterType.EthernetLANAdapter);
 
+        /// <summary>
+        ///   The hostname of the main NIC (LAN A) on the processor or server
+        /// </summary>
         public static string HostName
         {
             get
@@ -322,6 +347,9 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
+        /// <summary>
+        ///  The domain name of the main NIC (LAN A) on the processor or server
+        /// </summary>
         public static string DomainName
         {
             get
@@ -333,6 +361,9 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
+        /// <summary>
+        ///   The DHCP status of the main NIC (LAN A) on the processor or server
+        /// </summary>
         public static string DhcpStatus
         {
             get
@@ -344,6 +375,9 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
+        /// <summary>
+        ///   The IP address of the main NIC (LAN A) on the processor or server
+        /// </summary>
         public static string IpAddress
         {
             get
@@ -363,6 +397,9 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
+        /// <summary>
+        ///   The MAC address of the main NIC (LAN A) on the processor or server
+        /// </summary>
         public static string MacAddress
         {
             get
@@ -374,6 +411,9 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
+        /// <summary>
+        ///    The serial number of the processor or server
+        /// </summary>
         public static string SerialNumber
         {
             get
@@ -389,8 +429,24 @@ namespace UXAV.AVnet.Core.Models
 
         public virtual string AppName => AppAssembly.GetName().Name;
 
-        public virtual string AppVersion => FileVersionInfo.GetVersionInfo(AppAssembly.Location).ProductVersion;
+        /// <summary>
+        ///  The version of the app
+        /// </summary>
+        public virtual string AppVersion
+        {
+            get
+            {
+                if (_appVersion != null) return _appVersion;
+                var vi = FileVersionInfo.GetVersionInfo(AppAssembly.Location);
+                _appVersion = $"{vi.ProductMajorPart}.{vi.ProductMinorPart}.{vi.ProductBuildPart}";
+                return _appVersion;
+            }
+        }
 
+        /// <summary>
+        ///   The unique identifier for the runtime of the app
+        ///   <para>Will be re-generated if the application restarts</para>
+        /// </summary>
         public static string RuntimeGuid
         {
             get
@@ -410,6 +466,13 @@ namespace UXAV.AVnet.Core.Models
 
         public virtual Version AppAssemblyVersion => AppAssembly.GetName().Version;
 
+        /// <summary>
+        ///    The directory of the running program
+        /// </summary>
+        /// <returns>
+        ///     eDevicePlatform.Server if running on a VC-4 or similar server setup
+        ///     eDevicePlatform.Appliance if running on a Crestron hardware processor such as a CP4 or MC4
+        /// </returns>
         public static eDevicePlatform DevicePlatform => CrestronEnvironment.DevicePlatform;
 
         /// <summary>
@@ -443,12 +506,18 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
+        /// <summary>
+        ///   The user directory for the processor or program instance on a server
+        /// </summary>
         public static string ProgramUserDirectory => ProgramRootDirectory + "/user";
 
+        /// <summary>
+        ///    The NVRAM directory for the processor or program instance on a server
+        /// </summary>
         public static string ProgramNvramDirectory => ProgramRootDirectory + "/nvram";
 
         /// <summary>
-        ///     The app instance directory for the program e.g nvram/app_01
+        ///    The app instance directory for the program e.g nvram/app_01
         /// </summary>
         public static string ProgramNvramAppInstanceDirectory
         {
@@ -465,8 +534,17 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
+        /// <summary>
+        ///   The HTML directory for the processor or program instance on a server
+        /// </summary>
         public static string ProgramHtmlDirectory => ProgramRootDirectory + "/html";
 
+        /// <summary>
+        ///   The base cws URL for the control system
+        ///   <example>
+        ///   https://vc4/VirtualControl/Rooms/ROOMAPPID/cws
+        ///   </example>
+        /// </summary>
         public static string CwsBaseUrl
         {
             get
@@ -478,8 +556,19 @@ namespace UXAV.AVnet.Core.Models
             }
         }
 
+        /// <summary>
+        ///  The date and time the program was built
+        /// </summary>
         public DateTime ProgramBuildTime { get; }
 
+        /// <summary>
+        ///  The target framework the app was built for
+        /// </summary>
+        public string TargetFramework { get; }
+
+        /// <summary>
+        /// The Include4.dat version
+        /// </summary>
         public string Include4DatInfo { get; }
 
         public static string CwsPath => CrestronEnvironment.DevicePlatform == eDevicePlatform.Server
@@ -492,12 +581,21 @@ namespace UXAV.AVnet.Core.Models
         /// </summary>
         protected virtual string ApplianceWebServerRedirect => "/cws/app";
 
+        /// <summary>
+        ///   The boot status of the app
+        /// </summary>
         public EBootStatus BootStatus { get; private set; }
 
         public EUnits LocalUnits { get; } = EUnits.Metric;
 
+        /// <summary>
+        ///  The description of the boot status
+        /// </summary>
         public string BootStatusDescription { get; private set; }
 
+        /// <summary>
+        /// The progress of the boot status in percentage 0-100
+        /// </summary>
         public uint BootProgress { get; private set; }
 
         /// <summary>
@@ -505,11 +603,20 @@ namespace UXAV.AVnet.Core.Models
         /// </summary>
         protected bool UseFusion { get; set; }
 
+        /// <summary>
+        ///   Get a device by its ID
+        /// </summary>
+        /// <param name="id">Unique number of the device</param>
+        /// <returns>The associated <see cref="IDevice"/></returns>
         public IDevice GetDevice(uint id)
         {
             return DevicesDict[id];
         }
 
+        /// <summary>
+        ///   Get all devices in the system that conform to the IDevice interface
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<IDevice> GetDevices()
         {
             return DevicesDict.Values;
@@ -632,6 +739,12 @@ namespace UXAV.AVnet.Core.Models
             UpdateHelper.SetupUpdateTimer();
         }
 
+        /// <summary>
+        ///  Restart the app
+        ///  <para>For VC-4 this will restart the app instance using the VC-4 server internal API</para>
+        ///  <para>For Crestron hardware this will restart the app using the built in console command</para>
+        /// </summary>
+        /// <returns>The returned value of the command run</returns>
         public string RestartApp()
         {
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
@@ -643,6 +756,11 @@ namespace UXAV.AVnet.Core.Models
             return response;
         }
 
+        /// <summary>
+        ///   Reboot the appliance
+        ///   <para>Only works on Crestron hardware, will throw an exception if called on a VC-4 server</para>
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Cannot reboot a VC-4 server</exception>
         public void RebootAppliance()
         {
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
@@ -718,6 +836,9 @@ namespace UXAV.AVnet.Core.Models
 
         protected abstract IEnumerable<DiagnosticMessage> GenerateDiagnosticMessages();
 
+        /// <summary>
+        /// Initialize the system
+        /// </summary>
         public void Initialize()
         {
             Logger.Highlight("Initialize()");
