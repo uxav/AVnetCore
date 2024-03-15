@@ -6,10 +6,15 @@
             "extensions": [
                 "ms-dotnettools.csdevkit",
                 "ms-dotnettools.csharp",
+                "ms-dotnettools.vscodeintellicode-csharp",
                 "ms-vscode-remote.remote-containers",
                 "github.vscode-github-actions",
-                "GitHub.remotehub"
-            ]
+                "GitHub.remotehub",
+                "ms-vscode.powershell",
+                "esbenp.prettier-vscode",
+                "ms-python.python"
+            ],
+            "settings": {}
         }
     }
 }
