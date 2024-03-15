@@ -140,7 +140,7 @@ NuGet Package: [UXAV.AVnet.Core](https://www.nuget.org/packages/UXAV.AVnet.Core/
 - [Figgle](https://www.nuget.org/packages/Figgle)
 - [Microsoft.AspNet.WebApi.Client](https://www.nuget.org/packages/Microsoft.AspNet.WebApi.Client)
 - [Microsoft.CSharp](https://www.nuget.org/packages/Microsoft.CSharp)
-- [MimeKit](https://www.nuget.org/packages/MimeKit)
+- [MimeTypes](https://www.nuget.org/packages/MimeTypes)
 - [Newtonsoft.Json](https://www.nuget.org/packages/Newtonsoft.Json)
 - [Newtonsoft.Json.Schema](https://www.nuget.org/packages/Newtonsoft.Json.Schema)
 - [System.IO.Compression](https://www.nuget.org/packages/System.IO.Compression)
@@ -181,4 +181,4 @@ Thank you for your interest in contributing to this project!
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE.md).
