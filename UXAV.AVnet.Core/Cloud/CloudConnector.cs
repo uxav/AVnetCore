@@ -53,8 +53,6 @@ namespace UXAV.AVnet.Core.Cloud
         {
             get
             {
-                /*return new Uri("http://172.16.100.148:5001/avnet-cloud/us-central1/appInstanceCheckIn/api/checkin/v2" +
-                               $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");*/
                 if (_checkinUri == null)
                     _checkinUri = new Uri(
                         $"https://{Host}/api/checkin/v2" +
@@ -68,9 +66,6 @@ namespace UXAV.AVnet.Core.Cloud
         {
             get
             {
-                /*return new Uri(
-                    "http://172.16.100.148:5001/avnet-cloud/us-central1/appInstanceConfigs/api/configs/v1/submit" +
-                    $"/{ApplicationName}/{HttpUtility.UrlEncode(InstanceId)}?token={Token}");*/
                 if (_configUploadUri == null)
                     _configUploadUri = new Uri(
                         $"https://{Host}/api/configs/v1/submit" +
