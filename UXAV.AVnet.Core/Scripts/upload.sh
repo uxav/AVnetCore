@@ -6,7 +6,7 @@
 archive="$2$3.dll"
 
 # comment this out to continue below
-# exit 0;
+exit 0;
 
 if [ $1 == "net472" ]; then
 
