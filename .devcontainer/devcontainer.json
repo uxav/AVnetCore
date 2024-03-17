@@ -1,10 +1,6 @@
 {
-    "name": "AVnetCore Dev Container",
+    "name": "AVnetCore",
 	"image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
-	"features": {
-		"ghcr.io/devcontainers/features/git-lfs:1": {},
-		"ghcr.io/devcontainers/features/github-cli:1": {}
-	},
 	"customizations": {
 		"vscode": {
 			"extensions": [
