@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Crestron.SimplSharpPro;
 using UXAV.AVnet.Core.Models.Rooms;
 using UXAV.AVnet.Core.Models.Sources;
@@ -22,26 +23,41 @@ namespace UXAV.AVnet.Core.Models
 
         private static string _version;
         private static string _productVersion;
+        private static string _assemblyVersion;
 
         static UxEnvironment()
         {
             var assembly = Assembly.GetExecutingAssembly();
             Name = assembly.GetName().Name;
-            AssemblyVersion = assembly.GetName().Version;
         }
 
         public static SystemBase System { get; internal set; }
         public static CrestronControlSystem ControlSystem { get; internal set; }
         public static string Name { get; }
-        public static Version AssemblyVersion { get; }
+        public static string AssemblyVersion
+        {
+            get
+            {
+                if (_assemblyVersion != null) return _assemblyVersion;
+                var assembly = Assembly.GetExecutingAssembly();
+                _assemblyVersion = assembly.GetName().Version.ToString();
+
+                return _assemblyVersion;
+            }
+        }
 
         public static string Version
         {
             get
             {
                 if (_version != null) return _version;
-                var versionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
-                _version = versionInfo.FileVersion;
+                var vi = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
+                var r = new Regex(@"^(\d+\.\d+\.\d+[^+]*)");
+                if (r.IsMatch(vi.ProductVersion))
+                    _version = r.Match(vi.ProductVersion).Groups[1].Value;
+                else
+                    // If the version is not in the format x.x.x, just use the product version (which is the file version
+                    _version = $"{vi.ProductMajorPart}.{vi.ProductMinorPart}.{vi.ProductBuildPart}";
 
                 return _version;
             }
