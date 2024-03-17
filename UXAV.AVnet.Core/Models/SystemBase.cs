@@ -161,7 +161,7 @@ namespace UXAV.AVnet.Core.Models
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
                 Logger.Log("SerialNumber: {0}", CrestronEnvironment.SystemInfo.SerialNumber);
             Logger.Log("App Info: {0}", AppAssembly.GetName().FullName);
-            Logger.Log("App Version: {0}", AppAssembly.GetName().Version);
+            Logger.Log("App Version: {0}", AppVersion);
             var versionInfo = FileVersionInfo.GetVersionInfo(AppAssembly.Location);
             Logger.Log("App File Version: {0}", versionInfo.FileVersion);
             Logger.Log("App Product Version: {0}", versionInfo.ProductVersion);
@@ -439,6 +439,7 @@ namespace UXAV.AVnet.Core.Models
                 if (_appVersion != null) return _appVersion;
                 var vi = FileVersionInfo.GetVersionInfo(AppAssembly.Location);
                 _appVersion = $"{vi.ProductMajorPart}.{vi.ProductMinorPart}.{vi.ProductBuildPart}";
+
                 return _appVersion;
             }
         }

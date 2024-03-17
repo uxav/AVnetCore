@@ -93,10 +93,10 @@ namespace UXAV.AVnet.Core.Models
                             switch (CrestronEnvironment.DevicePlatform)
                             {
                                 case eDevicePlatform.Appliance:
-                                {
-                                    var appNumber = InitialParametersClass.ApplicationNumber;
-                                    var commands = new[]
                                     {
+                                        var appNumber = InitialParametersClass.ApplicationNumber;
+                                        var commands = new[]
+                                        {
                                         "hostname",
                                         "mycrestron",
                                         "showlicense",
@@ -159,17 +159,17 @@ namespace UXAV.AVnet.Core.Models
                                         "reportcresnet"
                                     };
 
-                                    foreach (var command in commands)
-                                    {
-                                        infoStream.WriteLine("Ran Console Command: {0}", command);
-                                        var response = string.Empty;
-                                        CrestronConsole.SendControlSystemCommand(command, ref response);
-                                        infoStream.WriteLine(response);
-                                        infoStream.WriteLine(string.Empty);
-                                    }
+                                        foreach (var command in commands)
+                                        {
+                                            infoStream.WriteLine("Ran Console Command: {0}", command);
+                                            var response = string.Empty;
+                                            CrestronConsole.SendControlSystemCommand(command, ref response);
+                                            infoStream.WriteLine(response);
+                                            infoStream.WriteLine(string.Empty);
+                                        }
 
-                                    break;
-                                }
+                                        break;
+                                    }
                                 case eDevicePlatform.Server:
                                     infoStream.WriteLine(
                                         $"App running on server platform: {InitialParametersClass.ControllerPromptName}");
@@ -194,7 +194,8 @@ namespace UXAV.AVnet.Core.Models
                                     infoStream.WriteLine("{0} Version: {1}", UxEnvironment.Name, UxEnvironment.Version);
                                     infoStream.WriteLine("{0} Assembly Version: {1}", UxEnvironment.Name,
                                         UxEnvironment.AssemblyVersion);
-                                    infoStream.WriteLine("App version {0}", SystemBase.AppAssembly.GetName().Version);
+                                    infoStream.WriteLine("App version {0}", UxEnvironment.System.AppVersion);
+                                    infoStream.WriteLine("App assembly version {0}", UxEnvironment.System.AppAssemblyVersion);
                                     infoStream.WriteLine(
                                         $"Program Info states build time as: {UxEnvironment.System.ProgramBuildTime:R}");
                                     infoStream.WriteLine("ProgramIDTag: {0}", InitialParametersClass.ProgramIDTag);
@@ -242,62 +243,62 @@ namespace UXAV.AVnet.Core.Models
                             switch (CrestronEnvironment.DevicePlatform)
                             {
                                 case eDevicePlatform.Server:
-                                {
-                                    if (!Directory.Exists("/var/log/crestron"))
                                     {
-                                        Logger.Warn(
-                                            "No log folder found on server at /var/log/crestron, " +
-                                            "Try setting up logging files to this server with associated permissions.");
-                                        break;
-                                    }
-
-                                    var logFolder = new DirectoryInfo("/var/log/crestron");
-                                    var logFiles = logFolder.GetFiles($"*{InitialParametersClass.RoomId}*.log")
-                                        .ToList();
-                                    logFiles.AddRange(logFolder.GetFiles("crestron.log"));
-
-                                    foreach (var fileInfo in logFiles)
-                                    {
-                                        Logger.Debug("Creating zip entry for " + fileInfo.FullName);
-                                        var zipPath = Regex.Replace(fileInfo.FullName, "^/var/log/crestron/", "");
-                                        var logEntry = archive.CreateEntry("Logs/" + zipPath);
-                                        using (var entryStream = logEntry.Open())
+                                        if (!Directory.Exists("/var/log/crestron"))
                                         {
-                                            fileInfo.OpenRead().CopyTo(entryStream);
+                                            Logger.Warn(
+                                                "No log folder found on server at /var/log/crestron, " +
+                                                "Try setting up logging files to this server with associated permissions.");
+                                            break;
                                         }
-                                    }
 
-                                    break;
-                                }
-                                case eDevicePlatform.Appliance:
-                                {
-                                    var logFolder = new DirectoryInfo("/logs");
-                                    var logFiles = logFolder.EnumerateFiles("*", SearchOption.AllDirectories);
-                                    foreach (var fileInfo in logFiles)
-                                        try
+                                        var logFolder = new DirectoryInfo("/var/log/crestron");
+                                        var logFiles = logFolder.GetFiles($"*{InitialParametersClass.RoomId}*.log")
+                                            .ToList();
+                                        logFiles.AddRange(logFolder.GetFiles("crestron.log"));
+
+                                        foreach (var fileInfo in logFiles)
                                         {
-                                            if (fileInfo.FullName.StartsWith("/logs/core/")) continue;
-                                            if (fileInfo.FullName.StartsWith("/logs/MsgLog.")) continue;
                                             Logger.Debug("Creating zip entry for " + fileInfo.FullName);
-                                            var zipPath = Regex.Replace(fileInfo.FullName, "^/logs/", "");
+                                            var zipPath = Regex.Replace(fileInfo.FullName, "^/var/log/crestron/", "");
                                             var logEntry = archive.CreateEntry("Logs/" + zipPath);
                                             using (var entryStream = logEntry.Open())
                                             {
-                                                fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read)
-                                                    .CopyTo(entryStream);
+                                                fileInfo.OpenRead().CopyTo(entryStream);
                                             }
                                         }
-                                        catch (UnauthorizedAccessException)
-                                        {
-                                            Logger.Warn($"No access to the file: {fileInfo.FullName}");
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            Logger.Error(e);
-                                        }
 
-                                    break;
-                                }
+                                        break;
+                                    }
+                                case eDevicePlatform.Appliance:
+                                    {
+                                        var logFolder = new DirectoryInfo("/logs");
+                                        var logFiles = logFolder.EnumerateFiles("*", SearchOption.AllDirectories);
+                                        foreach (var fileInfo in logFiles)
+                                            try
+                                            {
+                                                if (fileInfo.FullName.StartsWith("/logs/core/")) continue;
+                                                if (fileInfo.FullName.StartsWith("/logs/MsgLog.")) continue;
+                                                Logger.Debug("Creating zip entry for " + fileInfo.FullName);
+                                                var zipPath = Regex.Replace(fileInfo.FullName, "^/logs/", "");
+                                                var logEntry = archive.CreateEntry("Logs/" + zipPath);
+                                                using (var entryStream = logEntry.Open())
+                                                {
+                                                    fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read)
+                                                        .CopyTo(entryStream);
+                                                }
+                                            }
+                                            catch (UnauthorizedAccessException)
+                                            {
+                                                Logger.Warn($"No access to the file: {fileInfo.FullName}");
+                                            }
+                                            catch (Exception e)
+                                            {
+                                                Logger.Error(e);
+                                            }
+
+                                        break;
+                                    }
                                 default:
                                     throw new ArgumentOutOfRangeException();
                             }
