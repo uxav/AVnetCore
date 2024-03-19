@@ -331,9 +331,13 @@ namespace UXAV.AVnet.Core.Cloud
 
                     try
                     {
+#if DEBUG
                         Logger.Debug($"Uploaded {logIds.Length} logs successfully! Removing from pending...");
+#endif
                         foreach (var id in logIds) PendingLogs.TryRemove(id, out var _);
+#if DEBUG
                         Logger.Debug($"Pending logs remaining: {PendingLogs.Count}");
+#endif
                         if (_loggingSuspended)
                         {
                             _loggingSuspended = false;
