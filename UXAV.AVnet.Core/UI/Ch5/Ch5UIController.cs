@@ -30,6 +30,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 }
 
                 if (args.Event != eSigEvent.BoolChange || args.Sig.Number != 10 || !args.Sig.BoolValue) return;
+                if (string.IsNullOrEmpty(WebSocketUrl)) return;
                 Logger.Log($"Device received high join on 10, sending websocket URL: {WebSocketUrl}");
                 device.StringInput[Serial.WebsocketUrl].StringValue = WebSocketUrl;
                 device.StringInput[Serial.DeviceIdString].StringValue = device.ID.ToString("X2");
