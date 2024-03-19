@@ -1,20 +1,19 @@
 {
-    "image": "mikejobson/test-dev:latest",
-    "onCreateCommand": "dotnet restore",
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-dotnettools.csdevkit",
-                "ms-dotnettools.csharp",
-                "ms-dotnettools.vscodeintellicode-csharp",
-                "ms-vscode-remote.remote-containers",
-                "github.vscode-github-actions",
-                "GitHub.remotehub",
-                "ms-vscode.powershell",
-                "esbenp.prettier-vscode",
-                "ms-python.python"
-            ],
-            "settings": {}
-        }
-    }
+    "name": "AVnetCore",
+	"image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
+	"features": {
+		"ghcr.io/devcontainers/features/git-lfs:1": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csdevkit",
+				"ms-dotnettools.csharp",
+				"ms-dotnettools.vscodeintellicode-csharp",
+				"ms-vscode.powershell",
+				"esbenp.prettier-vscode",
+				"github.vscode-github-actions"
+			]
+		}
+	}
 }

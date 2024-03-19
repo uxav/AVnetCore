@@ -1,3 +1,4 @@
+using System;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
 using Crestron.SimplSharpPro;
@@ -6,7 +7,6 @@ using UXAV.AVnet.Core.Cloud;
 using UXAV.AVnet.Core.Models;
 using UXAV.AVnet.Core.UI.Ch5;
 using UXAV.Logging;
-using s = System;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
@@ -45,7 +45,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     }
 
                 var nl = string.Empty;
-                foreach (int c in s.Environment.NewLine) nl = nl + $"\\x{c:x2}";
+                foreach (int c in Environment.NewLine) nl = nl + $"\\x{c:x2}";
 
                 var process = global::System.Diagnostics.Process.GetCurrentProcess();
 
@@ -67,7 +67,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         BACnet.IsLicensed
                     };
                 }
-                catch (s.Exception e)
+                catch (Exception e)
                 {
                     Logger.Error(e);
                 }
@@ -82,8 +82,8 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     SystemBase.SerialNumber,
                     Firmware = InitialParametersClass.FirmwareVersion,
                     AVNetName = UxEnvironment.Name,
-                    AVNetVersion = UxEnvironment.Version.ToString(),
-                    AVNetAssemblyVersion = UxEnvironment.AssemblyVersion.ToString(),
+                    AVNetVersion = UxEnvironment.Version,
+                    AVNetAssemblyVersion = UxEnvironment.AssemblyVersion,
                     CloudInstanceId = CloudConnector.InstanceId,
                     Server.System.AppVersion,
                     AppAssemblyVersion = Server.System.AppAssemblyVersion.ToString(),
@@ -122,11 +122,11 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     InitialParametersClass.ControllerPromptName,
                     Environment = new
                     {
-                        Version = s.Environment.Version.ToString(),
-                        OSVersion = s.Environment.OSVersion.VersionString,
-                        s.Environment.MachineName,
-                        s.Environment.ProcessorCount,
-                        s.Environment.Is64BitOperatingSystem,
+                        Version = Environment.Version.ToString(),
+                        OSVersion = Environment.OSVersion.VersionString,
+                        Environment.MachineName,
+                        Environment.ProcessorCount,
+                        Environment.Is64BitOperatingSystem,
                         NewLine = nl
                     },
                     Location = new
@@ -142,7 +142,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     BACnet = bacNet
                 }));
             }
-            catch (s.Exception e)
+            catch (Exception e)
             {
                 HandleError(e);
             }
