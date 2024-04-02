@@ -41,6 +41,7 @@ namespace UXAV.AVnet.Core.Cloud
         private static bool _loggingSuspended;
         private static Timer _logHoldTimer;
         private static bool _firstCheckin;
+        private static DateTime _lastCheckin;
 
         static CloudConnector()
         {
@@ -176,24 +177,27 @@ namespace UXAV.AVnet.Core.Cloud
 
             while (true)
             {
+                if (_lastCheckin < DateTime.Now.AddMinutes(-1))
+                {
 #if DEBUG
-                Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
+                    Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
 #endif
-                await CheckInAsync();
-                if (!_firstCheckin)
-                    _firstCheckin = true;
-                if (_uploadConfig)
-                    try
-                    {
-                        await UploadConfigAsync();
-                        _uploadConfig = false;
-                    }
-                    catch (Exception e)
-                    {
-                        if (!_suppressWarning) Logger.Error(e);
-                    }
+                    await CheckInAsync();
+                    if (!_firstCheckin)
+                        _firstCheckin = true;
+                    if (_uploadConfig)
+                        try
+                        {
+                            await UploadConfigAsync();
+                            _uploadConfig = false;
+                        }
+                        catch (Exception e)
+                        {
+                            if (!_suppressWarning) Logger.Error(e);
+                        }
+                }
 
-                _waitHandle?.WaitOne(TimeSpan.FromMinutes(1));
+                _waitHandle?.WaitOne(TimeSpan.FromMinutes(5));
                 if (!_programStopping) continue;
                 Logger.Warn($"{nameof(CloudConnector)} leaving checkin process!");
                 return;
@@ -296,7 +300,7 @@ namespace UXAV.AVnet.Core.Cloud
 #if DEBUG
                     Logger.Debug($"Cloud checkin URL is {CheckinUri}");
 #endif
-                    var result = await HttpClient.PostAsync(CheckinUri, content);
+                    using var result = await HttpClient.PostAsync(CheckinUri, content);
 #if DEBUG
                     Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
 #endif
@@ -349,7 +353,7 @@ namespace UXAV.AVnet.Core.Cloud
                         Logger.Error(e);
                     }
 
-                    result.Dispose();
+                    _lastCheckin = DateTime.Now;
                     _suppressWarning = false;
                 }
                 catch (Exception e)
