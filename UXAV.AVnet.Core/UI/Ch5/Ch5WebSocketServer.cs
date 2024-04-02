@@ -14,10 +14,17 @@ namespace UXAV.AVnet.Core.UI.Ch5
     public static class Ch5WebSocketServer
     {
         private static HttpServer _server;
+        private static string _hostNameToUse;
         private static string _workingDirectory;
 
-        public static string WebSocketBaseUrl =>
-            $"ws{(Secure ? "s" : "")}://{SystemBase.IpAddress}:{_server.Port}";
+        public static string WebSocketBaseUrl
+        {
+            get
+            {
+                var host = _hostNameToUse ?? SystemBase.IpAddress;
+                return $"ws{(Secure ? "s" : "")}://{host}:{_server.Port}";
+            }
+        }
 
         public static int Port => _server?.Port ?? 0;
 
@@ -47,13 +54,16 @@ namespace UXAV.AVnet.Core.UI.Ch5
         /// An optional certificate to use for the server to run in secure mode
         /// </param>
         /// <example>
+        /// <param name="hostName">
+        /// Optional hostname to use for the server, otherwise defaults to IP address
+        /// </param>
         /// Initialize the server on port 8081 with the working directory of "./ch5" and a certificate
         /// assuming the application number is 1
         /// <code>
         /// Ch5WebSocketServer.Init(8080 + InitialParametersClass.ApplicationNumber, "./ch5", cert);
         /// </code>
         /// </example>
-        public static void Init(int port, string workingDirectory = "./ch5", X509Certificate2 cert = null)
+        public static void Init(int port, string workingDirectory = "./ch5", X509Certificate2 cert = null, string hostName = null)
         {
             Logger.AddCommand((argString, args, connection, respond) => { DebugIsOn = true; }, "WebSocketServerDebug",
                 "Set the debugging on the websocket server to on");
@@ -64,6 +74,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 _server.Stop();
             }
 
+            _hostNameToUse = hostName;
             _workingDirectory = workingDirectory;
             _server = new HttpServer(port, cert != null)
             {
@@ -78,6 +89,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 {
                     Logger.Highlight($"Loaded cert for websocket: {cert.FriendlyName}");
                     _server.SslConfiguration.ServerCertificate = cert;
+                    _server.SslConfiguration.CheckCertificateRevocation = false;
+                    _server.SslConfiguration.ClientCertificateRequired = false;
+                    _server.SslConfiguration.ClientCertificateValidationCallback = (sender, certificate, chain, errors) => true;
                     _server.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
                 }
             }
