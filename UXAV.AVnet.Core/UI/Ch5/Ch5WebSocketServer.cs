@@ -16,13 +16,18 @@ namespace UXAV.AVnet.Core.UI.Ch5
         private static HttpServer _server;
         private static string _hostNameToUse;
         private static string _workingDirectory;
+        private static int _advertisedPort;
 
         public static string WebSocketBaseUrl
         {
             get
             {
                 var host = _hostNameToUse ?? SystemBase.IpAddress;
-                return $"ws{(Secure ? "s" : "")}://{host}:{_server.Port}";
+                var result = $"ws{(Secure ? "s" : "")}://{host}";
+                var port = _advertisedPort > 0 ? _advertisedPort : Port;
+                if (port != 80 && port != 443)
+                    result += $":{port}";
+                return result;
             }
         }
 
@@ -45,6 +50,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
         /// If you are running multiple instances of the application, you will need to change the port
         /// for each instance
         /// </param>
+        /// <param name="advertisedPort">
+        /// Port for the server to advertise to the client if using reverse proxy etc
+        /// </param>
         /// <param name="workingDirectory">
         /// The working diretcory for the server to use
         /// Defaults to "./ch5" which would then be relative to the application directory with a ch5 directory
@@ -63,7 +71,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         /// Ch5WebSocketServer.Init(8080 + InitialParametersClass.ApplicationNumber, "./ch5", cert);
         /// </code>
         /// </example>
-        public static void Init(int port, string workingDirectory = "./ch5", X509Certificate2 cert = null, string hostName = null)
+        public static void Init(int port, int advertisedPort = 0, string workingDirectory = "./ch5", X509Certificate2 cert = null, string hostName = null)
         {
             Logger.AddCommand((argString, args, connection, respond) => { DebugIsOn = true; }, "WebSocketServerDebug",
                 "Set the debugging on the websocket server to on");
@@ -76,6 +84,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             _hostNameToUse = hostName;
             _workingDirectory = workingDirectory;
+            _advertisedPort = advertisedPort;
             _server = new HttpServer(port, cert != null)
             {
                 KeepClean = true,
