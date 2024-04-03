@@ -23,8 +23,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             get
             {
                 var host = _hostNameToUse ?? SystemBase.IpAddress;
-                var result = $"ws{(Secure ? "s" : "")}://{host}";
                 var port = _advertisedPort > 0 ? _advertisedPort : Port;
+                var result = $"ws{(Secure || port == 443 ? "s" : "")}://{host}";
                 if (port != 80 && port != 443)
                     result += $":{port}";
                 return result;
