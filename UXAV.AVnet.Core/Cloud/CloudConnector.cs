@@ -41,7 +41,6 @@ namespace UXAV.AVnet.Core.Cloud
         private static bool _loggingSuspended;
         private static Timer _logHoldTimer;
         private static bool _firstCheckin;
-        private static DateTime _lastCheckin;
 
         static CloudConnector()
         {
@@ -157,17 +156,15 @@ namespace UXAV.AVnet.Core.Cloud
             if (PendingLogs.Count > 1000) _loggingSuspended = true;
             var level = Logger.Level;
             if (message.Level > level) return;
-#if DEBUG
             // don't log debug messages to cloud
             if (message.Level == Logger.LoggerLevel.Debug) return;
-#endif
             PendingLogs[message.Id] = message;
             if (!_firstCheckin) return;
             if (_logHoldTimer == null)
-                _logHoldTimer = new Timer(state => _waitHandle.Set(), null, TimeSpan.FromSeconds(1),
+                _logHoldTimer = new Timer(state => _waitHandle.Set(), null, TimeSpan.FromSeconds(30),
                     Timeout.InfiniteTimeSpan);
             else
-                _logHoldTimer.Change(TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
+                _logHoldTimer.Change(TimeSpan.FromSeconds(30), Timeout.InfiniteTimeSpan);
         }
 
         private static async void CheckInProcess()
@@ -177,27 +174,24 @@ namespace UXAV.AVnet.Core.Cloud
 
             while (true)
             {
-                if (_lastCheckin < DateTime.Now.AddMinutes(-1))
-                {
 #if DEBUG
-                    Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
+                Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
 #endif
-                    await CheckInAsync();
-                    if (!_firstCheckin)
-                        _firstCheckin = true;
-                    if (_uploadConfig)
-                        try
-                        {
-                            await UploadConfigAsync();
-                            _uploadConfig = false;
-                        }
-                        catch (Exception e)
-                        {
-                            if (!_suppressWarning) Logger.Error(e);
-                        }
-                }
+                await CheckInAsync();
+                if (!_firstCheckin)
+                    _firstCheckin = true;
+                if (_uploadConfig)
+                    try
+                    {
+                        await UploadConfigAsync();
+                        _uploadConfig = false;
+                    }
+                    catch (Exception e)
+                    {
+                        if (!_suppressWarning) Logger.Error(e);
+                    }
 
-                _waitHandle?.WaitOne(TimeSpan.FromMinutes(5));
+                _waitHandle?.WaitOne(TimeSpan.FromMinutes(2));
                 if (!_programStopping) continue;
                 Logger.Warn($"{nameof(CloudConnector)} leaving checkin process!");
                 return;
@@ -353,7 +347,6 @@ namespace UXAV.AVnet.Core.Cloud
                         Logger.Error(e);
                     }
 
-                    _lastCheckin = DateTime.Now;
                     _suppressWarning = false;
                 }
                 catch (Exception e)
