@@ -156,17 +156,15 @@ namespace UXAV.AVnet.Core.Cloud
             if (PendingLogs.Count > 1000) _loggingSuspended = true;
             var level = Logger.Level;
             if (message.Level > level) return;
-#if DEBUG
             // don't log debug messages to cloud
             if (message.Level == Logger.LoggerLevel.Debug) return;
-#endif
             PendingLogs[message.Id] = message;
             if (!_firstCheckin) return;
             if (_logHoldTimer == null)
-                _logHoldTimer = new Timer(state => _waitHandle.Set(), null, TimeSpan.FromSeconds(1),
+                _logHoldTimer = new Timer(state => _waitHandle.Set(), null, TimeSpan.FromSeconds(30),
                     Timeout.InfiniteTimeSpan);
             else
-                _logHoldTimer.Change(TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
+                _logHoldTimer.Change(TimeSpan.FromSeconds(30), Timeout.InfiniteTimeSpan);
         }
 
         private static async void CheckInProcess()
@@ -193,7 +191,7 @@ namespace UXAV.AVnet.Core.Cloud
                         if (!_suppressWarning) Logger.Error(e);
                     }
 
-                _waitHandle?.WaitOne(TimeSpan.FromMinutes(1));
+                _waitHandle?.WaitOne(TimeSpan.FromMinutes(2));
                 if (!_programStopping) continue;
                 Logger.Warn($"{nameof(CloudConnector)} leaving checkin process!");
                 return;
@@ -296,7 +294,7 @@ namespace UXAV.AVnet.Core.Cloud
 #if DEBUG
                     Logger.Debug($"Cloud checkin URL is {CheckinUri}");
 #endif
-                    var result = await HttpClient.PostAsync(CheckinUri, content);
+                    using var result = await HttpClient.PostAsync(CheckinUri, content);
 #if DEBUG
                     Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
 #endif
@@ -349,7 +347,6 @@ namespace UXAV.AVnet.Core.Cloud
                         Logger.Error(e);
                     }
 
-                    result.Dispose();
                     _suppressWarning = false;
                 }
                 catch (Exception e)

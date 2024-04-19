@@ -14,10 +14,22 @@ namespace UXAV.AVnet.Core.UI.Ch5
     public static class Ch5WebSocketServer
     {
         private static HttpServer _server;
+        private static string _hostNameToUse;
         private static string _workingDirectory;
+        private static int _advertisedPort;
 
-        public static string WebSocketBaseUrl =>
-            $"ws{(Secure ? "s" : "")}://{SystemBase.IpAddress}:{_server.Port}";
+        public static string WebSocketBaseUrl
+        {
+            get
+            {
+                var host = _hostNameToUse ?? SystemBase.IpAddress;
+                var port = _advertisedPort > 0 ? _advertisedPort : Port;
+                var result = $"ws{(Secure || port == 443 ? "s" : "")}://{host}";
+                if (port != 80 && port != 443)
+                    result += $":{port}";
+                return result;
+            }
+        }
 
         public static int Port => _server?.Port ?? 0;
 
@@ -38,6 +50,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
         /// If you are running multiple instances of the application, you will need to change the port
         /// for each instance
         /// </param>
+        /// <param name="advertisedPort">
+        /// Port for the server to advertise to the client if using reverse proxy etc
+        /// </param>
         /// <param name="workingDirectory">
         /// The working diretcory for the server to use
         /// Defaults to "./ch5" which would then be relative to the application directory with a ch5 directory
@@ -47,13 +62,16 @@ namespace UXAV.AVnet.Core.UI.Ch5
         /// An optional certificate to use for the server to run in secure mode
         /// </param>
         /// <example>
+        /// <param name="hostName">
+        /// Optional hostname to use for the server, otherwise defaults to IP address
+        /// </param>
         /// Initialize the server on port 8081 with the working directory of "./ch5" and a certificate
         /// assuming the application number is 1
         /// <code>
         /// Ch5WebSocketServer.Init(8080 + InitialParametersClass.ApplicationNumber, "./ch5", cert);
         /// </code>
         /// </example>
-        public static void Init(int port, string workingDirectory = "./ch5", X509Certificate2 cert = null)
+        public static void Init(int port, int advertisedPort = 0, string workingDirectory = "./ch5", X509Certificate2 cert = null, string hostName = null)
         {
             Logger.AddCommand((argString, args, connection, respond) => { DebugIsOn = true; }, "WebSocketServerDebug",
                 "Set the debugging on the websocket server to on");
@@ -64,7 +82,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 _server.Stop();
             }
 
+            _hostNameToUse = hostName;
             _workingDirectory = workingDirectory;
+            _advertisedPort = advertisedPort;
             _server = new HttpServer(port, cert != null)
             {
                 KeepClean = true,
@@ -76,7 +96,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 if (cert != null)
                 {
-                    Logger.Highlight($"Loaded cert for websocket: {cert.FriendlyName}");
+                    Logger.Highlight($"Loaded cert for websocket: {cert.SubjectName.Name}");
                     _server.SslConfiguration.ServerCertificate = cert;
                     _server.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
                 }
