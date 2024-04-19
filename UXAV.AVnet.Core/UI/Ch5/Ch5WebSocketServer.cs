@@ -96,11 +96,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 if (cert != null)
                 {
-                    Logger.Highlight($"Loaded cert for websocket: {cert.FriendlyName}");
+                    Logger.Highlight($"Loaded cert for websocket: {cert.SubjectName.Name}");
                     _server.SslConfiguration.ServerCertificate = cert;
-                    _server.SslConfiguration.CheckCertificateRevocation = false;
-                    _server.SslConfiguration.ClientCertificateRequired = false;
-                    _server.SslConfiguration.ClientCertificateValidationCallback = (sender, certificate, chain, errors) => true;
                     _server.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
                 }
             }
