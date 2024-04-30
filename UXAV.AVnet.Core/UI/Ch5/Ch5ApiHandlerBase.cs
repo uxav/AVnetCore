@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
@@ -182,12 +183,12 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         internal void OnReceiveInternal(JToken data)
         {
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 try
                 {
                     var request = new RequestMessage(data);
-                    var response = ProcessResponse(request);
+                    var response = await ProcessResponseAsync(request);
                     Send(response.ToString());
                 }
                 catch (Exception e)
@@ -201,7 +202,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             });
         }
 
-        private ResponseMessage ProcessResponse(RequestMessage message)
+        private async Task<ResponseMessage> ProcessResponseAsync(RequestMessage message)
         {
             if (message.Id == null) throw new NullReferenceException("id cannot be null");
 
@@ -209,7 +210,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 if (message.Method == "ping") return new ResponseMessage((int)message.Id, "pong");
 
-                var result = FindAndInvokeMethod<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
+                var result = await FindAndInvokeMethod<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
                 return new ResponseMessage((int)message.Id, result);
             }
             catch (TargetInvocationException e)
@@ -224,7 +225,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
         }
 
-        private object FindAndInvokeMethod<T>(string method, JToken args) where T : ApiTargetAttributeBase
+        private async Task<object> FindAndInvokeMethod<T>(string method, JToken args) where T : ApiTargetAttributeBase
         {
             object target = this;
             var namedArgs = args;
@@ -234,20 +235,20 @@ namespace UXAV.AVnet.Core.UI.Ch5
             switch (method)
             {
                 case "Room.Invoke":
-                {
-                    if (Ch5WebSocketServer.DebugIsOn)
-                        Logger.Debug("Room.Invoke found");
-                    if (args["room"] == null || args["method"] == null)
-                        throw new Exception("Room.Invoke requires a room and method parameter");
-                    var roomId = args["room"].Value<uint>();
-                    var room = UxEnvironment.GetRoom(roomId);
-                    method = args["method"].Value<string>();
-                    target = room;
-                    //Logger.Debug("Target set to room: " + room);
-                    //Logger.Debug("Args\n" + args);
-                    namedArgs = args["roomParams"];
-                    break;
-                }
+                    {
+                        if (Ch5WebSocketServer.DebugIsOn)
+                            Logger.Debug("Room.Invoke found");
+                        if (args["room"] == null || args["method"] == null)
+                            throw new Exception("Room.Invoke requires a room and method parameter");
+                        var roomId = args["room"].Value<uint>();
+                        var room = UxEnvironment.GetRoom(roomId);
+                        method = args["method"].Value<string>();
+                        target = room;
+                        //Logger.Debug("Target set to room: " + room);
+                        //Logger.Debug("Args\n" + args);
+                        namedArgs = args["roomParams"];
+                        break;
+                    }
                 case "GetSettings":
                     return _deviceController.GetSettings();
                 case "SaveSettings":
@@ -255,38 +256,66 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     return true;
             }
 
-            var methods = target.GetType().GetMethods();
-            foreach (var methodInfo in methods)
+            var methods = target.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (var methodInfo in methods.Where(m => m.GetCustomAttribute<T>() != null && m.GetCustomAttribute<T>().Name == method))
             {
                 var attribute = methodInfo.GetCustomAttribute<T>();
-                //Logger.Debug($"Looking at method: {method.Name}");
+                //Logger.Debug($"Looking at method: {methodInfo.Name}");
                 if (attribute == null || attribute.Name != method) continue;
                 //Logger.Debug($"Name matches....");
                 var methodParams = methodInfo.GetParameters();
-                //Logger.Debug($"Param count = {methodParams.Length}");
+                //ogger.Debug($"Param count = {methodParams.Length}");
+                var isAwaitable = methodInfo.ReturnType.GetMethod(nameof(Task.GetAwaiter)) != null;
+                object[] invokeParams = null;
                 switch (namedArgs)
                 {
                     case null when methodParams.Length == 0:
-                    {
-                        var result = methodInfo.Invoke(target, new object[] { });
-                        if (methodInfo.ReturnType == typeof(void)) result = true;
-                        return result;
-                    }
+                        {
+                            invokeParams = [];
+                        }
+                        break;
                     case null:
                         continue;
                     default:
+                        {
+                            //Logger.Debug($"namedArgs are: {JsonConvert.SerializeObject(namedArgs)}");
+                            if (namedArgs.Count() != methodParams.Length) continue;
+                            invokeParams = (from methodParam in methodParams
+                                            where namedArgs[methodParam.Name] != null
+                                            // ReSharper disable once PossibleNullReferenceException
+                                            select namedArgs[methodParam.Name].ToObject(methodParam.ParameterType))
+                                .ToArray();
+                            //Logger.Debug($"params are: {JsonConvert.SerializeObject(invokeParams)}");
+                            if (invokeParams.Length != methodParams.Length) continue;
+                        }
+                        break;
+                }
+
+                if (isAwaitable)
+                {
+                    //Logger.Debug("Method is awaitable");
+                    if (methodInfo.ReturnType.IsGenericType)
                     {
-                        if (namedArgs.Count() != methodParams.Length) continue;
-                        var invokeParams = (from methodParam in methodParams
-                                where namedArgs[methodParam.Name] != null
-                                // ReSharper disable once PossibleNullReferenceException
-                                select namedArgs[methodParam.Name].ToObject(methodParam.ParameterType))
-                            .ToArray();
-                        if (invokeParams.Length != methodParams.Length) continue;
-                        var result = methodInfo.Invoke(target, invokeParams);
-                        if (methodInfo.ReturnType == typeof(void)) result = true;
-                        return result;
+                        return (object)await (dynamic)methodInfo.Invoke(target, invokeParams);
                     }
+                    else
+                    {
+                        await (Task)methodInfo.Invoke(target, invokeParams);
+                    }
+                    var task = (Task)methodInfo.Invoke(target, invokeParams);
+                    task.Wait();
+                    return task.GetType().GetProperty("Result")?.GetValue(task);
+                }
+                else
+                {
+                    //Logger.Debug("Method is not awaitable");
+                    if (methodInfo.ReturnType == typeof(void))
+                    {
+                        methodInfo.Invoke(target, invokeParams);
+                        return null;
+                    }
+                    else
+                        return methodInfo.Invoke(target, invokeParams);
                 }
             }
 
@@ -300,7 +329,19 @@ namespace UXAV.AVnet.Core.UI.Ch5
         }
 
         [ApiTargetMethod("Subscribe")]
-        public void Subscribe(int id, string name, JToken @params)
+        public async Task Subscribe(int id, string name, JToken @params)
+        {
+            await Subscribe(id, name, this, @params);
+        }
+
+        [ApiTargetMethod("Subscribe")]
+        public async Task Subscribe(int id, string name, uint roomId, JToken @params)
+        {
+            var room = UxEnvironment.GetRoom(roomId);
+            await Subscribe(id, name, room, @params);
+        }
+
+        private async Task Subscribe(int id, string name, object targetObject, JToken @params)
         {
             if (Ch5WebSocketServer.DebugIsOn)
                 Logger.Debug($"Subscribe with id: {id}, name: {name}, params: {@params}");
@@ -310,14 +351,14 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     throw new InvalidOperationException($"Event ID {id} already registered");
             }
 
-            var obj = FindAndInvokeMethod<ApiTargetEventAttribute>(name, @params);
-            var attribute = GetType().GetMethods()
+            var obj = await FindAndInvokeMethod<ApiTargetEventAttribute>(name, @params);
+            var attribute = targetObject.GetType().GetMethods()
                 .First(m => m.GetCustomAttribute<ApiTargetEventAttribute>()?.Name == name)
                 .GetCustomAttribute<ApiTargetEventAttribute>();
             var ctor =
                 attribute!.SubscriptionType.GetConstructor(new[]
-                    { typeof(Ch5ApiHandlerBase), typeof(int), typeof(string), typeof(object), typeof(string) });
-            var sub = (EventSubscription)ctor!.Invoke(new[] { this, id, name, obj, attribute.EventName });
+                    { targetObject.GetType(), typeof(int), typeof(string), typeof(object), typeof(string) });
+            var sub = (EventSubscription)ctor!.Invoke([targetObject, id, name, obj, attribute.EventName]);
             lock (_eventSubscriptions)
             {
                 _eventSubscriptions[id] = sub;
