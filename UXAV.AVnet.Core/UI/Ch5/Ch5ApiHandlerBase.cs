@@ -300,11 +300,10 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     }
                     else
                     {
-                        await (Task)methodInfo.Invoke(target, invokeParams);
+                        var task = (Task)methodInfo.Invoke(target, invokeParams);
+                        task.Wait();
+                        return task.GetType().GetProperty("Result")?.GetValue(task);
                     }
-                    var task = (Task)methodInfo.Invoke(target, invokeParams);
-                    task.Wait();
-                    return task.GetType().GetProperty("Result")?.GetValue(task);
                 }
                 else
                 {
@@ -332,13 +331,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
         public async Task Subscribe(int id, string name, JToken @params)
         {
             await Subscribe(id, name, this, @params);
-        }
-
-        [ApiTargetMethod("Subscribe")]
-        public async Task Subscribe(int id, string name, uint roomId, JToken @params)
-        {
-            var room = UxEnvironment.GetRoom(roomId);
-            await Subscribe(id, name, room, @params);
         }
 
         private async Task Subscribe(int id, string name, object targetObject, JToken @params)
