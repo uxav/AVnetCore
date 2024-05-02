@@ -832,7 +832,7 @@ namespace UXAV.AVnet.Core.Models
                 Logger.Error(e);
             }
 
-            return messages.OrderByDescending(m => m.Level);
+            return messages.OrderByDescending(m => m.Level).ThenBy(m => m.Message).ThenBy(m => m.DetailsMessage);
         }
 
         protected abstract IEnumerable<DiagnosticMessage> GenerateDiagnosticMessages();
