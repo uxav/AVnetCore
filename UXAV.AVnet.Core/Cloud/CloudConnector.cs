@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -38,7 +39,6 @@ namespace UXAV.AVnet.Core.Cloud
         private static readonly ConcurrentDictionary<string, LoggerMessage> PendingLogs =
             new ConcurrentDictionary<string, LoggerMessage>();
 
-        private static bool _loggingSuspended;
         private static Timer _logHoldTimer;
         private static bool _firstCheckin;
 
@@ -55,10 +55,21 @@ namespace UXAV.AVnet.Core.Cloud
             {
                 if (_checkinUri == null)
                     _checkinUri = new Uri(
-                        $"https://{Host}/api/checkin/v2" +
+                        $"https://{Host}/api/checkin/v3" +
                         $"/{ApplicationName}/{WebUtility.UrlEncode(InstanceId)}?token={Token}");
 
                 return _checkinUri;
+            }
+        }
+
+        private static Uri LogsCheckinUri
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Host) || string.IsNullOrEmpty(Token)) return null;
+                return new Uri(
+                    $"https://{Host}/api/checkin/v3/logs" +
+                    $"/{ApplicationName}/{WebUtility.UrlEncode(InstanceId)}?token={Token}");
             }
         }
 
@@ -152,14 +163,12 @@ namespace UXAV.AVnet.Core.Cloud
 
         private static void LoggerOnMessageLogged(LoggerMessage message)
         {
-            if (_loggingSuspended) return;
-            if (PendingLogs.Count > 1000) _loggingSuspended = true;
+            if (PendingLogs.Count > 2000) return;
             var level = Logger.Level;
             if (message.Level > level) return;
             // don't log debug messages to cloud
             if (message.Level == Logger.LoggerLevel.Debug) return;
             PendingLogs[message.Id] = message;
-            if (!_firstCheckin) return;
             if (_logHoldTimer == null)
                 _logHoldTimer = new Timer(state => _waitHandle.Set(), null, TimeSpan.FromSeconds(30),
                     Timeout.InfiniteTimeSpan);
@@ -178,6 +187,16 @@ namespace UXAV.AVnet.Core.Cloud
                 Logger.Debug($"{nameof(CloudConnector)} will checkin now...");
 #endif
                 await CheckInAsync();
+                while (PendingLogs.Count > 0)
+                    try
+                    {
+                        await UploadLogsAsync();
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error(e);
+                        break;
+                    }
                 if (!_firstCheckin)
                     _firstCheckin = true;
                 if (_uploadConfig)
@@ -217,25 +236,6 @@ namespace UXAV.AVnet.Core.Cloud
                     SystemMonitor.RamFreeMinimum,
                     SystemMonitor.TotalRamSize
                 };
-
-            var logIds = PendingLogs.Keys.ToArray();
-            var logData = new List<object>();
-            foreach (var id in logIds)
-            {
-                if (!PendingLogs.TryGetValue(id, out var log)) continue;
-                logData.Add(new
-                {
-                    id = log.Id,
-                    time = log.Time.ToUniversalTime(),
-                    level = log.Level.ToString(),
-                    message = log.Message,
-                    type = log.MessageType.ToString(),
-                    color = log.ColorClass,
-                    stackTrace = log.StackTrace,
-                    tracedName = log.TracedName,
-                    tracedNameFull = log.TracedNameFull
-                });
-            }
 
             try
             {
@@ -284,83 +284,120 @@ namespace UXAV.AVnet.Core.Cloud
                         },
                         longitude = CrestronEnvironment.Longitude,
                         latitude = CrestronEnvironment.Latitude
-                    },
-                    logs = logData
+                    }
                 };
-                var json = JToken.FromObject(data);
-                var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
-                try
-                {
-#if DEBUG
-                    Logger.Debug($"Cloud checkin URL is {CheckinUri}");
-#endif
-                    using var result = await HttpClient.PostAsync(CheckinUri, content);
-#if DEBUG
-                    Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
-#endif
-                    result.EnsureSuccessStatusCode();
-                    var contents = await result.Content.ReadAsStringAsync();
-#if DEBUG
-                    Logger.Debug($"Cloud Rx:\r\n{contents}");
-#endif
-                    var responseData = JToken.Parse(contents);
-                    if (responseData["actions"] != null)
-                        foreach (var action in responseData["actions"])
-                            try
-                            {
-                                Logger.Warn($"Received cloud action: {action}");
-                                var actionId = (action["id"] ?? "").Value<string>();
-                                var methodName = (action["method"] ?? "").Value<string>();
-                                var args = action["args"]?.ToObject<Dictionary<string, string>>();
-                                try
-                                {
-                                    UxEnvironment.System.RunCloudActionInternal(methodName, args);
-                                }
-                                catch (Exception e)
-                                {
-                                    Logger.Warn($"Error running action with ID {actionId}");
-                                    Logger.Error(e);
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Logger.Error(e);
-                            }
 
-                    try
-                    {
-#if DEBUG
-                        Logger.Debug($"Uploaded {logIds.Length} logs successfully! Removing from pending...");
-#endif
-                        foreach (var id in logIds) PendingLogs.TryRemove(id, out var _);
-#if DEBUG
-                        Logger.Debug($"Pending logs remaining: {PendingLogs.Count}");
-#endif
-                        if (_loggingSuspended)
-                        {
-                            _loggingSuspended = false;
-                            Logger.Warn("Log uploading to cloud resumed after suspension!");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error(e);
-                    }
-
-                    _suppressWarning = false;
-                }
-                catch (Exception e)
-                {
-                    if (_suppressWarning) return;
-                    Logger.Debug($"Could not checkin at {CheckinUri}, {e.Message}");
-                    _suppressWarning = true;
-                }
+                await UploadCheckinData(data);
             }
             catch (Exception e)
             {
                 Logger.Error(e);
             }
         }
+
+        private static async Task UploadLogsAsync()
+        {
+            var logIds = PendingLogs.Keys.Take(500).ToArray();
+            var logData = new List<object>();
+            foreach (var id in logIds)
+            {
+                if (!PendingLogs.TryGetValue(id, out var log)) continue;
+                logData.Add(new
+                {
+                    id = log.Id,
+                    time = log.Time.ToUniversalTime(),
+                    level = log.Level.ToString(),
+                    message = log.Message,
+                    type = log.MessageType.ToString(),
+                    color = log.ColorClass,
+                    stackTrace = log.StackTrace,
+                    tracedName = log.TracedName,
+                    tracedNameFull = log.TracedNameFull
+                });
+            }
+
+            var data = new
+            {
+                logs = logData
+            };
+
+            var json = JToken.FromObject(data);
+            var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
+#if DEBUG
+            Logger.Debug($"Logs checkin URL is {LogsCheckinUri}");
+#endif
+            using var result = await HttpClient.PostAsync(LogsCheckinUri, content);
+#if DEBUG
+            Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
+#endif
+            result.EnsureSuccessStatusCode();
+            var contents = await result.Content.ReadAsStringAsync();
+#if DEBUG
+            Logger.Debug($"Cloud Rx:\r\n{contents}");
+#endif
+            var responseData = JToken.Parse(contents);
+
+#if DEBUG
+            Logger.Debug($"Uploaded {logIds.Length} logs successfully! Removing from pending...");
+#endif
+            foreach (var id in logIds) PendingLogs.TryRemove(id, out var _);
+#if DEBUG
+            Logger.Debug($"Pending logs remaining: {PendingLogs.Count}");
+#endif
+        }
+
+        private static async Task UploadCheckinData(object data)
+        {
+            var json = JToken.FromObject(data);
+            var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
+            try
+            {
+#if DEBUG
+                Logger.Debug($"Cloud checkin URL is {CheckinUri}");
+#endif
+                using var result = await HttpClient.PostAsync(CheckinUri, content);
+#if DEBUG
+                Logger.Debug($"{nameof(CloudConnector)}.{nameof(CheckInAsync)}() result = {result.StatusCode}");
+#endif
+                result.EnsureSuccessStatusCode();
+                var contents = await result.Content.ReadAsStringAsync();
+#if DEBUG
+                Logger.Debug($"Cloud Rx:\r\n{contents}");
+#endif
+                var responseData = JToken.Parse(contents);
+                if (responseData["actions"] != null)
+                    foreach (var action in responseData["actions"])
+                        try
+                        {
+                            Logger.Warn($"Received cloud action: {action}");
+                            var actionId = (action["id"] ?? "").Value<string>();
+                            var methodName = (action["method"] ?? "").Value<string>();
+                            var args = action["args"]?.ToObject<Dictionary<string, string>>();
+                            try
+                            {
+                                UxEnvironment.System.RunCloudActionInternal(methodName, args);
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.Warn($"Error running action with ID {actionId}");
+                                Logger.Error(e);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error(e);
+                        }
+
+                _suppressWarning = false;
+            }
+            catch (Exception e)
+            {
+                if (_suppressWarning) return;
+                Logger.Debug($"Could not checkin at {CheckinUri}, {e.Message}");
+                _suppressWarning = true;
+            }
+        }
+
 
         private static async Task UploadConfigAsync()
         {
