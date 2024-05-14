@@ -78,29 +78,35 @@ namespace UXAV.AVnet.Core.DeviceSupport
             {
                 if (_deviceCommunicating == value) return;
                 _deviceCommunicating = value;
-                if (_deviceCommunicating)
-                    Logger.Success($"{Name} is now online.", GetType().Name, true);
-                else
-                    Logger.Warn($"{Name} is offline!", GetType().Name, false);
-
-                try
-                {
-                    DeviceCommunicatingChange?.Invoke(this, _deviceCommunicating);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e);
-                }
-
-                if (System.BootStatus != SystemBase.EBootStatus.Running) return;
-                EventService.Notify(EventMessageType.DeviceConnectionChange, new
-                {
-                    Device = Name,
-                    Description = AllocatedRoom?.Name,
-                    ConnectionInfo,
-                    Online = value
-                });
+                OnDeviceCommunicatingChange(value);
             }
+        }
+
+        protected virtual void OnDeviceCommunicatingChange(bool communicating, bool log = true, bool notify = true)
+        {
+            if (_deviceCommunicating && log)
+                Logger.Success($"{Name} is now online.", GetType().Name, true);
+            else if (!_deviceCommunicating && log)
+                Logger.Warn($"{Name} is offline!", GetType().Name, false);
+
+            try
+            {
+                DeviceCommunicatingChange?.Invoke(this, _deviceCommunicating);
+            }
+            catch (Exception e)
+            {
+                if (log)
+                    Logger.Error(e);
+            }
+
+            if (System.BootStatus != SystemBase.EBootStatus.Running || !notify) return;
+            EventService.Notify(EventMessageType.DeviceConnectionChange, new
+            {
+                Device = Name,
+                Description = AllocatedRoom?.Name,
+                ConnectionInfo,
+                Online = communicating
+            });
         }
 
         public virtual bool DebugEnabled { get; set; }
