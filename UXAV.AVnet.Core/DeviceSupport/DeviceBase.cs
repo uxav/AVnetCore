@@ -28,7 +28,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
             {
                 if (type == eProgramStatusEventType.Stopping) OnProgramStopping();
             };
-            Logger.Log($"Created device {GetType().Name} \"{Name}\" with device ID {Id}");
+            Logger.Debug($"Created device {GetType().Name} \"{Name}\" with device ID {Id}");
         }
 
         protected DeviceBase(string name, uint roomIdAllocated = 0)
@@ -42,7 +42,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
             {
                 if (type == eProgramStatusEventType.Stopping) OnProgramStopping();
             };
-            Logger.Log($"Created device {GetType().Name} \"{Name}\" with device ID {Id}");
+            Logger.Debug($"Created device {GetType().Name} \"{Name}\" with device ID {Id}");
         }
 
         [Obsolete("Method is no longer used. Please use ctor(name, room).")]

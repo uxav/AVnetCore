@@ -228,7 +228,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
                     var result = device.Register();
                     if (result == eDeviceRegistrationUnRegistrationResponse.Success)
                     {
-                        Logger.Log($"Registered device: {device}");
+                        Logger.Debug($"Registered device: {device}");
                         continue;
                     }
 
@@ -251,7 +251,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
                     var result = device.Register();
                     if (result == eDeviceRegistrationUnRegistrationResponse.Success)
                     {
-                        Logger.Success($"Registered device: {device}");
+                        Logger.Debug($"Registered device: {device}");
                         continue;
                     }
 
