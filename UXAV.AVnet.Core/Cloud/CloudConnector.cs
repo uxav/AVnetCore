@@ -194,7 +194,7 @@ namespace UXAV.AVnet.Core.Cloud
                     }
                     catch (Exception e)
                     {
-                        Logger.Error(e);
+                        if (!_suppressWarning) Logger.Error(e);
                         break;
                     }
                 if (!_firstCheckin)
