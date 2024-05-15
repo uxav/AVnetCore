@@ -26,6 +26,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
         private UdpClient _client;
         private bool _fireState;
         private bool _normalState;
+        private bool _normalStateOverride;
         private bool _programStopping;
         private int _sendCount;
         private TimeSpan _sendWaitTime = TimeSpan.FromSeconds(30);
@@ -86,6 +87,12 @@ namespace UXAV.AVnet.Core.DeviceSupport
             }
         }
 
+        public void OverrideNormalState(bool state)
+        {
+            _normalState = state;
+            _normalStateOverride = true;
+        }
+
         public bool Initialized { get; private set; }
 
         public uint Id => 0;
@@ -98,16 +105,24 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 switch (_port)
                 {
                     case Versiport versiport:
-                        _normalState = versiport.DigitalIn;
+                        if (!_normalStateOverride)
+                            _normalState = versiport.DigitalIn;
                         break;
                     case DigitalInput digitalInput:
-                        _normalState = digitalInput.State;
+                        if (!_normalStateOverride)
+                            _normalState = digitalInput.State;
                         break;
                 }
 
                 if (_port != null)
+                {
                     Logger.Highlight($"Fire interface state set as {_port}, normal state = " +
-                                     (_normalState ? "closed" : "open"));
+                                 (_normalState ? "closed" : "open"));
+                }
+                if (_normalStateOverride)
+                {
+                    Logger.Warn($"Fire normal state overridden to: {_normalStateOverride}");
+                }
                 Initialized = true;
                 return;
             }
@@ -191,7 +206,6 @@ namespace UXAV.AVnet.Core.DeviceSupport
                             if (_sendCount >= 5)
                             {
                                 _sendWaitTime = TimeSpan.FromSeconds(30);
-                                _sendCount = 0;
                             }
 
                             var bytes = new byte[]
