@@ -213,14 +213,16 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 var result = await FindAndInvokeMethod<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
                 return new ResponseMessage((int)message.Id, result);
             }
-            catch (TargetInvocationException e)
-            {
-                Logger.Error(e.InnerException);
-                return new ResponseMessage((int)message.Id, e.InnerException);
-            }
             catch (Exception e)
             {
                 Logger.Error(e);
+                while (true)
+                {
+                    if (e.InnerException == null)
+                        break;
+                    e = e.InnerException;
+                    Logger.Error(e);
+                }
                 return new ResponseMessage((int)message.Id, e);
             }
         }
