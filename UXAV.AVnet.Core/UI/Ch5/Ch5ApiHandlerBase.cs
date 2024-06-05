@@ -333,6 +333,24 @@ namespace UXAV.AVnet.Core.UI.Ch5
             await Subscribe(id, name, this, @params);
         }
 
+        [ApiTargetMethod("SubscribeRoom")]
+        public void SubscribeRoom(int id, string name, uint roomId)
+        {
+            var room = UxEnvironment.GetRoom(roomId);
+            try
+            {
+                var sub = new EventSubscription<object>(this, id, name, room, name);
+                lock (_eventSubscriptions)
+                {
+                    _eventSubscriptions[id] = sub;
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to subscribe to room event {name}", e);
+            }
+        }
+
         private async Task Subscribe(int id, string name, object targetObject, JToken @params)
         {
             if (Ch5WebSocketServer.DebugIsOn)

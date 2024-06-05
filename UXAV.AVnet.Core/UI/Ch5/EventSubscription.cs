@@ -1,24 +1,24 @@
 using System;
+using System.Reflection;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.UI.Ch5
 {
     public abstract class EventSubscription
     {
-        private readonly string _eventName;
         private readonly Ch5ApiHandlerBase _apiHandler;
+        private readonly EventInfo _eventInfo;
         private readonly object _eventObject;
 
         protected EventSubscription(Ch5ApiHandlerBase apiHandler, int id, string name, object eventObject, string eventName)
         {
-            _eventName = eventName;
             _apiHandler = apiHandler;
-            _eventObject = eventObject;
             Id = id;
             Name = name;
-            var eventInfo = _eventObject.GetType().GetEvent(_eventName);
-            var handler = Delegate.CreateDelegate(eventInfo.EventHandlerType, this, "OnEvent");
-            eventInfo.AddEventHandler(_eventObject, handler);
+            _eventInfo = eventObject.GetType().GetEvent(eventName);
+            _eventObject = eventObject;
+            var handler = Delegate.CreateDelegate(_eventInfo.EventHandlerType, this, "OnEvent");
+            _eventInfo.AddEventHandler(_eventObject, handler);
         }
 
         protected void Notify(object value)
@@ -38,9 +38,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         public void Unsubscribe()
         {
-            var eventInfo = _eventObject.GetType().GetEvent(_eventName);
-            var handler = Delegate.CreateDelegate(eventInfo.EventHandlerType, this, "OnEvent");
-            eventInfo.RemoveEventHandler(_eventObject, handler);
+            var handler = Delegate.CreateDelegate(_eventInfo.EventHandlerType, this, "OnEvent");
+            _eventInfo.RemoveEventHandler(_eventObject, handler);
         }
 
         public int Id { get; }
