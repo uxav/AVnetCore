@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -236,9 +237,9 @@ namespace UXAV.AVnet.Core
         {
             if (extender == null) throw new ArgumentNullException(nameof(extender));
             return (from property in extender.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                let s = property.GetValue(extender) as Sig
-                where s != null && s == sig
-                select property.Name).FirstOrDefault();
+                    let s = property.GetValue(extender) as Sig
+                    where s != null && s == sig
+                    select property.Name).FirstOrDefault();
         }
 
         public static void InvokeMethod(this DeviceExtender extender, string methodName)
@@ -412,5 +413,38 @@ namespace UXAV.AVnet.Core
         }
 
         #endregion
+    }
+
+    public class SemiNumericComparer : IComparer<string>
+    {
+        public int Compare(string s1, string s2)
+        {
+            var s1n = SemiNumericComparer.IsNumeric(s1, out int s1r);
+            var s2n = SemiNumericComparer.IsNumeric(s2, out int s2r);
+
+            if (s1n && s2n) return s1r - s2r;
+            else if (s1n) return -1;
+            else if (s2n) return 1;
+
+            var num1 = Regex.Match(s1, @"\d+");
+            var num2 = Regex.Match(s2, @"\d+");
+
+            var onlyString1 = s1.Remove(num1.Index, num1.Length);
+            var onlyString2 = s2.Remove(num2.Index, num2.Length);
+
+            if (onlyString1 == onlyString2)
+            {
+                if (num1.Success && num2.Success) return Convert.ToInt32(num1.Value) - Convert.ToInt32(num2.Value);
+                else if (num1.Success) return 1;
+                else if (num2.Success) return -1;
+            }
+
+            return string.Compare(s1, s2, true);
+        }
+
+        public static bool IsNumeric(string value, out int result)
+        {
+            return int.TryParse(value, out result);
+        }
     }
 }

@@ -707,7 +707,7 @@ namespace UXAV.AVnet.Core.Models
             BootStatus = status;
             BootStatusDescription = description;
             BootProgress = progress;
-            Logger.Log("Boot status set to {0}, {1} ({2}%)", status, description, progress);
+            Logger.Debug("Boot status set to {0}, {1} ({2}%)", status, description, progress);
             EventService.Notify(EventMessageType.BootStatus, new
             {
                 status,
@@ -832,7 +832,9 @@ namespace UXAV.AVnet.Core.Models
                 Logger.Error(e);
             }
 
-            return messages.OrderByDescending(m => m.Level);
+            var comparer = new SemiNumericComparer();
+
+            return messages.OrderByDescending(m => m.Level).ThenBy(m => m.Message, comparer).ThenBy(m => m.DetailsMessage, comparer);
         }
 
         protected abstract IEnumerable<DiagnosticMessage> GenerateDiagnosticMessages();
@@ -875,7 +877,7 @@ namespace UXAV.AVnet.Core.Models
             UpdateBootStatus(EBootStatus.Initializing, "Registering CIP devices not already registered", 10);
             CipDevices.RegisterDevices();
 
-            Logger.Highlight("WebScriptingHandlersShouldRegister()");
+            Logger.Debug("WebScriptingHandlersShouldRegister()");
             try
             {
                 WebScriptingHandlersShouldRegister();
@@ -903,7 +905,7 @@ namespace UXAV.AVnet.Core.Models
                     itemCount++;
                     UpdateBootStatus(EBootStatus.Initializing, "Initializing " + item.Name,
                         (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
-                    Logger.Highlight("Initializing {0}", item.ToString());
+                    Logger.Debug("Initializing {0}", item.ToString());
                     item.Initialize();
                     Thread.Sleep(50);
                 }
@@ -923,7 +925,7 @@ namespace UXAV.AVnet.Core.Models
                 itemCount++;
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + room,
                     (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
-                Logger.Highlight("Initializing room: {0}", room);
+                Logger.Debug("Initializing room: {0}", room);
                 room.InternalInitialize();
             }
 
@@ -940,7 +942,7 @@ namespace UXAV.AVnet.Core.Models
                 itemCount++;
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + source,
                     (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
-                Logger.Highlight("Initializing source: {0}", source);
+                Logger.Debug("Initializing source: {0}", source);
                 source.InternalInitialize();
             }
 
@@ -962,11 +964,11 @@ namespace UXAV.AVnet.Core.Models
 
                 Thread.Sleep(200);
                 UpdateBootStatus(EBootStatus.Initializing, "Generating RVI file info for Fusion", 70);
-                Logger.Highlight("Generating Fusion RVI File");
+                Logger.Debug("Generating Fusion RVI File");
                 try
                 {
                     FusionRVI.GenerateFileForAllFusionDevices();
-                    Logger.Success("Generated Fusion RVI file");
+                    Logger.Debug("Generated Fusion RVI file");
                     try
                     {
                         var dir = new DirectoryInfo(ProgramApplicationDirectory);
@@ -1011,7 +1013,7 @@ namespace UXAV.AVnet.Core.Models
             Thread.Sleep(500);
             if (Ch5WebSocketServer.InitCalled)
             {
-                Logger.Highlight("Starting CH5 websocket services");
+                Logger.Log("Starting CH5 websocket services");
                 Thread.Sleep(1000);
                 Ch5WebSocketServer.Start();
                 Thread.Sleep(2000);
@@ -1020,7 +1022,7 @@ namespace UXAV.AVnet.Core.Models
             if (Core3Controllers.Count > 0)
             {
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
-                Logger.Highlight("Initializing Core 3 UI Controllers");
+                Logger.Log("Initializing Core 3 UI Controllers");
                 InitializeCore3Controllers();
             }
 
