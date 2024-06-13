@@ -7,7 +7,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -44,7 +43,11 @@ namespace UXAV.AVnet.Core.Cloud
 
         static CloudConnector()
         {
-            HttpClient = new HttpClient();
+            var handler = new HttpClientHandler();
+            HttpClient = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromMinutes(3)
+            };
         }
 
         internal static string Host { get; private set; }
