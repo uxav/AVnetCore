@@ -16,6 +16,7 @@ namespace UXAV.AVnet.Core.Cloud
     {
         private static bool _cronSetup;
         private static bool _updatesAvailable;
+        private static bool _lastAttemptError;
 
         public static bool UpdatesAvailable
         {
@@ -36,40 +37,29 @@ namespace UXAV.AVnet.Core.Cloud
                 var uri = new Uri($"https://{CloudConnector.Host}/api/updates/v1/" +
                                   $"{WebUtility.UrlEncode(CloudConnector.ApplicationName)}?token={CloudConnector.Token}");
                 //Logger.Debug($"Looking for software updates from: {uri}");
-                var response = await CloudConnector.HttpClient.GetAsync(uri);
+                using var response = await CloudConnector.HttpClient.GetAsync(uri);
                 //Logger.Debug($"Response: {response.StatusCode}");
                 response.EnsureSuccessStatusCode();
-                try
-                {
-                    using (var content = response.Content)
-                    {
-                        var data = await content.ReadAsStringAsync();
-                        var json = JToken.Parse(data);
-                        var updates = json["result"]?
-                            .ToObject<SoftwareUpdateInfo[]>()?
-                            .New(!includeOlder)
-                            .Where(update => !update.Debug || includeDebug)
-                            .Where(update => !update.PreRelease || includePreRelease)
-                            .OrderBy(update => update.Version)
-                            .ThenBy(update => update.AssemblyVersion);
-                        return updates?.ToArray();
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e);
-                }
-                finally
-                {
-                    response.Dispose();
-                }
+                _lastAttemptError = false;
+                using var content = response.Content;
+                var data = await content.ReadAsStringAsync();
+                var json = JToken.Parse(data);
+                var updates = json["result"]?
+                    .ToObject<SoftwareUpdateInfo[]>()?
+                    .New(!includeOlder)
+                    .Where(update => !update.Debug || includeDebug)
+                    .Where(update => !update.PreRelease || includePreRelease)
+                    .OrderBy(update => update.Version)
+                    .ThenBy(update => update.AssemblyVersion);
+                return updates?.ToArray();
             }
             catch (Exception e)
             {
+                if (_lastAttemptError) return null;
+                _lastAttemptError = true;
                 Logger.Error(e);
+                return null;
             }
-
-            return null;
         }
 
         private static IEnumerable<SoftwareUpdateInfo> New(this IEnumerable<SoftwareUpdateInfo> updates,
