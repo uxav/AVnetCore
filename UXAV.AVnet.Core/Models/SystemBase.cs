@@ -925,8 +925,16 @@ namespace UXAV.AVnet.Core.Models
                 itemCount++;
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + room,
                     (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
-                Logger.Debug("Initializing room: {0}", room);
-                room.InternalInitialize();
+                try
+                {
+                    Logger.Debug("Initializing room: {0}", room);
+                    room.InternalInitialize();
+                    Logger.Debug("Initialize room complete: {0}", room);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
             }
 
             UpdateBootStatus(EBootStatus.Initializing, "Initializing rooms done", targetPercentage);
@@ -942,8 +950,16 @@ namespace UXAV.AVnet.Core.Models
                 itemCount++;
                 UpdateBootStatus(EBootStatus.Initializing, "Initializing " + source,
                     (uint)Tools.ScaleRange(itemCount, 0, itemMaxCount, startPercentage, targetPercentage));
-                Logger.Debug("Initializing source: {0}", source);
-                source.InternalInitialize();
+                try
+                {
+                    Logger.Debug("Initializing source: {0}", source);
+                    source.InternalInitialize();
+                    Logger.Debug("Initialize source complete: {0}", source);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
             }
 
             UpdateBootStatus(EBootStatus.Initializing, "Initializing sources done", targetPercentage);
