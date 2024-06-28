@@ -210,7 +210,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             {
                 if (message.Method == "ping") return new ResponseMessage((int)message.Id, "pong");
 
-                var result = await FindAndInvokeMethod<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
+                var result = await FindAndInvokeMethodAsync<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
                 return new ResponseMessage((int)message.Id, result);
             }
             catch (Exception e)
@@ -227,7 +227,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
         }
 
-        private async Task<object> FindAndInvokeMethod<T>(string method, JToken args) where T : ApiTargetAttributeBase
+        private async Task<object> FindAndInvokeMethodAsync<T>(string method, JToken args) where T : ApiTargetAttributeBase
         {
             object target = this;
             var namedArgs = args;
@@ -363,7 +363,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     throw new InvalidOperationException($"Event ID {id} already registered");
             }
 
-            var obj = await FindAndInvokeMethod<ApiTargetEventAttribute>(name, @params);
+            var obj = await FindAndInvokeMethodAsync<ApiTargetEventAttribute>(name, @params);
             var attribute = targetObject.GetType().GetMethods()
                 .First(m => m.GetCustomAttribute<ApiTargetEventAttribute>()?.Name == name)
                 .GetCustomAttribute<ApiTargetEventAttribute>();

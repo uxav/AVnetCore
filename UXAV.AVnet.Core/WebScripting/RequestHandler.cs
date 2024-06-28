@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
 using Crestron.SimplSharp.WebScripting;
@@ -78,7 +79,7 @@ namespace UXAV.AVnet.Core.WebScripting
             return session;
         }
 
-        public void Process()
+        public async Task ProcessAsync()
         {
             try
             {
@@ -116,7 +117,17 @@ namespace UXAV.AVnet.Core.WebScripting
 
                 try
                 {
-                    method.Invoke(this, new object[] { });
+
+                    if (method.ReturnType.GetMethod(nameof(Task.GetAwaiter)) != null)
+                    {
+                        //Logger.Debug("Invoking async method: {0}", method.Name);
+                        await (Task)method.Invoke(this, []);
+                    }
+                    else
+                    {
+                        //Logger.Debug("Invoking sync method: {0}", method.Name);
+                        method.Invoke(this, []);
+                    }
                 }
                 catch (TargetInvocationException e)
                 {
