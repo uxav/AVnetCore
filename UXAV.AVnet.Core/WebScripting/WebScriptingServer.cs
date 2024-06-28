@@ -180,7 +180,7 @@ namespace UXAV.AVnet.Core.WebScripting
                             return;
                         }
 
-                        instance.Process();
+                        instance.ProcessAsync().Wait();
                         processed = true;
                     }
                     catch (Exception e)

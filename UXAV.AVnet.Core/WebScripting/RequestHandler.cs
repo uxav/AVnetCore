@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
 using Crestron.SimplSharp.WebScripting;
@@ -78,7 +80,7 @@ namespace UXAV.AVnet.Core.WebScripting
             return session;
         }
 
-        public void Process()
+        public async Task ProcessAsync()
         {
             try
             {
@@ -91,8 +93,14 @@ namespace UXAV.AVnet.Core.WebScripting
 
                 if (method == null)
                 {
-                    HandleError(405, "Method not allowed",
-                        $"{GetType().Name} does not allow method \"{Request.Method}\"");
+                    method = GetType().GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                        .FirstOrDefault(method => method.GetCustomAttribute<RequestHandlerMethodAttribute>() != null
+                            && method.GetCustomAttribute<RequestHandlerMethodAttribute>().MethodType.ToString().ToUpper() == Request.Method);
+                }
+
+                if (method == null)
+                {
+                    HandleError(405, "Method not allowed", $"{GetType().Name} does not allow method \"{Request.Method}\"");
                     return;
                 }
 
@@ -116,7 +124,17 @@ namespace UXAV.AVnet.Core.WebScripting
 
                 try
                 {
-                    method.Invoke(this, new object[] { });
+
+                    if (method.ReturnType.GetMethod(nameof(Task.GetAwaiter)) != null)
+                    {
+                        //Logger.Debug("Invoking async method: {0}", method.Name);
+                        await (Task)method.Invoke(this, []);
+                    }
+                    else
+                    {
+                        //Logger.Debug("Invoking sync method: {0}", method.Name);
+                        method.Invoke(this, []);
+                    }
                 }
                 catch (TargetInvocationException e)
                 {

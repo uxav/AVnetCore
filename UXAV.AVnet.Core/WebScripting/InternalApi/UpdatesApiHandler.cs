@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Cloud;
 using UXAV.Logging;
@@ -18,7 +19,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public void Get()
+        public async Task Get()
         {
             try
             {
@@ -26,8 +27,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 bool.TryParse(Request.Query["debug"], out var debug);
                 bool.TryParse(Request.Query["rollbacks"], out var rollBack);
                 Logger.Debug($"Beta = {beta}, Debug = {debug}, RollBack = {rollBack}");
-                var updates = UpdateHelper.GetUpdatesAsync(
-                    debug, beta, rollBack).Result;
+                var updates = await UpdateHelper.GetUpdatesAsync(debug, beta, rollBack);
                 WriteResponse(updates);
             }
             catch (Exception e)
