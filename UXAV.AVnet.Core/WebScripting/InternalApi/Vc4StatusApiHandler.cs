@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Crestron.SimplSharp;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
@@ -9,7 +10,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         {
         }
 
-        public void Get()
+        public async Task Get()
         {
             if (CrestronEnvironment.DevicePlatform != eDevicePlatform.Server)
             {
@@ -20,27 +21,27 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             switch (Request.RoutePatternArgs["method"])
             {
                 case "ethernet":
-                    var ethernetInfo = Vc4WebApi.GetEthernetAsync().Result;
+                    var ethernetInfo = await Vc4WebApi.GetEthernetAsync();
                     WriteResponse(ethernetInfo);
                     return;
                 case "deviceInfo":
-                    var deviceInfo = Vc4WebApi.GetDeviceInfoAsync().Result;
+                    var deviceInfo = await Vc4WebApi.GetDeviceInfoAsync();
                     WriteResponse(deviceInfo);
                     return;
                 case "systemTable":
-                    var systemTable = Vc4WebApi.GetSystemTableAsync().Result;
+                    var systemTable = await Vc4WebApi.GetSystemTableAsync();
                     WriteResponse(systemTable);
                     return;
                 case "ipTable":
-                    var ipTable = Vc4WebApi.GetIpTableAsync().Result;
+                    var ipTable = await Vc4WebApi.GetIpTableAsync();
                     WriteResponse(ipTable);
                     return;
                 case "programLibrary":
-                    var programLibrary = Vc4WebApi.GetProgramLibraryAsync().Result;
+                    var programLibrary = await Vc4WebApi.GetProgramLibraryAsync();
                     WriteResponse(programLibrary);
                     return;
                 case "programInstance":
-                    var programInstance = Vc4WebApi.GetProgramInstanceAsync().Result;
+                    var programInstance = await Vc4WebApi.GetProgramInstanceAsync();
                     WriteResponse(programInstance);
                     return;
                 default:

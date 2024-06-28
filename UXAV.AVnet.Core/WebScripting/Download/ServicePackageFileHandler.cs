@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using UXAV.AVnet.Core.Cloud;
 using UXAV.AVnet.Core.Models;
@@ -14,11 +15,11 @@ namespace UXAV.AVnet.Core.WebScripting.Download
         }
 
         [SecureRequest]
-        public void Get()
+        public async Task Get()
         {
             try
             {
-                var zipStream = DiagnosticsArchiveTool.CreateArchiveAsync().Result;
+                var zipStream = await DiagnosticsArchiveTool.CreateArchiveAsync();
                 if (!string.IsNullOrEmpty(CloudConnector.LogsUploadUrl))
                     Response.Headers.Add("X-App-CloudUploadUrl", CloudConnector.LogsUploadUrl);
                 Response.Headers.Add("Access-Control-Expose-Headers", "Content-Disposition, X-App-CloudUploadUrl");
