@@ -93,17 +93,15 @@ namespace UXAV.AVnet.Core.WebScripting
 
                 if (method == null)
                 {
-                    var requestHandlerMethods = GetType().GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                        .Where(method => method.GetCustomAttribute<RequestHandlerMethodAttribute>() != null
-                            && method.GetCustomAttribute<RequestHandlerMethodAttribute>().MethodType.ToString() == Request.Method);
+                    method = GetType().GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                        .FirstOrDefault(method => method.GetCustomAttribute<RequestHandlerMethodAttribute>() != null
+                            && method.GetCustomAttribute<RequestHandlerMethodAttribute>().MethodType.ToString().ToUpper() == Request.Method);
+                }
 
-                    if (!requestHandlerMethods.Any())
-                    {
-                        HandleError(405, "Method not allowed", $"{GetType().Name} does not allow method \"{Request.Method}\"");
-                        return;
-                    }
-
-                    method = requestHandlerMethods.First();
+                if (method == null)
+                {
+                    HandleError(405, "Method not allowed", $"{GetType().Name} does not allow method \"{Request.Method}\"");
+                    return;
                 }
 
                 var secure = method.GetCustomAttribute<SecureRequestAttribute>();
