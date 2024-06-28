@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -92,9 +93,17 @@ namespace UXAV.AVnet.Core.WebScripting
 
                 if (method == null)
                 {
-                    HandleError(405, "Method not allowed",
-                        $"{GetType().Name} does not allow method \"{Request.Method}\"");
-                    return;
+                    var requestHandlerMethods = GetType().GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                        .Where(method => method.GetCustomAttribute<RequestHandlerMethodAttribute>() != null
+                            && method.GetCustomAttribute<RequestHandlerMethodAttribute>().MethodType.ToString() == Request.Method);
+
+                    if (!requestHandlerMethods.Any())
+                    {
+                        HandleError(405, "Method not allowed", $"{GetType().Name} does not allow method \"{Request.Method}\"");
+                        return;
+                    }
+
+                    method = requestHandlerMethods.First();
                 }
 
                 var secure = method.GetCustomAttribute<SecureRequestAttribute>();
