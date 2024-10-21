@@ -163,6 +163,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     Logger.Debug($"Setting content type to {res.ContentType}");
             }
 
+            if (path.EndsWith("/index.html"))
+                res.AddHeader("Cache-Control", "no-cache");
+            else
+                res.AddHeader("Cache-Control", "max-age=604800");
+
             res.ContentLength64 = contents.LongLength;
 
             res.Close(contents, true);
