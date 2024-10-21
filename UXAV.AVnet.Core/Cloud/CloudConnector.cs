@@ -443,14 +443,18 @@ namespace UXAV.AVnet.Core.Cloud
                             MediaTypeHeaderValue.Parse(MimeTypes.GetMimeType(".zip"));
                         content.Add(fileContent, "logs",
                             $"app_report_{InitialParametersClass.RoomId}_{DateTime.Now:yyyyMMddTHHmmss}.zip");
+#if DEBUG
                         Logger.Debug($"Content Headers:\r\n{fileContent.Headers}");
                         Logger.Debug($"Request Headers:\r\n{content.Headers}");
+#endif
                         using (var result = HttpClient.PostAsync(LogsUploadUrl, content).Result)
                         {
                             result.EnsureSuccessStatusCode();
                             Logger.Highlight($"Logs submitted. Result = {result.StatusCode}");
                             var response = await result.Content.ReadAsStringAsync();
+#if DEBUG
                             Logger.Debug($"Response: {response}");
+#endif
                         }
                     }
                 }
