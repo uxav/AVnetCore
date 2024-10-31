@@ -11,7 +11,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         {
         }
 
-        public void Get()
+        public async void Get()
         {
             try
             {
@@ -27,20 +27,20 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     });
                 }).Result;
 
-                WriteResponse(results);
+                await WriteResponseAsync(results);
             }
             catch (OperationCanceledException e)
             {
-                HandleError(503, "Service Unavailable", e.Message);
+                await HandleErrorAsync(503, e.Message);
             }
             catch (AggregateException e)
             {
                 LogInnerExceptions(e);
-                HandleError(500, "Server Error", e.Message);
+                await HandleErrorAsync(500, e.Message);
             }
             catch (Exception e)
             {
-                HandleError(500, "Server Error", e.Message);
+                await HandleErrorAsync(500, e.Message);
                 Logger.Error(e);
             }
         }

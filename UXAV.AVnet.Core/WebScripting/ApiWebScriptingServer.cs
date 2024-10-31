@@ -1,8 +1,11 @@
 using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Models;
-using UXAV.Logging;
+using WebSocketSharp;
+using Logger = UXAV.Logging.Logger;
 
 namespace UXAV.AVnet.Core.WebScripting
 {
@@ -22,53 +25,49 @@ namespace UXAV.AVnet.Core.WebScripting
             base.AddRoute(routePattern, handlerType);
         }
 
-        public override void HandleError(WebScriptingRequest request, Exception e)
+        public override async Task HandleErrorAsync(WebScriptingRequest request, Exception e)
         {
             Logger.Error(e);
             request.Response.StatusCode = 500;
-            request.Response.StatusDescription = "Server Error";
-            request.Response.ContentType = "application/json";
-            var json = JToken.FromObject(new
+            await request.Response.WriteAsJsonAsync(new
             {
                 Request = new
                 {
                     request.Path,
-                    request.Method
+                    request.Method,
+                    request.RouteValues
                 },
                 Code = request.Response.StatusCode,
                 Error = new
                 {
-                    Status = request.Response.StatusDescription,
+                    Status = request.Response.StatusCode.GetStatusDescription(),
                     e.Message,
                     e.StackTrace
                 }
             });
-            request.Response.Write(json.ToString(Formatting.Indented), true);
         }
 
-        public override void HandleError(WebScriptingRequest request, int statusCode, string statusDescription,
+        public override async Task HandleErrorAsync(WebScriptingRequest request, int statusCode,
             string message)
         {
-            Logger.Warn("\"{3}\" Error {0} {1}: {2}", statusCode, statusDescription, message, request.Path);
+            Logger.Warn($"\"{request.Path}\" Error {statusCode} {message}");
             request.Response.StatusCode = statusCode;
-            request.Response.StatusDescription = statusDescription;
-            request.Response.ContentType = "application/json";
-            var json = JToken.FromObject(new
+            await request.Response.WriteAsJsonAsync(new
             {
                 Request = new
                 {
                     request.Path,
-                    request.Method
+                    request.Method,
+                    request.RouteValues
                 },
                 Code = request.Response.StatusCode,
                 Error = new
                 {
-                    Status = request.Response.StatusDescription,
+                    Status = request.Response.StatusCode.GetStatusDescription(),
                     Message = message,
                     StackTrace = ""
                 }
             });
-            request.Response.Write(json.ToString(Formatting.Indented), true);
         }
     }
 }

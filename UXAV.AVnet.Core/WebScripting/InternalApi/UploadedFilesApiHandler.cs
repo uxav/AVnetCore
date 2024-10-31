@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -14,7 +16,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public void Get()
+        public async void Get()
         {
             var files = new List<object>();
             try
@@ -52,19 +54,17 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 Logger.Error(e);
             }
 
-            WriteResponse(files);
+            await WriteResponseAsync(files);
         }
 
         public void Options()
         {
-            Response.Headers.Add("Access-Control-Allow-Methods", "GET, OPTIONS, DELETE");
+            Response.Headers.Append("Access-Control-Allow-Methods", "GET, OPTIONS, DELETE");
             Response.StatusCode = 204;
-            Response.StatusDescription = "No Content";
-            Response.Flush();
         }
 
         [SecureRequest]
-        public void Delete()
+        public async void Delete()
         {
             Logger.Highlight($"File Delete Request: {Request.PathAndQueryString}");
             var fileName = Request.Query["file"];
@@ -74,17 +74,17 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     if (File.Exists(SystemBase.ProgramApplicationDirectory + "/" + fileName))
                         File.Delete(SystemBase.ProgramApplicationDirectory + "/" + fileName);
 
-                    WriteResponse(true);
+                    await WriteResponseAsync(true);
                     return;
                 case "nvram":
                     if (File.Exists(SystemBase.ProgramNvramAppInstanceDirectory + "/" + fileName))
                         File.Delete(SystemBase.ProgramNvramAppInstanceDirectory + "/" + fileName);
 
-                    WriteResponse(true);
+                    await WriteResponseAsync(true);
                     return;
             }
 
-            WriteResponse(false);
+            await WriteResponseAsync(false);
         }
     }
 }

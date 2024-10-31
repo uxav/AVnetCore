@@ -20,6 +20,7 @@ using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.AVnet.Core.Models.Diagnostics;
 using UXAV.AVnet.Core.UI;
 using UXAV.AVnet.Core.UI.Ch5;
+using UXAV.AVnet.Core.Web;
 using UXAV.AVnet.Core.WebScripting;
 using UXAV.AVnet.Core.WebScripting.Download;
 using UXAV.AVnet.Core.WebScripting.InternalApi;
@@ -572,9 +573,7 @@ namespace UXAV.AVnet.Core.Models
         /// </summary>
         public string Include4DatInfo { get; }
 
-        public static string CwsPath => CrestronEnvironment.DevicePlatform == eDevicePlatform.Server
-            ? $"/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws"
-            : "/cws";
+        public static string CwsPath => "/cws";
 
         /// <summary>
         ///     Default URL for control system appliances to redirect.
@@ -628,39 +627,19 @@ namespace UXAV.AVnet.Core.Models
             return GetDevices().OfType<DisplayDeviceBase>();
         }
 
-        private void InitWebApp()
+        private async Task InitWebAppAsync()
         {
-            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                try
-                {
-                    var path = ProgramApplicationDirectory + "/webapp/index.html";
-                    if (File.Exists(path))
-                    {
-                        var contents = File.ReadAllText(path);
-                        if (Regex.IsMatch(contents, @"<base href=""/cws/app/"">"))
-                        {
-                            var baseHref = $"{CwsPath}/app/";
-                            Logger.Warn($"Replacing base href value in \"{path}\" to \"{baseHref}\"");
-                            contents = Regex.Replace(contents, @"<base href="".*"">",
-                                $"<base href=\"{baseHref}\"");
-                            File.WriteAllText(path, contents);
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e);
-                }
-
             Logger.Highlight("Loading WebApp server for Angular app");
             try
             {
                 WebAppServer = new WebScriptingServer(this, "app");
-                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
-                    WebAppServer.AddRedirect(@"/app", @"/cws/app/");
-                else
-                    WebAppServer.AddRoute(@"/app", typeof(WebAppFileHandler));
+                // if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+                //     WebAppServer.AddRedirect(@"/app", @"/cws/app/");
+                // else
+                //     WebAppServer.AddRoute(@"/app", typeof(WebAppFileHandler));
 
+                WebAppServer.AddRedirect(@"/app/boot/startup", @"/");
+                WebAppServer.AddRoute(@"/app", typeof(WebAppFileHandler));
                 WebAppServer.AddRoute(@"/app/", typeof(WebAppFileHandler));
                 WebAppServer.AddRoute(@"/app/<filepath:[~\/\w\.\-\[\]\(\)\x20]+>", typeof(WebAppFileHandler));
             }
@@ -678,7 +657,7 @@ namespace UXAV.AVnet.Core.Models
                     var path = ProgramHtmlDirectory + "/index.html";
                     using (var file = File.CreateText(path))
                     {
-                        file.Write($"<meta http-equiv=\"refresh\" content=\"0; URL={ApplianceWebServerRedirect}\" />");
+                        await file.WriteAsync($"<meta http-equiv=\"refresh\" content=\"0; URL={ApplianceWebServerRedirect}\" />");
                     }
 
                     Logger.Log($"Created file: \"{path}\"");
@@ -686,7 +665,7 @@ namespace UXAV.AVnet.Core.Models
                     path = ProgramHtmlDirectory + "/_config_ini_";
                     using (var file = File.CreateText(path))
                     {
-                        file.Write(@"webdefault=index.html");
+                        await file.WriteAsync(@"webdefault=index.html");
                     }
 
                     Logger.Log($"Created file: \"{path}\"");
@@ -746,10 +725,13 @@ namespace UXAV.AVnet.Core.Models
         ///  <para>For Crestron hardware this will restart the app using the built in console command</para>
         /// </summary>
         /// <returns>The returned value of the command run</returns>
-        public string RestartApp()
+        public async Task<string> RestartAppAsync()
         {
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                return Vc4WebApi.RestartApp().Result.ToString();
+            {
+                var result = await Vc4WebApi.RestartApp();
+                return result.ToString();
+            }
 
             var response = "";
             CrestronConsole.SendControlSystemCommand($"progres -P:{InitialParametersClass.ApplicationNumber}",
@@ -842,14 +824,24 @@ namespace UXAV.AVnet.Core.Models
         /// <summary>
         /// Initialize the system
         /// </summary>
-        public void Initialize()
+        public async Task InitializeAsync()
         {
+            try
+            {
+                await InitWebAppAsync();
+                await WebServer.StartAsync();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
             Logger.Highlight("Initialize()");
             UpdateBootStatus(EBootStatus.Initializing, "System Initializing", 0);
 
             Logger.Log("Starting system initialize task");
             var task = new Task(InitializeTask);
-            task.ContinueWith(t =>
+            _ = task.ContinueWith(t =>
             {
                 if (t.Status == TaskStatus.RanToCompletion)
                 {
@@ -872,7 +864,7 @@ namespace UXAV.AVnet.Core.Models
             Thread.Sleep(500);
 
             UpdateBootStatus(EBootStatus.Initializing, "Initializing web app if installed", 7);
-            InitWebApp();
+
 
             UpdateBootStatus(EBootStatus.Initializing, "Registering CIP devices not already registered", 10);
             CipDevices.RegisterDevices();
@@ -1172,10 +1164,10 @@ namespace UXAV.AVnet.Core.Models
                 case "restart":
                     Logger.Warn("Remote restart requested from cloud service");
 
-                    Task.Run(() =>
+                    Task.Run(async () =>
                     {
                         Task.Delay(TimeSpan.FromSeconds(5)).Wait();
-                        UxEnvironment.System.RestartApp();
+                        await UxEnvironment.System.RestartAppAsync();
                     });
                     break;
                 case "reboot":

@@ -28,20 +28,20 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 bool.TryParse(Request.Query["rollbacks"], out var rollBack);
                 Logger.Debug($"Beta = {beta}, Debug = {debug}, RollBack = {rollBack}");
                 var updates = await UpdateHelper.GetUpdatesAsync(debug, beta, rollBack);
-                WriteResponse(updates);
+                await WriteResponseAsync(updates);
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
 
         [SecureRequest]
-        public void Post()
+        public async void Post()
         {
             try
             {
-                var json = JToken.Parse(Request.GetStringContents());
+                var json = JToken.Parse(await Request.GetStringContentsAsync());
                 var command = (json["command"] ?? string.Empty).Value<string>();
                 switch (command)
                 {
@@ -50,7 +50,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         if (string.IsNullOrEmpty(fileName))
                             throw new ArgumentException("Argument missing", nameof(fileName));
                         UpdateHelper.UpdateRunningProgram(fileName);
-                        WriteResponse("OK");
+                        await WriteResponseAsync("OK");
                         return;
                     default:
                         throw new ArgumentException("Invalid command", nameof(command));
@@ -58,7 +58,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

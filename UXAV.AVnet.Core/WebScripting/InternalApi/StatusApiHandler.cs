@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
 using Crestron.SimplSharpPro;
@@ -18,13 +19,13 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         // ReSharper disable once UnusedMember.Global
-        public void Get()
+        public async Task Get()
         {
             try
             {
                 if (UxEnvironment.System == null)
                 {
-                    HandleError(503, "Service Unavailable", "The server is not yet ready to accept requests");
+                    await HandleErrorAsync(503, "The server is not yet ready to accept requests");
                     return;
                 }
 
@@ -32,7 +33,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     switch (Request.RoutePatternArgs["function"])
                     {
                         case "boot":
-                            WriteResponse(new
+                            await WriteResponseAsync(new
                             {
                                 BootStatus = UxEnvironment.System.BootStatus.ToString(),
                                 Message = UxEnvironment.System.BootStatusDescription,
@@ -40,7 +41,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                             });
                             return;
                         default:
-                            HandleNotFound();
+                            await HandleNotFoundAsync();
                             return;
                     }
 
@@ -72,7 +73,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     Logger.Error(e);
                 }
 
-                WriteResponse(JToken.FromObject(new
+                await WriteResponseAsync(new
                 {
                     InitialParametersClass.RoomId,
                     InitialParametersClass.RoomName,
@@ -140,11 +141,11 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         RoomClock.Formatted
                     },
                     BACnet = bacNet
-                }));
+                });
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

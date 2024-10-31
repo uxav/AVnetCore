@@ -1,65 +1,61 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using Crestron.SimplSharp.CrestronIO;
-using Crestron.SimplSharp.WebScripting;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Routing;
+using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting
 {
     public class WebScriptingRequest
     {
-        private readonly HttpCwsRequest _request;
+        private readonly HttpRequest _request;
+        private readonly string _path;
 
-        internal WebScriptingRequest(HttpCwsContext context)
+        internal WebScriptingRequest(HttpContext context, string path)
         {
             _request = context.Request;
+            _path = path;
             Response = context.Response;
         }
 
-        public HttpCwsResponse Response { get; }
+        public HttpResponse Response { get; }
 
-        public string Method => _request.HttpMethod;
+        public string Method => _request.Method;
 
         public string ContentType => _request.ContentType;
 
-        public int ContentLength => _request.ContentLength;
+        public long? ContentLength => _request.ContentLength;
 
-        public Stream InputStream => _request.InputStream;
+        public Stream InputStream => _request.Body;
 
-        public HttpCwsCookieCollection Cookies => _request.Cookies;
+        public IRequestCookieCollection Cookies => _request.Cookies;
 
-        public string RawUrl => _request.RawUrl;
+        public RouteValueDictionary RouteValues => _request.RouteValues;
 
-        public Uri Url => _request.Url;
+        public string Path => _path;
 
-        public string Path => _request.Path;
+        public string UserHostAddress => _request.HttpContext.Connection.RemoteIpAddress.ToString();
 
-        public string UserHostAddress => _request.UserHostAddress;
+        public string PathAndQueryString => _path + _request.QueryString;
 
-        public string UserHostName => _request.UserHostName;
-
-        public string PathAndQueryString => Url.PathAndQuery;
-
-        public NameValueCollection Headers => _request.Headers;
+        public IHeaderDictionary Headers => _request.Headers;
 
         public Dictionary<string, string> RoutePatternArgs { get; internal set; }
 
         public string RoutePattern { get; internal set; }
 
-        public string QueryString => Url.Query;
+        public string QueryString => _request.QueryString.Value;
 
-        public NameValueCollection Query => _request.QueryString;
+        public IQueryCollection Query => _request.Query;
 
-        public string GetStringContents()
+        public async Task<string> GetStringContentsAsync()
         {
-            string result;
-
-            using (var reader = new StreamReader(InputStream))
-            {
-                result = reader.ReadToEnd();
-            }
-
-            return result;
+            using var reader = new StreamReader(InputStream);
+            return await reader.ReadToEndAsync();
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using System.Text.RegularExpressions;
-using Crestron.SimplSharp.CrestronIO;
 using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.Logging;
 using FileInfo = System.IO.FileInfo;
@@ -15,7 +15,7 @@ namespace UXAV.AVnet.Core.WebScripting
         {
         }
 
-        public void Get()
+        public async void Get()
         {
             try
             {
@@ -25,14 +25,14 @@ namespace UXAV.AVnet.Core.WebScripting
 
                 if (!CipDevices.ContainsDevice(ipId))
                 {
-                    HandleNotFound("No devices found with specified IP ID");
+                    await HandleNotFoundAsync("No devices found with specified IP ID");
                     return;
                 }
 
                 var path = CipDevices.GetPathOfVtzFileForXPanel(ipId);
                 if (string.IsNullOrEmpty(path))
                 {
-                    HandleNotFound("No resource path set for specified device");
+                    await HandleNotFoundAsync("No resource path set for specified device");
                     return;
                 }
 
@@ -40,14 +40,14 @@ namespace UXAV.AVnet.Core.WebScripting
                 {
                     if (!File.Exists(path))
                     {
-                        HandleNotFound($"No file found at \"{path}\"");
+                        await HandleNotFoundAsync($"No file found at \"{path}\"");
                         return;
                     }
                 }
-                catch (InvalidDirectoryLocationException)
+                catch (FileNotFoundException)
                 {
-                    Logger.Debug("InvalidDirectoryLocationException, Looking for full path...");
-                    if (global::System.IO.File.Exists(path))
+                    Logger.Debug("FileNotFoundException, Looking for full path...");
+                    if (File.Exists(path))
                     {
                         var info = new FileInfo(path);
                         path = info.FullName;
@@ -58,11 +58,16 @@ namespace UXAV.AVnet.Core.WebScripting
 
                 var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
                 Response.ContentType = "application/x-zip-compressed";
-                Response.Write(stream, true);
+                using (var memoryStream = new MemoryStream())
+                {
+                    stream.CopyTo(memoryStream);
+                    var fileBytes = memoryStream.ToArray();
+                    await Response.Body.WriteAsync(fileBytes, 0, fileBytes.Length);
+                }
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

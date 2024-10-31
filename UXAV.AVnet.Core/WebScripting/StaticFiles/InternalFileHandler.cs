@@ -1,6 +1,5 @@
 using System;
-using System.IO;
-using System.Reflection;
+using Microsoft.Extensions.FileProviders;
 
 namespace UXAV.AVnet.Core.WebScripting.StaticFiles
 {
@@ -12,10 +11,12 @@ namespace UXAV.AVnet.Core.WebScripting.StaticFiles
 
         protected override string RootFilePath => GetType().Namespace;
 
-        protected override Stream GetResourceStream(Assembly assembly, string fileName)
+        protected override IFileInfo GetFile(string fileName)
         {
-            SetCacheTime(TimeSpan.FromHours(1));
-            return base.GetResourceStream(assembly, fileName);
+            var file = base.GetFile(fileName);
+            if (file != null && file.Exists)
+                SetCacheTime(TimeSpan.FromHours(1));
+            return file;
         }
     }
 }

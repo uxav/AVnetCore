@@ -14,7 +14,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         {
             if (CrestronEnvironment.DevicePlatform != eDevicePlatform.Server)
             {
-                HandleNotFound("Not supported on this platform");
+                await HandleNotFoundAsync("Not supported on this platform");
                 return;
             }
 
@@ -22,30 +22,30 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             {
                 case "ethernet":
                     var ethernetInfo = await Vc4WebApi.GetEthernetAsync();
-                    WriteResponse(ethernetInfo);
+                    await WriteResponseAsync(ethernetInfo);
                     return;
                 case "deviceInfo":
                     var deviceInfo = await Vc4WebApi.GetDeviceInfoAsync();
-                    WriteResponse(deviceInfo);
+                    await WriteResponseAsync(deviceInfo);
                     return;
                 case "systemTable":
                     var systemTable = await Vc4WebApi.GetSystemTableAsync();
-                    WriteResponse(systemTable);
+                    await WriteResponseAsync(systemTable);
                     return;
                 case "ipTable":
                     var ipTable = await Vc4WebApi.GetIpTableAsync();
-                    WriteResponse(ipTable);
+                    await WriteResponseAsync(ipTable);
                     return;
                 case "programLibrary":
                     var programLibrary = await Vc4WebApi.GetProgramLibraryAsync();
-                    WriteResponse(programLibrary);
+                    await WriteResponseAsync(programLibrary);
                     return;
                 case "programInstance":
                     var programInstance = await Vc4WebApi.GetProgramInstanceAsync();
-                    WriteResponse(programInstance);
+                    await WriteResponseAsync(programInstance);
                     return;
                 default:
-                    HandleNotFound();
+                    await HandleNotFoundAsync();
                     return;
             }
         }

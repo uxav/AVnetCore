@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -23,56 +24,54 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         {
         }
 
-        private static long WriteFile(string path, int chunkSequence, Stream data)
+        private static async Task<long> WriteFileAsync(string path, int chunkSequence, Stream data)
         {
             if (chunkSequence == 0)
             {
                 if (UploadStreams.ContainsKey(path))
                     foreach (var s in UploadStreams[path].Values)
                         s.Dispose();
-                UploadStreams[path] = new Dictionary<int, MemoryStream>();
+                UploadStreams[path] = [];
                 UploadProgress[path] = 0;
             }
 
             var stream = new MemoryStream();
             UploadStreams[path][chunkSequence] = stream;
 
-            data.CopyTo(stream);
+            await data.CopyToAsync(stream);
             UploadProgress[path] += stream.Length;
             return UploadProgress[path];
         }
 
-        private static long SaveToDisk(string path)
+        private static async Task<long> SaveToDiskAsync(string path)
         {
-            using (var file = File.Create(path))
+            using var file = File.Create(path);
+            var streams = UploadStreams[path].OrderBy(i => i.Key).Select(i => i.Value).ToArray();
+            var chunk = 0;
+            foreach (var memoryStream in streams)
             {
-                var streams = UploadStreams[path].OrderBy(i => i.Key).Select(i => i.Value).ToArray();
-                var chunk = 0;
-                foreach (var memoryStream in streams)
-                {
-                    memoryStream.Seek(0, SeekOrigin.Begin);
-                    memoryStream.CopyTo(file);
-                    UploadStreams[path][chunk].Dispose();
-                    UploadStreams[path][chunk] = null;
-                    UploadStreams[path].Remove(chunk);
-                    chunk++;
-                }
-
-                UploadStreams.Remove(path);
-                Logger.Debug("Starting garbage collection...");
-                GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-                GC.Collect();
-                Logger.Debug("Completed garbage collection!");
-                return file.Length;
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                await memoryStream.CopyToAsync(file);
+                UploadStreams[path][chunk].Dispose();
+                UploadStreams[path][chunk] = null;
+                UploadStreams[path].Remove(chunk);
+                chunk++;
             }
+
+            UploadStreams.Remove(path);
+            Logger.Debug("Starting garbage collection...");
+            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+            GC.Collect();
+            Logger.Debug("Completed garbage collection!");
+            return file.Length;
         }
 
         [SecureRequest]
-        public void Post()
+        public async void Post()
         {
             try
             {
-                var content = new StreamContent(Request.InputStream.GetNormalStream());
+                var content = new StreamContent(Request.InputStream);
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse(Request.ContentType);
                 var data = content.ReadAsMultipartAsync().Result;
                 var results = new Dictionary<string, object>();
@@ -86,8 +85,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                             if (!Regex.IsMatch(fileName, @"[\w\-\[\]\(\)\x20]+\.cpz"))
                             {
                                 Logger.Warn($"File: \"{fileName}\" is not a valid cpz file name");
-                                HandleError(406, "Not Acceptable",
-                                    "One or more files did not match the required format");
+                                await HandleErrorAsync(406, "One or more files did not match the required format");
                                 return;
                             }
 
@@ -95,33 +93,32 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
 
                             if (name == "end")
                             {
-                                results[fileName] = SaveToDisk(path);
+                                results[fileName] = await SaveToDiskAsync(path);
                             }
                             else
                             {
                                 var chunkSequence = 0;
-                                if (Request.Query["chunked"] != null)
+                                if (!string.IsNullOrEmpty(Request.Query["chunked"]))
                                     // name should be chunk_1 etc
                                     chunkSequence = int.Parse(name.Substring(6, name.Length - 6));
                                 //Logger.Debug($"Received chunk {chunkSequence:D3} of {fileName}");
 
-                                var size = WriteFile(path, chunkSequence, httpContent.ReadAsStreamAsync().Result);
+                                var size = await WriteFileAsync(path, chunkSequence, await httpContent.ReadAsStreamAsync());
                                 results[fileName] = size;
                             }
                         }
 
                         break;
                     default:
-                        HandleError(400, "Bad Request",
-                            $"Invalid fileType: {Request.RoutePatternArgs["fileType"]}");
+                        await HandleErrorAsync(400, $"Invalid fileType: {Request.RoutePatternArgs["fileType"]}");
                         return;
                 }
 
-                WriteResponse(results);
+                await WriteResponseAsync(results);
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

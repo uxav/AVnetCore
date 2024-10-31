@@ -10,7 +10,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         {
         }
 
-        public void Get()
+        public async void Get()
         {
             var page = Request.RoutePatternArgs["page"];
             switch (page)
@@ -27,10 +27,10 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                             Url = room.HtmlUiUrl
                         });
                     }
-                    WriteResponse(data);
+                    await WriteResponseAsync(data);
                     return;
                 default:
-                    HandleNotFound();
+                    await HandleNotFoundAsync();
                     return;
             }
         }

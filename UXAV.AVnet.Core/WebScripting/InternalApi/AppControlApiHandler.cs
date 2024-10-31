@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
@@ -15,20 +16,20 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public void Post()
+        public async void Post()
         {
-            var json = JToken.Parse(Request.GetStringContents());
+            var json = JToken.Parse(await Request.GetStringContentsAsync());
             var cmd = (json["command"] ?? string.Empty).Value<string>();
             var response = string.Empty;
             switch (cmd)
             {
                 case "restart":
                     Logger.Warn("Remote restart requested from {0}", Request.UserHostAddress);
-                    WriteResponse(System.RestartApp());
+                    await WriteResponseAsync(System.RestartAppAsync());
                     return;
                 case "reboot":
                     Logger.Warn("Remote reboot requested from {0}", Request.UserHostAddress);
-                    WriteResponse("App will now send reboot command!");
+                    await WriteResponseAsync("App will now send reboot command!");
                     System.RebootAppliance();
                     return;
                 case "load":
@@ -39,8 +40,8 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     {
                         Logger.Warn($"Will send progload command for app {InitialParametersClass.ApplicationNumber}," +
                                     $"file found: {files[0].FullName}");
-                        WriteResponse($"App will load \"{files[0].FullName}\" now!");
-                        Task.Run(() =>
+                        await WriteResponseAsync($"App will load \"{files[0].FullName}\" now!");
+                        await Task.Run(() =>
                         {
                             CrestronConsole.SendControlSystemCommand(
                                 $"progload -p:{InitialParametersClass.ApplicationNumber}", ref response);
@@ -51,14 +52,14 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
 
                     if (files.Length == 0)
                     {
-                        HandleError(404, "Not Found", "CPZ file could not be found");
+                        await HandleErrorAsync(404, "CPZ file could not be found");
                         return;
                     }
 
-                    HandleError(409, "Conflict", "More than one CPZ file found in app directory");
+                    await HandleErrorAsync(409, "More than one CPZ file found in app directory");
                     return;
                 default:
-                    HandleError(400, "Bad Request", $"Unknown command: \"{cmd}\"");
+                    await HandleErrorAsync(400, $"Unknown command: \"{cmd}\"");
                     return;
             }
         }

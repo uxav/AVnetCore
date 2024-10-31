@@ -7,16 +7,17 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
-using Crestron.SimplSharp.WebScripting;
+using Microsoft.AspNetCore.Http;
 using UXAV.AVnet.Core.Models;
-using UXAV.Logging;
+using UXAV.AVnet.Core.Web;
+using WebSocketSharp;
+using Logger = UXAV.Logging.Logger;
 using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace UXAV.AVnet.Core.WebScripting
 {
     public class WebScriptingServer
     {
-        private readonly HttpCwsServer _cws;
         private readonly string _directory;
         private readonly Dictionary<string, Type> _handlers = new Dictionary<string, Type>();
         private readonly Dictionary<string, List<string>> _keyNames = new Dictionary<string, List<string>>();
@@ -27,25 +28,11 @@ namespace UXAV.AVnet.Core.WebScripting
         {
             System = system;
             _directory = directory;
-            _cws = new HttpCwsServer(directory);
-            _cws.Register();
-            _cws.ReceivedRequestEvent += CwsOnReceivedRequestEvent;
-            CrestronEnvironment.ProgramStatusEventHandler += OnProgramStatusEventHandler;
+            WebServer.AddRoute($"/cws/{directory}", CwsOnReceivedRequestEvent);
+            WebServer.AddRoute($"/cws/{directory}/{{*rest}}", CwsOnReceivedRequestEvent);
         }
 
         public SystemBase System { get; }
-
-        private void OnProgramStatusEventHandler(eProgramStatusEventType programeventtype)
-        {
-            if (programeventtype != eProgramStatusEventType.Stopping) return;
-            Task.Run(Unregister);
-        }
-
-        private void Unregister()
-        {
-            Logger.Highlight("Shutting down and unregistering {0}, at path \"/cws/{1}\"", GetType().Name, _directory);
-            _cws.Unregister();
-        }
 
         public void AddRedirect(string routePattern, string redirectUrl)
         {
@@ -93,20 +80,14 @@ namespace UXAV.AVnet.Core.WebScripting
             Logger.Debug("Added handler type {0} for {1} at \"{2}\"", handlerType.Name, GetType().Name, routePattern);
         }
 
-        private void CwsOnReceivedRequestEvent(object sender, HttpCwsRequestEventArgs args)
+        private async Task CwsOnReceivedRequestEvent(HttpContext context)
         {
-            var sw = new Stopwatch();
-            sw.Start();
-
-            var request = new WebScriptingRequest(args.Context);
-
             try
             {
-                var decodedPath = WebUtility.UrlDecode(args.Context.Request.Path);
-                //var remoteAddress = args.Context.Request.UserHostAddress;
-                //var hostName = args.Context.Request.UserHostName;
+                var request = new WebScriptingRequest(context, $"/{_directory}/{context.Request.RouteValues["rest"]}");
+                var remoteAddress = context.Request.HttpContext.Connection.RemoteIpAddress.MapToIPv4();
 
-                //Logger.Highlight(Logger.LoggerLevel.Debug, "New WebScripting Request from {0} ({1}) {2} {3}", remoteAddress, hostName,
+                //Logger.Highlight($"New WebScripting Request from {remoteAddress} ({request.Method}) {request.PathAndQueryString}");
                 //    request.Method, request.PathAndQueryString);
                 /*var headerContents = args.Context.Request.Headers.Cast<string>().Aggregate(string.Empty,
                     (current, header) =>
@@ -116,20 +97,20 @@ namespace UXAV.AVnet.Core.WebScripting
 
                 foreach (var redirect in from redirect in _redirects
                                          let pattern = redirect.Key
-                                         let match = Regex.Match(decodedPath, pattern)
+                                         let match = Regex.Match(request.Path, pattern)
                                          where match.Success
                                          select redirect)
                 {
                     try
                     {
                         Logger.Debug("Redirect found!, Redirected to: \"{0}\"", redirect.Value);
-                        Logger.Debug($"Query is {args.Context.Request.Url.Query}");
-                        args.Context.Response.Redirect(redirect.Value + args.Context.Request.Url.Query);
+                        Logger.Debug($"Query is {context.Request.QueryString}");
+                        context.Response.Redirect(redirect.Value + context.Request.QueryString);
                     }
                     catch (Exception e)
                     {
                         Logger.Error("Error with redirect. {0}", e.Message);
-                        HandleError(request, e);
+                        await HandleErrorAsync(request, e);
                     }
 
                     return;
@@ -141,7 +122,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 {
                     var pattern = keyValuePair.Key;
 
-                    var match = Regex.Match(decodedPath, pattern);
+                    var match = Regex.Match(request.Path, pattern);
 
                     if (!match.Success) continue;
 
@@ -166,7 +147,7 @@ namespace UXAV.AVnet.Core.WebScripting
 
                         if (ctor == null)
                         {
-                            HandleError(request, 500, "Server Error",
+                            await HandleErrorAsync(request, 500,
                                 "Could not load ctor for handler type: " + requestType.FullName);
                             return;
                         }
@@ -175,17 +156,18 @@ namespace UXAV.AVnet.Core.WebScripting
                         if (ctor.Invoke(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null,
                             [this, request], CultureInfo.InvariantCulture) is not RequestHandler instance)
                         {
-                            HandleError(request, 500, "Server Error",
+                            await HandleErrorAsync(request, 500,
                                 "Could not invoke ctor for handler type: " + requestType.FullName);
                             return;
                         }
 
-                        instance.ProcessAsync().Wait();
+                        await instance.ProcessAsync();
+                        await context.Response.CompleteAsync();
                         processed = true;
                     }
                     catch (Exception e)
                     {
-                        HandleError(request, e);
+                        await HandleErrorAsync(request, e);
                         processed = true;
                     }
                 }
@@ -193,29 +175,29 @@ namespace UXAV.AVnet.Core.WebScripting
                 if (!processed)
                 {
                     Logger.Warn(Logger.LoggerLevel.Debug, "No handler found for request");
-                    HandleError(request, 404, "Not Found", "No handler found on this path to deal with the request");
+                    await HandleErrorAsync(request, 404, "No handler found on this path to deal with the request");
                 }
-
-                request.Response.End();
             }
             catch (Exception e)
             {
-                HandleError(request, e);
+                Logger.Error(e);
+                context.Response.Clear();
+                context.Response.StatusCode = 500;
             }
         }
 
-        public virtual void HandleError(WebScriptingRequest request, Exception e)
+        public virtual async Task HandleErrorAsync(WebScriptingRequest request, Exception e)
         {
             Logger.Error(e);
             ErrorLog.Exception("Error handling request", e);
             request.Response.StatusCode = 500;
-            request.Response.StatusDescription = "Server Error";
             request.Response.ContentType = "text/html";
-            var content = @"<!DOCTYPE html><html><body><h1>Error 500</h1><h2>" + request.Response.StatusDescription +
+            var content = @"<!DOCTYPE html><html><body><h1>Error 500</h1><h2>" + request.Response.StatusCode.GetStatusDescription() +
                           @"</h2><p>" + e.Message + @"</p><p><pre>" + e.StackTrace + @"</pre></p></body></html>";
             try
             {
-                request.Response.Write(content, true);
+                await request.Response.WriteAsync(content);
+                await request.Response.CompleteAsync();
             }
             catch (Exception e2)
             {
@@ -223,18 +205,17 @@ namespace UXAV.AVnet.Core.WebScripting
             }
         }
 
-        public virtual void HandleError(WebScriptingRequest request, int statusCode, string statusDescription,
-            string message)
+        public virtual async Task HandleErrorAsync(WebScriptingRequest request, int statusCode, string message)
         {
-            Logger.Warn("Error {0} {1}: {2}", statusCode, statusDescription, message);
+            Logger.Warn($"Error {statusCode}: {message}");
             request.Response.StatusCode = statusCode;
-            request.Response.StatusDescription = statusDescription;
             request.Response.ContentType = "text/html";
-            var content = @"<!DOCTYPE html><html><body><h1>Error " + statusCode + @"</h1><h2>" + statusDescription +
+            var content = @"<!DOCTYPE html><html><body><h1>Error " + statusCode + @"</h1><h2>" + request.Response.StatusCode.GetStatusDescription() +
                           @"</h2><p>" + message + @"</p></body></html>";
             try
             {
-                request.Response.Write(content, true);
+                await request.Response.WriteAsync(content);
+                await request.Response.CompleteAsync();
             }
             catch (Exception e)
             {

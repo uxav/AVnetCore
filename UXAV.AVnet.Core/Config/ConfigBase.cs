@@ -6,10 +6,6 @@ namespace UXAV.AVnet.Core.Config
 {
     public abstract class ConfigBase
     {
-        [DisplayName("PList Dictionary")]
-        [Description("PList for custom values as strings")]
-        public ConcurrentDictionary<string, object> PropertyList { get; set; }
-
         public string ConfigName { get; set; }
         public string SystemType { get; set; }
         public string SystemName { get; set; }

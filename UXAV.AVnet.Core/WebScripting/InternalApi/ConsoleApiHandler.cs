@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Crestron.SimplSharp;
-using Crestron.SimplSharp.CrestronIO;
 using Newtonsoft.Json.Linq;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
@@ -13,26 +13,26 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         {
         }
 
-        public void Get()
+        public async void Get()
         {
             try
             {
-                var cmd = Request.Query.Get("cmd");
+                var cmd = Request.Query["cmd"];
                 var response = string.Empty;
                 CrestronConsole.SendControlSystemCommand(cmd, ref response);
-                WriteResponse(response);
+                await WriteResponseAsync(response);
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
 
-        public void Post()
+        public async void Post()
         {
             try
             {
-                var content = new StreamReader(Request.InputStream).ReadToEnd();
+                var content = await Request.GetStringContentsAsync();
                 var json = JToken.Parse(content);
                 var response = new List<string>();
                 var r = string.Empty;
@@ -44,11 +44,11 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     response.Add(r);
                 }
 
-                WriteResponse(response);
+                await WriteResponseAsync(response);
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

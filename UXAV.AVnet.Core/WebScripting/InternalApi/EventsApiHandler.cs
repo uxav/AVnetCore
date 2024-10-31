@@ -23,12 +23,12 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         // ReSharper disable once UnusedMember.Global - Called using reflection
-        public void Get()
+        public async void Get()
         {
             switch (Request.RoutePatternArgs["method"].ToLower())
             {
                 case "start":
-                    WriteResponse(new
+                    await WriteResponseAsync(new
                     {
                         SessionId = Start()
                     });
@@ -36,18 +36,21 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 case "poll":
                     if (!Request.RoutePatternArgs.ContainsKey("id"))
                     {
-                        HandleError(400, "Bad Request", "No session id specified");
+                        await HandleErrorAsync(400, "No session id specified");
                         return;
                     }
 
                     var id = int.Parse(Request.RoutePatternArgs["id"]);
+                    bool sessionExists;
                     lock (Sessions)
                     {
-                        if (!Sessions.ContainsKey(id))
-                        {
-                            HandleError(400, "Bad Request", "No sessions for this id value");
-                            return;
-                        }
+                        sessionExists = Sessions.ContainsKey(id);
+                    }
+
+                    if (!sessionExists)
+                    {
+                        await HandleErrorAsync(400, "No sessions for this id value");
+                        return;
                     }
 
                     //CrestronConsole.PrintLine("Event poll for session " + id);
@@ -59,7 +62,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                             session = Sessions[id];
                         }
 
-                        WriteResponse(session.GetMessages());
+                        await WriteResponseAsync(session.GetMessages());
                         //CrestronConsole.PrintLine("Responded for session " + id);
                         return;
                     }
@@ -74,7 +77,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         return;
                     }
                 default:
-                    HandleError(400, "Bad Request", $"Method \"{Request.RoutePatternArgs["method"]}\" is not valid");
+                    await HandleErrorAsync(400, $"Method \"{Request.RoutePatternArgs["method"]}\" is not valid");
                     return;
             }
         }

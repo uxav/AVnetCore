@@ -10,16 +10,16 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         {
         }
 
-        public void Get()
+        public async void Get()
         {
             try
             {
                 var messages = DiagnosticService.GetMessages();
-                WriteResponse(messages);
+                await WriteResponseAsync(messages);
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

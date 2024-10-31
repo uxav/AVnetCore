@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
-using Crestron.SimplSharp.WebScripting;
+using Microsoft.AspNetCore.Http;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -48,7 +48,7 @@ namespace UXAV.AVnet.Core.WebScripting
 
         public WebScriptingRequest Request { get; }
 
-        public HttpCwsResponse Response => Request.Response;
+        public HttpResponse Response => Request.Response;
 
         public bool SuppressLogging { get; }
 
@@ -56,27 +56,24 @@ namespace UXAV.AVnet.Core.WebScripting
         {
             var cookie = Request.Cookies["sessionId"];
             if (cookie == null) return null;
-            var session = AppAuthentication.ValidateSession(cookie.Value, renew);
+            var session = AppAuthentication.ValidateSession(cookie, renew);
             if (session == null || session.ExpiryTime < DateTime.Now)
             {
-                Response.SetCookie(new HttpCwsCookie("sessionId")
+                Response.Cookies.Append("sessionId", string.Empty, new CookieOptions
                 {
-                    Value = string.Empty,
                     Expires = new DateTime().ToUniversalTime(),
                     Path = "/"
                 });
                 return null;
             }
 
-            Response.SetCookie(new HttpCwsCookie("sessionId")
+            Response.Cookies.Append("sessionId", cookie, new CookieOptions
             {
-                Value = cookie.Value,
                 Expires = session.ExpiryTime.ToUniversalTime(),
                 Path = "/",
                 HttpOnly = true,
                 Secure = false
             });
-
             return session;
         }
 
@@ -84,12 +81,10 @@ namespace UXAV.AVnet.Core.WebScripting
         {
             try
             {
-                Request.Response.Headers.Add("X-App-RequestHandler", GetType().FullName);
+                Request.Response.Headers.Append("X-App-RequestHandler", GetType().FullName);
 
                 var method = GetType().GetMethod(Request.Method,
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance,
-                    null,
-                    new Type[] { }, null);
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance, null, [], null);
 
                 if (method == null)
                 {
@@ -100,7 +95,7 @@ namespace UXAV.AVnet.Core.WebScripting
 
                 if (method == null)
                 {
-                    HandleError(405, "Method not allowed", $"{GetType().Name} does not allow method \"{Request.Method}\"");
+                    await HandleErrorAsync(405, $"{GetType().Name} does not allow method \"{Request.Method}\"");
                     return;
                 }
 
@@ -115,7 +110,7 @@ namespace UXAV.AVnet.Core.WebScripting
                             Redirect("/cws/a/login?after={0}", Request.PathAndQueryString);
                             return;
                         case null:
-                            HandleError(401, "Unauthorized", "No session valid. Please login.");
+                            await HandleErrorAsync(401, "No session valid. Please login.");
                             return;
                     }
 
@@ -138,7 +133,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 }
                 catch (TargetInvocationException e)
                 {
-                    HandleError(e.InnerException);
+                    await HandleErrorAsync(e.InnerException);
                 }
                 catch (ThreadAbortException)
                 {
@@ -146,12 +141,12 @@ namespace UXAV.AVnet.Core.WebScripting
                 catch (Exception e)
                 {
                     ErrorLog.Exception("Error handling request", e);
-                    HandleError(e);
+                    await HandleErrorAsync(e);
                 }
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
 
@@ -160,24 +155,24 @@ namespace UXAV.AVnet.Core.WebScripting
             Request.Response.Redirect(string.Format(url, args));
         }
 
-        protected virtual void HandleError(Exception e)
+        protected virtual async Task HandleErrorAsync(Exception e)
         {
-            Server.HandleError(Request, e);
+            await Server.HandleErrorAsync(Request, e);
         }
 
-        protected virtual void HandleNotFound()
+        protected virtual async Task HandleNotFoundAsync()
         {
-            Server.HandleError(Request, 404, "Not Found", "The request handler could not process this request");
+            await Server.HandleErrorAsync(Request, 404, "Not Found");
         }
 
-        protected virtual void HandleNotFound(string message)
+        protected virtual async Task HandleNotFoundAsync(string message)
         {
-            Server.HandleError(Request, 404, "Not Found", message);
+            await Server.HandleErrorAsync(Request, 404, message);
         }
 
-        protected void HandleError(int code, string title, string message)
+        protected async Task HandleErrorAsync(int code, string message)
         {
-            Server.HandleError(Request, code, title, message);
+            await Server.HandleErrorAsync(Request, code, message);
         }
 
         public sealed override string ToString()

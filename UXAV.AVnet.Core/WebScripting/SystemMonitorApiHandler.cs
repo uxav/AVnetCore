@@ -1,6 +1,6 @@
 using System;
+using System.IO;
 using System.Linq;
-using Crestron.SimplSharp.CrestronIO;
 using Newtonsoft.Json.Linq;
 
 namespace UXAV.AVnet.Core.WebScripting
@@ -12,7 +12,7 @@ namespace UXAV.AVnet.Core.WebScripting
         {
         }
 
-        public void Get()
+        public async void Get()
         {
             var totalRam = SystemMonitor.TotalRamSize;
             var ramUsed = totalRam - SystemMonitor.RamFree;
@@ -43,11 +43,11 @@ namespace UXAV.AVnet.Core.WebScripting
                     MemoryData = memoryData
                 }
             };
-            WriteResponse(data);
+            await WriteResponseAsync(data);
         }
 
         [SecureRequest]
-        public void Post()
+        public async void Post()
         {
             try
             {
@@ -59,15 +59,15 @@ namespace UXAV.AVnet.Core.WebScripting
                 {
                     case "resetmaxvalues":
                         Crestron.SimplSharpPro.Diagnostics.SystemMonitor.ResetMaximums();
-                        WriteResponse(true);
+                        await WriteResponseAsync(true);
                         return;
                 }
 
-                HandleError(400, "Bad Request", $"Method \"{method}\" not known");
+                await HandleErrorAsync(400, $"Method \"{method}\" not known");
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

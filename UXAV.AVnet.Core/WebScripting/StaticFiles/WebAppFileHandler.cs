@@ -1,5 +1,8 @@
 using System;
-using System.Reflection;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.FileProviders.Physical;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -13,7 +16,7 @@ namespace UXAV.AVnet.Core.WebScripting.StaticFiles
 
         protected override string RootFilePath => SystemBase.ProgramApplicationDirectory + "/webapp";
 
-        public override void Get()
+        public override async Task Get()
         {
             try
             {
@@ -22,26 +25,25 @@ namespace UXAV.AVnet.Core.WebScripting.StaticFiles
 #if DEBUG
                 Logger.Debug("Looking for file resource: {0}", path);
 #endif
-                var stream = GetResourceStream(Assembly.GetExecutingAssembly(), path);
-                if (stream == null)
+                var file = GetFile(path);
+                if (file == null)
                 {
 #if DEBUG
                     Logger.Debug("File not found, defaulting to index.html !");
 #endif
-                    stream = GetResourceStream(Assembly.GetExecutingAssembly(), "index.html");
+                    file = GetFile("index.html");
                 }
-                //Logger.Debug("Stream = " + stream);
-                if (stream == null)
+                if (file == null)
                 {
-                    HandleNotFound();
+                    await HandleNotFoundAsync();
                     return;
                 }
 
-                Response.Write(stream.GetCrestronStream(), true);
+                await WriteFileAsync(file);
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }
