@@ -1,19 +1,61 @@
 {
-    "name": "AVnetCore",
-	"image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
-	"features": {
-		"ghcr.io/devcontainers/features/git-lfs:1": {}
-	},
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"ms-dotnettools.csdevkit",
-				"ms-dotnettools.csharp",
-				"ms-dotnettools.vscodeintellicode-csharp",
-				"ms-vscode.powershell",
-				"esbenp.prettier-vscode",
-				"github.vscode-github-actions"
-			]
-		}
-	}
+  "name": "C# (.NET)",
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  "image": "mcr.microsoft.com/devcontainers/dotnet:8.0",
+
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  // "features": {},
+  "features": {
+    "ghcr.io/devcontainers/features/git-lfs:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers-extra/features/angular-cli:2": {
+      "version": "18"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "configureZshAsDefaultShell": true
+    }
+  },
+  // Configure tool-specific properties.
+  "customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+          },
+          "zsh": {
+            "path": "zsh",
+            "icon": "terminal-debian",
+            "color": "terminal.ansiMagenta"
+          },
+          "pwsh": {
+            "path": "pwsh",
+            "icon": "terminal-powershell"
+          }
+        }
+      },
+      "extensions": [
+        "ms-dotnettools.csharp@prerelease",
+        "ms-dotnettools.csdevkit@prerelease",
+        "ms-dotnettools.vscodeintellicode-csharp",
+        "Angular.ng-template",
+        "christian-kohler.npm-intellisense",
+        "ms-vscode.powershell",
+        "esbenp.prettier-vscode",
+        "cyrilletuzi.angular-schematics",
+        "github.vscode-github-actions",
+        "mhutchie.git-graph"
+      ]
+    }
+  },
+  "postStartCommand": "git config --global --add safe.directory \"${containerWorkspaceFolder}\"",
+  "postCreateCommand": "pip install requests"
 }
