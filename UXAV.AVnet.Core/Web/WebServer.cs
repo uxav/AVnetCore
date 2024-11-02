@@ -152,8 +152,8 @@ public static class WebServer
     {
         var path = $"/ui/ws/{controller.Device.ID:x2}";
         var ipAddress = SystemBase.IpAddress;
-        var url = $"http{(_app.Urls.First().Contains("https") ? "s" : "")}://{ipAddress}:{_app.Urls.First().Split(':').Last()}{path}";
-        controller.WebSocketUrl = $"{url}{path}";
+        var url = $"ws{(_app.Urls.First().Contains("https") ? "s" : "")}://{ipAddress}:{_app.Urls.First().Split(':').Last()}{path}";
+        controller.WebSocketUrl = url;
         if (_apiHandlers.ContainsKey(path))
         {
             throw new InvalidOperationException($"Device service already exists for path: {path}");

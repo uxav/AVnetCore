@@ -45,6 +45,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             internal set
             {
                 _webSocketUrl = value;
+                Logger.Log($"Setting websocket URL: {_webSocketUrl}");
                 Device.StringInput[Serial.WebsocketUrl].StringValue = _webSocketUrl;
             }
         }
