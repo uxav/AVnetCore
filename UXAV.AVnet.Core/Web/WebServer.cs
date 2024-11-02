@@ -1,17 +1,28 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.WebSockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
+using UXAV.AVnet.Core.Models;
+using UXAV.AVnet.Core.UI;
+using UXAV.AVnet.Core.UI.Ch5;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.Web;
 
+/// <summary>
+/// Provides functionality to initialize and manage a web server.
+/// </summary>
 public static class WebServer
 {
     private static WebApplication _app;
+    private static Dictionary<string, Func<Ch5ConnectionInstance>> _apiHandlers = [];
 
     static WebServer()
     {
@@ -31,30 +42,78 @@ public static class WebServer
         };
     }
 
+    /// <summary>
+    /// Adds a route to the web server with a synchronous handler.
+    /// </summary>
+    /// <param name="path">The URL path of the route.</param>
+    /// <param name="handler">The handler to process requests to the route.</param>
     public static void AddRoute(string path, Action<HttpContext> handler)
     {
         _app.Map(path, handler);
     }
 
+    /// <summary>
+    /// Adds a route to the web server with an asynchronous handler.
+    /// </summary>
+    /// <param name="path">The URL path of the route.</param>
+    /// <param name="handler">The handler to process requests to the route.</param>
     public static void AddRoute(string path, Func<HttpContext, Task> handler)
     {
         _app.Map(path, handler);
     }
 
-    public static void MapStaticFiles(string requestPath, string physicalPath)
+    public static void SetupUI(string requestPath, string physicalPath)
     {
-        if (_app == null)
+        _app.Map("/ui/ws/{*id}", async context =>
         {
-            throw new InvalidOperationException("Web server is not initialized");
-        }
+            if (context.WebSockets.IsWebSocketRequest)
+            {
+                var id = context.Request.RouteValues["id"].ToString();
+                Logger.Debug($"WebSocket request received for id: {id}");
+                var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                var path = $"/ui/ws/{id}";
+                if (_apiHandlers.ContainsKey(path))
+                {
+                    var handler = _apiHandlers[path]();
+                    await handler.RunAsync(webSocket, context);
+                }
+                else
+                {
+                    Logger.Error($"No handler found for path: {path}");
+                    context.Response.StatusCode = 404;
+                }
+            }
+            else
+            {
+                context.Response.StatusCode = 400;
+            }
+        });
 
-        _app.UseStaticFiles(new StaticFileOptions
+        _app.UseFileServer(new FileServerOptions
         {
             FileProvider = new PhysicalFileProvider(physicalPath),
-            RequestPath = requestPath
+            RequestPath = requestPath,
+            EnableDefaultFiles = true,
+            StaticFileOptions = { ServeUnknownFileTypes = true }
+        });
+
+        _app.Use(async (context, next) =>
+        {
+            await next();
+
+            if (context.Response.StatusCode == 404 && context.Request.Path.StartsWithSegments(requestPath))
+            {
+                Logger.Debug($"Redirecting {context.Request.Path} to {requestPath}/index.html");
+                context.Response.Redirect("/ui/index.html");
+            }
         });
     }
 
+    /// <summary>
+    /// Initializes the web server on the specified port.
+    /// </summary>
+    /// <param name="port">The port to run the web server on.</param>
+    /// <exception cref="InvalidOperationException">Thrown if the web server is already running.</exception>
     public static void Init(int port)
     {
         if (_app != null)
@@ -64,13 +123,23 @@ public static class WebServer
 
         _app = WebApplication.Create();
         _app.Urls.Add($"http://*:{port}");
+        _app.Environment.WebRootPath = Path.Combine(SystemBase.ProgramApplicationDirectory, "webroot");
         _app.Map("/", context =>
         {
             context.Response.Redirect("/cws/app");
             return Task.CompletedTask;
         });
+
+        _app.UseWebSockets();
+
+        Logger.Highlight($"Web server initialized. Urls are: {string.Join(", ", _app.Urls)}");
     }
 
+    /// <summary>
+    /// Starts the web server asynchronously.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if the web server is not initialized.</exception>
     public async static Task StartAsync()
     {
         if (_app == null)
@@ -79,5 +148,40 @@ public static class WebServer
         }
 
         await _app.RunAsync();
+    }
+
+    internal static void AddDeviceService<THandler>(Ch5UIController<THandler> controller)
+            where THandler : Ch5ApiHandlerBase
+    {
+        var path = $"/ui/ws/{controller.Device.ID:x2}";
+        var ipAddress = SystemBase.IpAddress;
+        var url = $"http{(_app.Urls.First().Contains("https") ? "s" : "")}://{ipAddress}:{_app.Urls.First().Split(':').Last()}{path}";
+        controller.WebSocketUrl = $"{url}{path}";
+        if (_apiHandlers.ContainsKey(path))
+        {
+            throw new InvalidOperationException($"Device service already exists for path: {path}");
+        }
+        _apiHandlers.Add(path, () =>
+        {
+            var ctor = typeof(THandler).GetConstructor([typeof(Core3ControllerBase)]);
+            var handler = (Ch5ApiHandlerBase)ctor.Invoke([controller]);
+            return new Ch5ConnectionInstance(handler, controller);
+        });
+        Logger.Highlight($"Websocket URL for UI Controller {controller.Id} set to: {controller.WebSocketUrl}");
+    }
+
+    public static void AddWebService<THandler>(string path = "/ui/ws/web") where THandler : Ch5ApiHandlerBase
+    {
+        if (_apiHandlers.ContainsKey(path))
+        {
+            throw new InvalidOperationException($"Web service already exists for path: {path}");
+        }
+        _apiHandlers.Add(path, () =>
+        {
+            var ctor = typeof(THandler).GetConstructor([typeof(Core3ControllerBase)]);
+            var handler = (Ch5ApiHandlerBase)ctor.Invoke([null]);
+            return new Ch5ConnectionInstance(handler);
+        });
+        Logger.Highlight($"Web service added for path: {path}");
     }
 }

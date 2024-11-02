@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
 using UXAV.AVnet.Core.UI.Ch5.MessageHandling;
+using UXAV.AVnet.Core.Web;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.UI.Ch5
@@ -231,15 +232,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             object target = this;
             var namedArgs = args;
-            if (Ch5WebSocketServer.DebugIsOn)
-                Logger.Debug("Looking for method: " + method);
 
             switch (method)
             {
                 case "Room.Invoke":
                     {
-                        if (Ch5WebSocketServer.DebugIsOn)
-                            Logger.Debug("Room.Invoke found");
                         if (args["room"] == null || args["method"] == null)
                             throw new Exception("Room.Invoke requires a room and method parameter");
                         var roomId = args["room"].Value<uint>();
@@ -355,8 +352,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private async Task Subscribe(int id, string name, object targetObject, JToken @params)
         {
-            if (Ch5WebSocketServer.DebugIsOn)
-                Logger.Debug($"Subscribe with id: {id}, name: {name}, params: {@params}");
             lock (_eventSubscriptions)
             {
                 if (_eventSubscriptions.ContainsKey(id))
@@ -380,8 +375,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
         [ApiTargetMethod("Unsubscribe")]
         public void Unsubscribe(int id)
         {
-            if (Ch5WebSocketServer.DebugIsOn)
-                Logger.Debug($"Unsubscribe with id: {id}");
             lock (_eventSubscriptions)
             {
                 if (!_eventSubscriptions.ContainsKey(id))
@@ -413,7 +406,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 ConfigManager.ConfigPath,
                 UpTime = SystemBase.UpTime.ToPrettyFormat(),
                 BooTime = SystemBase.BootTime,
-                Ch5WebSocketServer.WebSocketBaseUrl,
                 SystemBase.SerialNumber,
                 UxEnvironment.System.AppVersion,
                 AVNetVersion = UxEnvironment.Version.ToString()

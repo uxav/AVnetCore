@@ -758,8 +758,6 @@ namespace UXAV.AVnet.Core.Models
 
         private void SystemStoppingInternal(eProgramStatusEventType eventType)
         {
-            if (eventType == eProgramStatusEventType.Stopping) Ch5WebSocketServer.Stop();
-
             try
             {
                 OnProgramStatusEventHandler(eventType);
@@ -784,10 +782,6 @@ namespace UXAV.AVnet.Core.Models
                     new DiagnosticMessage(MessageLevel.Warning, $"Logger connection from {connection}",
                         "Console Connection", GetType().Name)));
             }
-
-            if (Ch5WebSocketServer.Running)
-                messages.Add(new DiagnosticMessage(MessageLevel.Info, "CH5 websocket service listening",
-                    Ch5WebSocketServer.WebSocketBaseUrl, nameof(Ch5WebSocketServer)));
 
             messages.AddRange(CipDevices.GetDiagnosticMessages());
 
@@ -826,36 +820,44 @@ namespace UXAV.AVnet.Core.Models
         /// </summary>
         public async Task InitializeAsync()
         {
+            Logger.Highlight("Initialize()");
+
             try
             {
                 await InitWebAppAsync();
-                await WebServer.StartAsync();
+                _ = WebServer.StartAsync();
             }
             catch (Exception e)
             {
                 Logger.Error(e);
             }
 
-            Logger.Highlight("Initialize()");
-            UpdateBootStatus(EBootStatus.Initializing, "System Initializing", 0);
-
-            Logger.Log("Starting system initialize task");
-            var task = new Task(InitializeTask);
-            _ = task.ContinueWith(t =>
+            try
             {
-                if (t.Status == TaskStatus.RanToCompletion)
-                {
-                    Logger.Success("System Initialized OK");
-                    UpdateBootStatus(EBootStatus.Running, "System Running", 100);
-                }
-                else
-                {
-                    Logger.Warn("System initialize task ended and status is: {0}", t.Status);
-                }
-            });
+                UpdateBootStatus(EBootStatus.Initializing, "System Initializing", 0);
 
-            UpdateBootStatus(EBootStatus.Initializing, $"Starting {GetType().Name}.Initialize()", 2);
-            task.Start();
+                Logger.Log("Starting system initialize task");
+                var task = new Task(InitializeTask);
+                _ = task.ContinueWith(t =>
+                {
+                    if (t.Status == TaskStatus.RanToCompletion)
+                    {
+                        Logger.Success("System Initialized OK");
+                        UpdateBootStatus(EBootStatus.Running, "System Running", 100);
+                    }
+                    else
+                    {
+                        Logger.Warn("System initialize task ended and status is: {0}", t.Status);
+                    }
+                });
+
+                UpdateBootStatus(EBootStatus.Initializing, $"Starting {GetType().Name}.Initialize()", 2);
+                task.Start();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         private void InitializeTask()
@@ -1016,23 +1018,9 @@ namespace UXAV.AVnet.Core.Models
                 CipDevices.RegisterFusionRooms();
             }
 
-            Thread.Sleep(500);
-            UpdateBootStatus(EBootStatus.Initializing, "Starting CH5 websocket services", 90);
-            Thread.Sleep(500);
-            if (Ch5WebSocketServer.InitCalled)
-            {
-                Logger.Log("Starting CH5 websocket services");
-                Thread.Sleep(1000);
-                Ch5WebSocketServer.Start();
-                Thread.Sleep(2000);
-            }
-
-            if (Core3Controllers.Count > 0)
-            {
-                UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
-                Logger.Log("Initializing Core 3 UI Controllers");
-                InitializeCore3Controllers();
-            }
+            UpdateBootStatus(EBootStatus.Initializing, "Initializing UI Controllers", 90);
+            Logger.Log("Initializing UI Controllers");
+            InitializeCore3Controllers();
 
             try
             {

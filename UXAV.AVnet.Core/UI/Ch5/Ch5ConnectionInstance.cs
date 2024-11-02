@@ -1,53 +1,50 @@
 using System;
 using System.Net;
+using System.Net.WebSockets;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Models;
-using WebSocketSharp;
-using WebSocketSharp.Server;
 using Logger = UXAV.Logging.Logger;
 
 namespace UXAV.AVnet.Core.UI.Ch5
 {
-    public class Ch5ConnectionInstance : WebSocketBehavior
+    public class Ch5ConnectionInstance
     {
         private readonly Ch5ApiHandlerBase _apiHandler;
         private readonly Core3ControllerBase _controller;
         private readonly Mutex _sendMutex = new Mutex();
+        private WebSocket _webSocket;
 
-        public Ch5ConnectionInstance(Ch5ApiHandlerBase apiHandler)
+        public Ch5ConnectionInstance(Ch5ApiHandlerBase apiHandle)
         {
-            _apiHandler = apiHandler;
+            this.ID = Guid.NewGuid().ToString();
+            _apiHandler = apiHandle;
             _apiHandler.SendEvent += OnHandlerSendRequest;
             _apiHandler.SendDataEvent += OnHandlerSendDataRequest;
         }
 
         public Ch5ConnectionInstance(Ch5ApiHandlerBase apiHandler, Core3ControllerBase controller)
+            : this(apiHandler)
         {
-            _apiHandler = apiHandler;
-            _apiHandler.SendEvent += OnHandlerSendRequest;
-            _apiHandler.SendDataEvent += OnHandlerSendDataRequest;
             _controller = controller;
             _controller.NotifyWebsocket += ControllerOnNotifyWebsocket;
         }
 
         public IPAddress RemoteIpAddress { get; private set; }
 
+        public string ID { get; private set; }
         private void ControllerOnNotifyWebsocket(object sender, NotifyWebsocketEventArgs args)
         {
             _apiHandler.SendNotificationInternal(args.Method, args.Data);
         }
 
-        protected override void OnOpen()
+        public async Task RunAsync(WebSocket webSocket, Microsoft.AspNetCore.Http.HttpContext context)
         {
-            base.OnOpen();
-            RemoteIpAddress = Context.UserEndPoint.Address;
-            Logger.Success($"👍🏻 Websocket Opened from {RemoteIpAddress}, ID = \"{ID}\"");
-            Logger.Log("Connection User-Agent:\r\n" + Context.Headers["User-Agent"]);
-            foreach (var protocol in Context.SecWebSocketProtocols)
-            {
-                //Logger.Debug($"Connection protocol includes: {protocol}");
-            }
+            _webSocket = webSocket;
+            RemoteIpAddress = context.Connection.RemoteIpAddress.MapToIPv4();
+            Logger.Success($"👍🏻 Websocket Opened from {RemoteIpAddress}");
+            Logger.Log("Connection User-Agent:\r\n" + context.Request.Headers["User-Agent"]);
 
             _apiHandler.OnConnectInternal(this);
             EventService.Notify(EventMessageType.DeviceConnectionChange, new
@@ -57,17 +54,26 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 ConnectionInfo = RemoteIpAddress.ToString(),
                 Online = true
             });
-        }
 
-        protected override void OnClose(CloseEventArgs e)
-        {
-            base.OnClose(e);
-            Logger.Log($"👋 Websocket Closed, {e.Code}, Clean: {e.WasClean}, Remote IP: {RemoteIpAddress}");
+            try
+            {
+                // await Task.WhenAll(ReceiveAsync(), CheckConnectionAsync());
+                await Task.WhenAll(ReceiveAsync());
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
+
+            Logger.Log($"👋 Websocket Closed, Reason: {_webSocket.CloseStatus}, Remote IP: {RemoteIpAddress}");
+
             _apiHandler.SendEvent -= OnHandlerSendRequest;
             _apiHandler.SendDataEvent -= OnHandlerSendDataRequest;
             if (_controller != null)
                 _controller.NotifyWebsocket -= ControllerOnNotifyWebsocket;
+
             _apiHandler.OnDisconnectInternal(this);
+
             EventService.Notify(EventMessageType.DeviceConnectionChange, new
             {
                 Device = "CH5 Websocket",
@@ -77,31 +83,22 @@ namespace UXAV.AVnet.Core.UI.Ch5
             });
         }
 
-        protected override void OnError(ErrorEventArgs e)
+        private async Task ReceiveAsync()
         {
-            base.OnError(e);
-            Logger.Error(e.Exception);
-        }
-
-        protected override void OnMessage(MessageEventArgs args)
-        {
-            base.OnMessage(args);
-            try
+            var buffer = new byte[1024];
+            _webSocket = _webSocket ?? throw new NullReferenceException("WebSocket is null");
+            while (_webSocket.State == WebSocketState.Open)
             {
-                if (args.IsPing)
+                try
                 {
-                    //Logger.Debug("Websocket received Ping!");
-                }
-                else if (args.IsBinary)
-                {
-                    /*Logger.Debug($"🟠 WS received from {RemoteIpAddress}:\r\n" +
-                                 Tools.GetBytesAsReadableString(args.RawData, 0, args.RawData.Length, true));*/
-                }
-                else if (args.IsText)
-                {
-                    var data = args.Data;
-                    if (data != null)
-                        //Logger.Debug($"🟠 WS received from {RemoteIpAddress}:\r\n" + data);
+                    var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                    }
+                    else if (result.MessageType == WebSocketMessageType.Text)
+                    {
+                        var data = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
                         try
                         {
                             _apiHandler.OnReceiveInternal(JToken.Parse(data));
@@ -110,22 +107,46 @@ namespace UXAV.AVnet.Core.UI.Ch5
                         {
                             Logger.Error(e);
                         }
+                    }
+                    else if (result.MessageType == WebSocketMessageType.Binary)
+                    {
+                        //Logger.Debug($"🟠 WS received from {RemoteIpAddress}:\r\n" +
+                        //             Tools.GetBytesAsReadableString(buffer, 0, result.Count, true));
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
                 }
             }
-            catch (Exception e)
+        }
+
+        private async Task CheckConnectionAsync()
+        {
+            while (_webSocket.State == WebSocketState.Open)
             {
-                Logger.Error(e);
+                // try
+                // {
+                //     await _webSocket.SendAsync(new ArraySegment<byte>([]), WebSocketMessageType.Text, true,
+                //         CancellationToken.None);
+                // }
+                // catch (Exception e)
+                // {
+                //     Logger.Error(e);
+                //     break;
+                // }
+                await Task.Delay(5000);
             }
         }
 
         private void OnHandlerSendRequest(string data)
         {
-            if (State != WebSocketState.Open) return;
             _sendMutex.WaitOne();
             try
             {
                 //Logger.Debug($"🟢 WS send to {RemoteIpAddress}:\r\n" + data);
-                Send(data);
+                var bytes = System.Text.Encoding.UTF8.GetBytes(data);
+                _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
             }
             catch (Exception e)
             {
@@ -137,12 +158,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private void OnHandlerSendDataRequest(byte[] data)
         {
-            if (State != WebSocketState.Open) return;
             _sendMutex.WaitOne();
             try
             {
                 //Logger.Debug($"🟢 WS send to {RemoteIpAddress}:\r\n" + data);
-                Send(data);
+                _webSocket.SendAsync(new ArraySegment<byte>(data), WebSocketMessageType.Binary, true, CancellationToken.None);
             }
             catch (Exception e)
             {

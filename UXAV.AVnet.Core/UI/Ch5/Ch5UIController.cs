@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Models;
 using UXAV.AVnet.Core.UI.ReservedJoins;
+using UXAV.AVnet.Core.Web;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.UI.Ch5
@@ -126,8 +127,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             try
             {
-                // ReSharper disable once RedundantTypeArgumentsOfMethod
-                Ch5WebSocketServer.AddDeviceService<THandler>(this);
+                WebServer.AddDeviceService(this);
             }
             catch (Exception e)
             {

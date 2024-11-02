@@ -157,12 +157,6 @@
           "Newtonsoft.Json": "13.0.3"
         }
       },
-      "WebSocketSharp-netstandard": {
-        "type": "Direct",
-        "requested": "[1.0.1, )",
-        "resolved": "1.0.1",
-        "contentHash": "knoinAv31vbdxXdypnzN2MPX5hyntVLWceq6OdWRXkr9zzqp/RWbxSuLFGbkW8De1061URgNAN43BUTlgMx1CA=="
-      },
       "Crestron.SimplSharp.SDK.Library": {
         "type": "Transitive",
         "resolved": "2.20.52",

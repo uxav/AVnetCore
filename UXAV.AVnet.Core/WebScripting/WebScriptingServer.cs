@@ -2,17 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using UXAV.AVnet.Core.Models;
 using UXAV.AVnet.Core.Web;
-using WebSocketSharp;
 using Logger = UXAV.Logging.Logger;
-using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace UXAV.AVnet.Core.WebScripting
 {
@@ -192,7 +190,7 @@ namespace UXAV.AVnet.Core.WebScripting
             ErrorLog.Exception("Error handling request", e);
             request.Response.StatusCode = 500;
             request.Response.ContentType = "text/html";
-            var content = @"<!DOCTYPE html><html><body><h1>Error 500</h1><h2>" + request.Response.StatusCode.GetStatusDescription() +
+            var content = @"<!DOCTYPE html><html><body><h1>Error 500</h1><h2>" + request.Response.StatusCode +
                           @"</h2><p>" + e.Message + @"</p><p><pre>" + e.StackTrace + @"</pre></p></body></html>";
             try
             {
@@ -210,7 +208,7 @@ namespace UXAV.AVnet.Core.WebScripting
             Logger.Warn($"Error {statusCode}: {message}");
             request.Response.StatusCode = statusCode;
             request.Response.ContentType = "text/html";
-            var content = @"<!DOCTYPE html><html><body><h1>Error " + statusCode + @"</h1><h2>" + request.Response.StatusCode.GetStatusDescription() +
+            var content = @"<!DOCTYPE html><html><body><h1>Error " + statusCode + @"</h1><h2>" + ReasonPhrases.GetReasonPhrase(statusCode) +
                           @"</h2><p>" + message + @"</p></body></html>";
             try
             {

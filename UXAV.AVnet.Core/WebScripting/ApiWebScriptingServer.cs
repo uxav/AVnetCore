@@ -1,10 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Models;
-using WebSocketSharp;
 using Logger = UXAV.Logging.Logger;
 
 namespace UXAV.AVnet.Core.WebScripting
@@ -40,7 +40,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 Code = request.Response.StatusCode,
                 Error = new
                 {
-                    Status = request.Response.StatusCode.GetStatusDescription(),
+                    Status = ReasonPhrases.GetReasonPhrase(request.Response.StatusCode),
                     e.Message,
                     e.StackTrace
                 }
@@ -63,7 +63,7 @@ namespace UXAV.AVnet.Core.WebScripting
                 Code = request.Response.StatusCode,
                 Error = new
                 {
-                    Status = request.Response.StatusCode.GetStatusDescription(),
+                    Status = ReasonPhrases.GetReasonPhrase((int)request.Response.StatusCode),
                     Message = message,
                     StackTrace = ""
                 }

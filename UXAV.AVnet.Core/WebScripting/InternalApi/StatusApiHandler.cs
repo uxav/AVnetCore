@@ -102,8 +102,6 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     ProcessId = process.Id,
                     CrestronSecureStorage = CrestronSecureStorage.Supported,
                     process.ProcessName,
-                    Ch5WebSocketServerEnabled = Ch5WebSocketServer.Running,
-                    Ch5WebSocketServer = Ch5WebSocketServer.Port,
                     Authentication = new
                     {
                         Authentication.Enabled,
