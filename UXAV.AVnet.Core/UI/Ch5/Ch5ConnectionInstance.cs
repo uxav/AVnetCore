@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Crestron.SimplSharp;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Models;
 using Logger = UXAV.Logging.Logger;
@@ -19,6 +20,21 @@ namespace UXAV.AVnet.Core.UI.Ch5
         public Ch5ConnectionInstance(Ch5ApiHandlerBase apiHandle)
         {
             this.ID = Guid.NewGuid().ToString();
+            CrestronEnvironment.ProgramStatusEventHandler += (args) =>
+            {
+                if (args == eProgramStatusEventType.Stopping)
+                {
+                    try
+                    {
+                        if (_webSocket != null && _webSocket.State == WebSocketState.Open)
+                            _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Program Stopping", CancellationToken.None);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error(e);
+                    }
+                }
+            };
             _apiHandler = apiHandle;
             _apiHandler.SendEvent += OnHandlerSendRequest;
             _apiHandler.SendDataEvent += OnHandlerSendDataRequest;
@@ -31,7 +47,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             _controller.NotifyWebsocket += ControllerOnNotifyWebsocket;
         }
 
-        public IPAddress RemoteIpAddress { get; private set; }
+        public System.Net.IPAddress RemoteIpAddress { get; private set; }
 
         public string ID { get; private set; }
         private void ControllerOnNotifyWebsocket(object sender, NotifyWebsocketEventArgs args)
@@ -57,15 +73,17 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             try
             {
-                // await Task.WhenAll(ReceiveAsync(), CheckConnectionAsync());
-                await Task.WhenAll(ReceiveAsync());
+                await ReceiveAsync();
+                Logger.Log($"👋 Websocket Closed, Reason: {_webSocket.CloseStatus}, Remote IP: {RemoteIpAddress}");
+            }
+            catch (WebSocketException e)
+            {
+                Logger.Warn($"🤨 Websocket Closed, Reason: {e.Message}, Remote IP: {RemoteIpAddress}");
             }
             catch (Exception e)
             {
                 Logger.Error(e);
             }
-
-            Logger.Log($"👋 Websocket Closed, Reason: {_webSocket.CloseStatus}, Remote IP: {RemoteIpAddress}");
 
             _apiHandler.SendEvent -= OnHandlerSendRequest;
             _apiHandler.SendDataEvent -= OnHandlerSendDataRequest;
@@ -89,53 +107,28 @@ namespace UXAV.AVnet.Core.UI.Ch5
             _webSocket = _webSocket ?? throw new NullReferenceException("WebSocket is null");
             while (_webSocket.State == WebSocketState.Open)
             {
-                try
+                var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                    if (result.MessageType == WebSocketMessageType.Close)
+                    await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                }
+                else if (result.MessageType == WebSocketMessageType.Text)
+                {
+                    var data = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    try
                     {
-                        await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                        _apiHandler.OnReceiveInternal(JToken.Parse(data));
                     }
-                    else if (result.MessageType == WebSocketMessageType.Text)
+                    catch (Exception e)
                     {
-                        var data = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
-                        try
-                        {
-                            _apiHandler.OnReceiveInternal(JToken.Parse(data));
-                        }
-                        catch (Exception e)
-                        {
-                            Logger.Error(e);
-                        }
-                    }
-                    else if (result.MessageType == WebSocketMessageType.Binary)
-                    {
-                        //Logger.Debug($"🟠 WS received from {RemoteIpAddress}:\r\n" +
-                        //             Tools.GetBytesAsReadableString(buffer, 0, result.Count, true));
+                        Logger.Error(e);
                     }
                 }
-                catch (Exception e)
+                else if (result.MessageType == WebSocketMessageType.Binary)
                 {
-                    Logger.Error(e);
+                    //Logger.Debug($"🟠 WS received from {RemoteIpAddress}:\r\n" +
+                    //             Tools.GetBytesAsReadableString(buffer, 0, result.Count, true));
                 }
-            }
-        }
-
-        private async Task CheckConnectionAsync()
-        {
-            while (_webSocket.State == WebSocketState.Open)
-            {
-                // try
-                // {
-                //     await _webSocket.SendAsync(new ArraySegment<byte>([]), WebSocketMessageType.Text, true,
-                //         CancellationToken.None);
-                // }
-                // catch (Exception e)
-                // {
-                //     Logger.Error(e);
-                //     break;
-                // }
-                await Task.Delay(5000);
             }
         }
 

@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.WebSockets;
-using System.Threading;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Microsoft.AspNetCore.Builder;
@@ -70,7 +68,7 @@ public static class WebServer
             {
                 var id = context.Request.RouteValues["id"].ToString();
                 Logger.Debug($"WebSocket request received for id: {id}");
-                var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
                 var path = $"/ui/ws/{id}";
                 if (_apiHandlers.ContainsKey(path))
                 {
@@ -149,7 +147,6 @@ public static class WebServer
 
         await _app.RunAsync();
     }
-
     internal static void AddDeviceService<THandler>(Ch5UIController<THandler> controller)
             where THandler : Ch5ApiHandlerBase
     {
@@ -170,6 +167,12 @@ public static class WebServer
         Logger.Highlight($"Websocket URL for UI Controller {controller.Id} set to: {controller.WebSocketUrl}");
     }
 
+    /// <summary>
+    /// Adds a web service to the web server.
+    /// </summary>
+    /// <typeparam name="THandler">Must be derived from <see cref="Ch5ApiHandlerBase"/> </typeparam>
+    /// <param name="path">Default is /ui/ws/web</param>
+    /// <exception cref="InvalidOperationException">Web service already exists for path</exception>
     public static void AddWebService<THandler>(string path = "/ui/ws/web") where THandler : Ch5ApiHandlerBase
     {
         if (_apiHandlers.ContainsKey(path))
