@@ -279,6 +279,7 @@ namespace UXAV.AVnet.Core.Models
                 ApiServer.AddRoute(@"/api/logs", typeof(LoggerApiHandler));
                 ApiServer.AddRoute(@"/api/plog", typeof(PlogApiHandler));
                 ApiServer.AddRoute(@"/api/authentication", typeof(AuthenticationApiHandler));
+                ApiServer.AddRoute(@"/api/appfiles", typeof(AppFilesApiHandler));
                 ApiServer.AddRoute(@"/api/passwords", typeof(PasswordsApiHandler));
                 ApiServer.AddRoute(@"/api/appcontrol", typeof(AppControlApiHandler));
                 ApiServer.AddRoute(@"/api/autodiscovery", typeof(AutoDiscoveryApiHandler));
