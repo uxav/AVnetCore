@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
 using UXAV.AVnet.Core.Models;
@@ -101,8 +103,14 @@ public static class WebServer
 
             if (context.Response.StatusCode == 404 && context.Request.Path.StartsWithSegments(requestPath))
             {
-                Logger.Debug($"Redirecting {context.Request.Path} to {requestPath}/index.html");
-                context.Response.Redirect("/ui/index.html");
+                var filePath = Path.Combine(physicalPath, "index.html");
+                if (File.Exists(filePath))
+                {
+                    context.Response.StatusCode = 200;
+                    context.Response.ContentType = "text/html";
+                    await context.Response.SendFileAsync(filePath);
+                    await context.Response.CompleteAsync();
+                }
             }
         });
     }
@@ -111,17 +119,36 @@ public static class WebServer
     /// Initializes the web server on the specified port.
     /// </summary>
     /// <param name="port">The port to run the web server on.</param>
+    /// <param name="securePort">The secure port to run the web server on.</param>
     /// <exception cref="InvalidOperationException">Thrown if the web server is already running.</exception>
-    public static void Init(int port)
+    public static void Init(int port, int securePort, X509Certificate2? certificate = null)
     {
         if (_app != null)
         {
             throw new InvalidOperationException("Web server is already running");
         }
+        var builder = WebApplication.CreateBuilder();
+        builder.Environment.WebRootPath = Path.Combine(SystemBase.ProgramApplicationDirectory, "webroot");
 
-        _app = WebApplication.Create();
+        builder.WebHost.UseKestrel(options =>
+        {
+            options.ListenAnyIP(port);
+            if (certificate != null)
+            {
+                options.ListenAnyIP(securePort, listenOptions =>
+                {
+                    listenOptions.UseHttps(certificate);
+                });
+            }
+        });
+
+        _app = builder.Build();
         _app.Urls.Add($"http://*:{port}");
-        _app.Environment.WebRootPath = Path.Combine(SystemBase.ProgramApplicationDirectory, "webroot");
+        if (certificate != null)
+        {
+            _app.UseHttpsRedirection();
+            _app.Urls.Add($"https://*:{securePort}");
+        }
         _app.Map("/", context =>
         {
             context.Response.Redirect("/cws/app");
