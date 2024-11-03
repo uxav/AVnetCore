@@ -94,7 +94,21 @@ public static class WebServer
             FileProvider = new PhysicalFileProvider(physicalPath),
             RequestPath = requestPath,
             EnableDefaultFiles = true,
-            StaticFileOptions = { ServeUnknownFileTypes = true }
+            StaticFileOptions =
+            {
+                ServeUnknownFileTypes = true,
+                OnPrepareResponse = ctx =>
+                {
+                    if (!ctx.File.Name.Equals("index.html", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=604800");
+                    }
+                    else if (ctx.File.Name.Equals("index.html", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ctx.Context.Response.Headers.Append("Cache-Control", "no-cache");
+                    }
+                }
+            }
         });
 
         _app.Use(async (context, next) =>
