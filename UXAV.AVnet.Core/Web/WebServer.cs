@@ -120,8 +120,9 @@ public static class WebServer
     /// </summary>
     /// <param name="port">The port to run the web server on.</param>
     /// <param name="securePort">The secure port to run the web server on.</param>
+    /// <param name="certificate">The certificate to use for HTTPS. Default is null.</param>
     /// <exception cref="InvalidOperationException">Thrown if the web server is already running.</exception>
-    public static void Init(int port, int securePort, X509Certificate2? certificate = null)
+    public static void Init(int port, int securePort, X509Certificate2 certificate = null)
     {
         if (_app != null)
         {
@@ -146,7 +147,9 @@ public static class WebServer
         _app.Urls.Add($"http://*:{port}");
         if (certificate != null)
         {
+#if !DEBUG
             _app.UseHttpsRedirection();
+#endif
             _app.Urls.Add($"https://*:{securePort}");
         }
         _app.Map("/", context =>
