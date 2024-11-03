@@ -24,7 +24,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         {
                             room.Id,
                             room.Name,
-                            Url = room.HtmlUiUrl
+                            Url = room.HtmlUiPath
                         });
                     }
                     await WriteResponseAsync(data);
