@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.FileProviders.Physical;
 using UXAV.Logging;
@@ -33,7 +34,8 @@ namespace UXAV.AVnet.Core.WebScripting
         protected async Task WriteFileAsync(IFileInfo file)
         {
             var extension = Path.GetExtension(file.Name);
-            var mimeType = MimeTypes.GetMimeType(extension);
+            var provider = new FileExtensionContentTypeProvider();
+            var mimeType = provider.TryGetContentType(extension, out var type) ? type : "application/octet-stream";
             Response.ContentType = mimeType;
             await Response.SendFileAsync(file);
         }

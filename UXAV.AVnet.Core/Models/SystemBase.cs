@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -248,6 +247,7 @@ namespace UXAV.AVnet.Core.Models
             {
                 FileServer = new WebScriptingServer(this, "files");
                 FileServer.AddRoute(@"/files/static/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(InternalFileHandler));
+                FileServer.AddRoute(@"/files/system/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(SystemFileHandler));
                 FileServer.AddRoute(@"/files/user/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(UserFileRequestHandler));
                 FileServer.AddRoute(@"/files/nvram/<filepath:[\/\w\.\-\[\]\(\)\x20]+>",
                     typeof(NvramFileRequestHandler));

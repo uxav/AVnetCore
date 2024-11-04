@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Crestron.SimplSharp;
 using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Models;
@@ -17,15 +19,35 @@ internal class AppFilesApiHandler : ApiRequestHandler
     [SecureRequest]
     public async void Get()
     {
-        var directories = new DirectoryInfo[]
+        try
         {
-            new(SystemBase.ProgramApplicationDirectory),
-            new(SystemBase.ProgramNvramDirectory),
-            new(SystemBase.ProgramUserDirectory)
-        };
-        var result = directories.Select(x => GetDirectory(x)).ToArray();
+            var directories = new List<DirectoryInfo>();
+            directories.AddRange([
+                new(SystemBase.ProgramApplicationDirectory),
+                new(SystemBase.ProgramNvramDirectory),
+                new(SystemBase.ProgramUserDirectory),
+                new(SystemBase.ProgramHtmlDirectory),
+            ]);
+            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            {
+                directories.Add(new DirectoryInfo("/ftp/cert"));
+                directories.Add(new DirectoryInfo("/ftp/firmware"));
+                directories.Add(new DirectoryInfo("/ftp/plog"));
+                directories.Add(new DirectoryInfo("/ftp/auditlog"));
+                directories.Add(new DirectoryInfo("/ftp/autoupdatelogs"));
+                directories.Add(new DirectoryInfo("/ftp/rm"));
+                directories.Add(new DirectoryInfo("/ftp/sshbanner"));
+                directories.Add(new DirectoryInfo("/ftp/temp"));
+            }
 
-        await WriteResponseAsync(result);
+            var result = directories.Select(x => GetDirectory(x)).ToArray();
+
+            await WriteResponseAsync(result);
+        }
+        catch (Exception e)
+        {
+            await HandleErrorAsync(e);
+        }
     }
 
     private JToken GetDirectory(DirectoryInfo directory)
@@ -34,6 +56,7 @@ internal class AppFilesApiHandler : ApiRequestHandler
         return JToken.FromObject(new
         {
             name = directory.Name,
+            path = directory.FullName,
             directories = directory.EnumerateDirectories()
                 .Select(x => GetDirectory(x)),
             files = directory.EnumerateFiles().Select(x =>
@@ -41,6 +64,7 @@ internal class AppFilesApiHandler : ApiRequestHandler
                 return new
                 {
                     name = x.Name,
+                    path = x.FullName,
                     size = x.Length,
                     sizeString = BytesToString(x.Length),
                     date = x.CreationTimeUtc,
