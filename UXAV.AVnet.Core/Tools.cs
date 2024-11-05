@@ -9,6 +9,7 @@ using Crestron.SimplSharp.CrestronIO;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.DM;
 using UXAV.AVnet.Core.Models;
+using UXAV.AVnet.Core.Web;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core
@@ -119,17 +120,17 @@ namespace UXAV.AVnet.Core
         }
 
         public static SystemBase CreateSystem(this CrestronControlSystem controlSystem, Assembly assembly,
-            string typeName)
+            string typeName, WebServerConfiguration webServerConfiguration = null)
         {
             if (string.IsNullOrEmpty(typeName)) throw new ArgumentException("string cannot be empty", nameof(typeName));
 
             var systemType = assembly.GetType(typeName);
-            var ctor = systemType.GetConstructor(new[] { typeof(CrestronControlSystem) });
+            var ctor = systemType.GetConstructor([typeof(CrestronControlSystem), typeof(WebServerConfiguration)]);
             if (ctor == null) throw new Exception($"Could not get ctor for type: {systemType.FullName}");
 
             try
             {
-                return (SystemBase)ctor.Invoke(new object[] { controlSystem });
+                return (SystemBase)ctor.Invoke(new object[] { controlSystem, webServerConfiguration });
             }
             catch (TargetInvocationException e)
             {

@@ -58,11 +58,12 @@ namespace UXAV.AVnet.Core.Models
         private static string _domainName;
         private static string _hostName;
         private static string _appVersion;
+        private static WebServer _webServer;
         private readonly string _initialConfig;
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
         internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
 
-        protected SystemBase(CrestronControlSystem controlSystem)
+        protected SystemBase(CrestronControlSystem controlSystem, WebServerConfiguration webServerConfiguration = null)
         {
             CrestronEnvironment.ProgramStatusEventHandler += SystemStoppingInternal;
             Logger.MessageLogged += message => { EventService.Notify(EventMessageType.LogEntry, message); };
@@ -86,6 +87,18 @@ namespace UXAV.AVnet.Core.Models
             RoomClock.Start();
             Scheduler.Init();
             UpdateBootStatus(EBootStatus.Booting, "System is booting", 0);
+
+            try
+            {
+                if (webServerConfiguration != null)
+                {
+                    _webServer = new WebServer(webServerConfiguration);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
 
             try
             {
@@ -552,12 +565,11 @@ namespace UXAV.AVnet.Core.Models
         {
             get
             {
-                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                    return $"https://{IpAddress}/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws";
-
-                return $"https://{IpAddress}/cws";
+                return $"https://{IpAddress}:{WebServer.SecurePort}/cws";
             }
         }
+
+        public static WebServer WebServer => _webServer;
 
         /// <summary>
         ///  The date and time the program was built
@@ -628,7 +640,7 @@ namespace UXAV.AVnet.Core.Models
             return GetDevices().OfType<DisplayDeviceBase>();
         }
 
-        private async Task InitWebAppAsync()
+        private void InitWebApp()
         {
             Logger.Highlight("Loading WebApp server for Angular app");
             try
@@ -648,37 +660,6 @@ namespace UXAV.AVnet.Core.Models
             {
                 Logger.Error("Could not load angular app web scripting server, {0}", e.Message);
                 return;
-            }
-
-            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
-            {
-                Logger.Log("Device is appliance, Creating default index redirect to cws app");
-                try
-                {
-                    var path = ProgramHtmlDirectory + "/index.html";
-                    using (var file = File.CreateText(path))
-                    {
-                        await file.WriteAsync($"<meta http-equiv=\"refresh\" content=\"0; URL={ApplianceWebServerRedirect}\" />");
-                    }
-
-                    Logger.Log($"Created file: \"{path}\"");
-
-                    path = ProgramHtmlDirectory + "/_config_ini_";
-                    using (var file = File.CreateText(path))
-                    {
-                        await file.WriteAsync(@"webdefault=index.html");
-                    }
-
-                    Logger.Log($"Created file: \"{path}\"");
-
-                    var response = string.Empty;
-                    CrestronConsole.SendControlSystemCommand("webinit", ref response);
-                    Logger.Highlight($"webinit response: {response}");
-                }
-                catch (Exception e)
-                {
-                    Logger.Error($"Error trying to init web server index, {e.Message}");
-                }
             }
         }
 
@@ -819,13 +800,13 @@ namespace UXAV.AVnet.Core.Models
         /// <summary>
         /// Initialize the system
         /// </summary>
-        public async Task InitializeAsync()
+        public void Initialize()
         {
             Logger.Highlight("Initialize()");
 
             try
             {
-                await InitWebAppAsync();
+                InitWebApp();
                 _ = WebServer.StartAsync();
             }
             catch (Exception e)

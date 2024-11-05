@@ -1,5 +1,7 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Timers;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
 using Newtonsoft.Json;
@@ -15,6 +17,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
     {
         private readonly Mutex _settingsMutex = new Mutex();
         private string _webSocketUrl;
+        private System.Threading.Timer _onlineDelay;
 
         protected Ch5UIController(SystemBase system, uint roomId, string typeName, uint ipId, string description,
             string pathOfPanelArchiveFile)
@@ -29,13 +32,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     Logger.Log($"Received log over CIP from Device {device}: {args.Sig.StringValue}");
                     return;
                 }
-
-                if (args.Event != eSigEvent.BoolChange || args.Sig.Number != 10 || !args.Sig.BoolValue) return;
-                if (string.IsNullOrEmpty(WebSocketUrl)) return;
-                Logger.Log($"Device received high join on 10, sending websocket URL: {WebSocketUrl}");
-                device.StringInput[Serial.WebsocketUrl].StringValue = "";
-                device.StringInput[Serial.WebsocketUrl].StringValue = WebSocketUrl;
-                device.StringInput[Serial.DeviceIdString].StringValue = device.ID.ToString("X2");
             };
         }
 
@@ -56,9 +52,15 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             base.OnOnlineStatusChange(currentDevice, args);
             if (!args.DeviceOnLine) return;
-            Logger.Log("Device online, sending websocket URL");
-            Device.StringInput[Serial.WebsocketUrl].StringValue = WebSocketUrl;
-            Device.StringInput[Serial.DeviceIdString].StringValue = Device.ID.ToString("X2");
+            _onlineDelay?.Dispose();
+            _onlineDelay = new System.Threading.Timer(async (e) =>
+            {
+                Logger.Log("Device online, sending websocket URL");
+                Device.StringInput[Serial.WebsocketUrl].StringValue = "";
+                await Task.Delay(500);
+                Device.StringInput[Serial.WebsocketUrl].StringValue = WebSocketUrl;
+                Device.StringInput[Serial.DeviceIdString].StringValue = Device.ID.ToString("X2");
+            }, null, 2000, 0);
         }
 
         internal override void WebsocketConnected(Ch5ApiHandlerBase ch5ApiHandlerBase)
@@ -128,7 +130,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             try
             {
-                WebServer.AddDeviceService(this);
+                SystemBase.WebServer.AddDeviceService(this);
             }
             catch (Exception e)
             {

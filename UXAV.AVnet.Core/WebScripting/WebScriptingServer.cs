@@ -26,8 +26,8 @@ namespace UXAV.AVnet.Core.WebScripting
         {
             System = system;
             _directory = directory;
-            WebServer.AddRoute($"/cws/{directory}", CwsOnReceivedRequestEvent);
-            WebServer.AddRoute($"/cws/{directory}/{{*rest}}", CwsOnReceivedRequestEvent);
+            SystemBase.WebServer.AddRoute($"/cws/{directory}", CwsOnReceivedRequestEvent);
+            SystemBase.WebServer.AddRoute($"/cws/{directory}/{{*rest}}", CwsOnReceivedRequestEvent);
         }
 
         public SystemBase System { get; }

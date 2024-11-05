@@ -38,7 +38,7 @@ namespace UXAV.AVnet.Core.WebScripting
 
         public string Path => _path;
 
-        public string UserHostAddress => _request.HttpContext.Connection.RemoteIpAddress.ToString();
+        public string UserHostAddress => _request.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
         public string PathAndQueryString => _path + _request.QueryString;
 
