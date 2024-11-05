@@ -99,7 +99,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     {
                         case "plist":
                             reader = new StreamReader(Request.InputStream);
-                            var list = JObject.Parse(reader.ReadToEnd()).ToObject<Dictionary<string, object>>();
+                            var list = JObject.Parse(await reader.ReadToEndAsync()).ToObject<Dictionary<string, object>>();
                             foreach (var item in list) ConfigManager.SetPropertyListItemWithKey(item.Key, item.Value);
 
                             await WriteResponseAsync(new
@@ -109,12 +109,12 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                             return;
                         case "new":
                             reader = new StreamReader(Request.InputStream);
-                            ConfigManager.CreateNewFileWithName(reader.ReadToEnd());
+                            ConfigManager.CreateNewFileWithName(await reader.ReadToEndAsync());
                             await WriteResponseAsync(ConfigManager.ConfigPath);
                             return;
                         case "filepath":
                             reader = new StreamReader(Request.InputStream);
-                            ConfigManager.SetConfigPath(reader.ReadToEnd());
+                            ConfigManager.SetConfigPath(await reader.ReadToEndAsync());
                             await WriteResponseAsync(ConfigManager.ConfigPath);
                             return;
                         default:
@@ -125,7 +125,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 try
                 {
                     reader = new StreamReader(Request.InputStream);
-                    var json = JToken.Parse(reader.ReadToEnd());
+                    var json = JToken.Parse(await reader.ReadToEndAsync());
                     Logger.Debug("Json received\r\n{0}", json.ToString());
                     ConfigManager.JConfig = json;
                     await WriteResponseAsync("OK");
