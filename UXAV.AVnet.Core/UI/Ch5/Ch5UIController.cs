@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
 using Newtonsoft.Json;
@@ -46,7 +47,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             }
         }
 
-        private string StorageTagForSettings => $"UI_SETTINGS_{Device.ID:X2}";
+        private string StorageTagForSettings => $"UI_SETTINGS_APP-{InitialParametersClass.ApplicationNumber:D2}_IPID-{Device.ID:X2}";
 
         protected override void OnOnlineStatusChange(GenericBase currentDevice, OnlineOfflineEventArgs args)
         {
@@ -70,10 +71,13 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 var settings = GetSettings();
                 if (settings == null)
                 {
+                    Logger.Warn("No UI settings found, sending default settings");
                     var newSettings = GetDefaultUiSettings();
                     settings = JToken.FromObject(newSettings);
                     SaveSettings(settings);
                 }
+
+                Logger.Debug("Sending UI settings to websocket:\r\n" + settings.ToString(Formatting.Indented));
 
                 OnNotifyWebsocket("SettingsInit", settings);
             }
@@ -117,6 +121,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             _settingsMutex.WaitOne(TimeSpan.FromSeconds(5));
             try
             {
+                Logger.Debug("Getting UI settings with tag: " + StorageTagForSettings);
                 CrestronDataStoreStatic.GetLocalStringValue(StorageTagForSettings, out var settingsString);
                 return string.IsNullOrEmpty(settingsString) ? null : JToken.Parse(settingsString);
             }
