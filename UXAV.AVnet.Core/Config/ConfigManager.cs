@@ -64,9 +64,6 @@ namespace UXAV.AVnet.Core.Config
         {
             get
             {
-                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                    return SystemBase.ProgramUserDirectory;
-
                 return SystemBase.ProgramNvramAppInstanceDirectory;
             }
         }
