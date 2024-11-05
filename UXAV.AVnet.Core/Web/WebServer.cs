@@ -191,7 +191,7 @@ public class WebServer
     /// </summary>
     /// <returns>A task that represents the asynchronous operation.</returns>
     /// <exception cref="InvalidOperationException">Thrown if the web server is not initialized.</exception>
-    public async Task StartAsync()
+    internal async Task StartAsync()
     {
         if (_app == null)
         {

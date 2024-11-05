@@ -254,62 +254,6 @@ namespace UXAV.AVnet.Core.Models
                 Logger.Log("App is not upgrading. Remains at {0}", AppAssembly.GetName().Version);
             }
 
-            UpdateBootStatus(EBootStatus.Booting, "Starting web scripting services", 0);
-            Logger.Highlight("Loading static file web scripting server at \"/files\"");
-            try
-            {
-                FileServer = new WebScriptingServer(this, "files");
-                FileServer.AddRoute(@"/files/static/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(InternalFileHandler));
-                FileServer.AddRoute(@"/files/system/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(SystemFileHandler));
-                FileServer.AddRoute(@"/files/user/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(UserFileRequestHandler));
-                FileServer.AddRoute(@"/files/nvram/<filepath:[\/\w\.\-\[\]\(\)\x20]+>",
-                    typeof(NvramFileRequestHandler));
-                FileServer.AddRoute(@"/files/xpanels/<filename:Core3XPanel_\w{2}\.(?:vtz|c3p)$>",
-                    typeof(XPanelResourceFileHandler));
-                FileServer.AddRoute(@"/files/service", typeof(ServicePackageFileHandler));
-            }
-            catch (Exception e)
-            {
-                Logger.Warn("Could not load static file web scripting server, {0}", e.Message);
-            }
-
-            Logger.Highlight("Loading API web scripting server at \"/api\"");
-            try
-            {
-                ApiServer = new ApiWebScriptingServer(this, "api");
-                ApiServer.AddRoute(@"/api/status/<function:\w+>", typeof(StatusApiHandler));
-                ApiServer.AddRoute(@"/api/status", typeof(StatusApiHandler));
-                ApiServer.AddRoute(@"/api/virtualcontrol/<method:\w+>", typeof(Vc4StatusApiHandler));
-                ApiServer.AddRoute(@"/api/config/<function:plist>/<key:\w+>", typeof(ConfigApiHandler));
-                ApiServer.AddRoute(@"/api/config/<function:\w+>", typeof(ConfigApiHandler));
-                ApiServer.AddRoute(@"/api/config", typeof(ConfigApiHandler));
-                ApiServer.AddRoute(@"/api/rooms", typeof(RoomsApiHandler));
-                ApiServer.AddRoute(@"/api/rooms/<id:\d+>", typeof(RoomsApiHandler));
-                ApiServer.AddRoute(@"/api/rooms/<id:\d+>/<method:\w+>", typeof(RoomsApiHandler));
-                ApiServer.AddRoute(@"/api/sources", typeof(SourcesApiHandler));
-                ApiServer.AddRoute(@"/api/events/<method:\w+>", typeof(EventsApiHandler));
-                ApiServer.AddRoute(@"/api/events/<method:\w+>/<id:\d+>", typeof(EventsApiHandler));
-                ApiServer.AddRoute(@"/api/logs", typeof(LoggerApiHandler));
-                ApiServer.AddRoute(@"/api/plog", typeof(PlogApiHandler));
-                ApiServer.AddRoute(@"/api/authentication", typeof(AuthenticationApiHandler));
-                ApiServer.AddRoute(@"/api/appfiles", typeof(AppFilesApiHandler));
-                ApiServer.AddRoute(@"/api/passwords", typeof(PasswordsApiHandler));
-                ApiServer.AddRoute(@"/api/appcontrol", typeof(AppControlApiHandler));
-                ApiServer.AddRoute(@"/api/autodiscovery", typeof(AutoDiscoveryApiHandler));
-                ApiServer.AddRoute(@"/api/console", typeof(ConsoleApiHandler));
-                ApiServer.AddRoute(@"/api/diagnostics", typeof(DiagnosticsApiHandler));
-                ApiServer.AddRoute(@"/api/sysmon", typeof(SystemMonitorApiHandler));
-                ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
-                ApiServer.AddRoute(@"/api/upload/uploadedfiles/<fileType:\w+>", typeof(UploadedFilesApiHandler));
-                ApiServer.AddRoute(@"/api/xpanels", typeof(XPanelDetailsApiHandler));
-                ApiServer.AddRoute(@"/api/ch5/<page:\w+>", typeof(Ch5StatusApiHandler));
-                ApiServer.AddRoute(@"/api/swupdate", typeof(UpdatesApiHandler));
-            }
-            catch (Exception e)
-            {
-                Logger.Warn("Could not load API web scripting server, {0}", e.Message);
-            }
-
             // Wait for above handlers to start accepting requests and update.
             Thread.Sleep(1000);
             Logger.Success(".ctor() Complete", true);
@@ -318,9 +262,9 @@ namespace UXAV.AVnet.Core.Models
 
         public CrestronControlSystem ControlSystem { get; }
 
-        protected WebScriptingServer FileServer { get; }
+        protected WebScriptingServer FileServer { get; private set; }
 
-        protected WebScriptingServer ApiServer { get; }
+        protected WebScriptingServer ApiServer { get; private set; }
 
         protected WebScriptingServer WebAppServer { get; private set; }
 
@@ -661,6 +605,61 @@ namespace UXAV.AVnet.Core.Models
                 Logger.Error("Could not load angular app web scripting server, {0}", e.Message);
                 return;
             }
+
+            Logger.Highlight("Loading static file web scripting server at \"/files\"");
+            try
+            {
+                FileServer = new WebScriptingServer(this, "files");
+                FileServer.AddRoute(@"/files/static/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(InternalFileHandler));
+                FileServer.AddRoute(@"/files/system/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(SystemFileHandler));
+                FileServer.AddRoute(@"/files/user/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(UserFileRequestHandler));
+                FileServer.AddRoute(@"/files/nvram/<filepath:[\/\w\.\-\[\]\(\)\x20]+>",
+                    typeof(NvramFileRequestHandler));
+                FileServer.AddRoute(@"/files/xpanels/<filename:Core3XPanel_\w{2}\.(?:vtz|c3p)$>",
+                    typeof(XPanelResourceFileHandler));
+                FileServer.AddRoute(@"/files/service", typeof(ServicePackageFileHandler));
+            }
+            catch (Exception e)
+            {
+                Logger.Warn("Could not load static file web scripting server, {0}", e.Message);
+            }
+
+            Logger.Highlight("Loading API web scripting server at \"/api\"");
+            try
+            {
+                ApiServer = new ApiWebScriptingServer(this, "api");
+                ApiServer.AddRoute(@"/api/status/<function:\w+>", typeof(StatusApiHandler));
+                ApiServer.AddRoute(@"/api/status", typeof(StatusApiHandler));
+                ApiServer.AddRoute(@"/api/virtualcontrol/<method:\w+>", typeof(Vc4StatusApiHandler));
+                ApiServer.AddRoute(@"/api/config/<function:plist>/<key:\w+>", typeof(ConfigApiHandler));
+                ApiServer.AddRoute(@"/api/config/<function:\w+>", typeof(ConfigApiHandler));
+                ApiServer.AddRoute(@"/api/config", typeof(ConfigApiHandler));
+                ApiServer.AddRoute(@"/api/rooms", typeof(RoomsApiHandler));
+                ApiServer.AddRoute(@"/api/rooms/<id:\d+>", typeof(RoomsApiHandler));
+                ApiServer.AddRoute(@"/api/rooms/<id:\d+>/<method:\w+>", typeof(RoomsApiHandler));
+                ApiServer.AddRoute(@"/api/sources", typeof(SourcesApiHandler));
+                ApiServer.AddRoute(@"/api/events/<method:\w+>", typeof(EventsApiHandler));
+                ApiServer.AddRoute(@"/api/events/<method:\w+>/<id:\d+>", typeof(EventsApiHandler));
+                ApiServer.AddRoute(@"/api/logs", typeof(LoggerApiHandler));
+                ApiServer.AddRoute(@"/api/plog", typeof(PlogApiHandler));
+                ApiServer.AddRoute(@"/api/authentication", typeof(AuthenticationApiHandler));
+                ApiServer.AddRoute(@"/api/appfiles", typeof(AppFilesApiHandler));
+                ApiServer.AddRoute(@"/api/passwords", typeof(PasswordsApiHandler));
+                ApiServer.AddRoute(@"/api/appcontrol", typeof(AppControlApiHandler));
+                ApiServer.AddRoute(@"/api/autodiscovery", typeof(AutoDiscoveryApiHandler));
+                ApiServer.AddRoute(@"/api/console", typeof(ConsoleApiHandler));
+                ApiServer.AddRoute(@"/api/diagnostics", typeof(DiagnosticsApiHandler));
+                ApiServer.AddRoute(@"/api/sysmon", typeof(SystemMonitorApiHandler));
+                ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
+                ApiServer.AddRoute(@"/api/upload/uploadedfiles/<fileType:\w+>", typeof(UploadedFilesApiHandler));
+                ApiServer.AddRoute(@"/api/xpanels", typeof(XPanelDetailsApiHandler));
+                ApiServer.AddRoute(@"/api/ch5/<page:\w+>", typeof(Ch5StatusApiHandler));
+                ApiServer.AddRoute(@"/api/swupdate", typeof(UpdatesApiHandler));
+            }
+            catch (Exception e)
+            {
+                Logger.Warn("Could not load API web scripting server, {0}", e.Message);
+            }
         }
 
         protected void UpdateBootStatus(EBootStatus status, string description, uint progress)
@@ -806,8 +805,21 @@ namespace UXAV.AVnet.Core.Models
 
             try
             {
-                InitWebApp();
-                _ = WebServer.StartAsync();
+                if (WebServer != null)
+                {
+                    Logger.Debug("Starting web server");
+                    InitWebApp();
+                    Logger.Debug("WebScriptingHandlersShouldRegister()");
+                    try
+                    {
+                        WebScriptingHandlersShouldRegister();
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error("Error registering app webscripting handlers, {0}", e.Message);
+                    }
+                    _ = WebServer.StartAsync();
+                }
             }
             catch (Exception e)
             {
@@ -852,16 +864,6 @@ namespace UXAV.AVnet.Core.Models
 
             UpdateBootStatus(EBootStatus.Initializing, "Registering CIP devices not already registered", 10);
             CipDevices.RegisterDevices();
-
-            Logger.Debug("WebScriptingHandlersShouldRegister()");
-            try
-            {
-                WebScriptingHandlersShouldRegister();
-            }
-            catch (Exception e)
-            {
-                Logger.Error("Error registering app webscripting handlers, {0}", e.Message);
-            }
 
             foreach (var device in DevicesDict.Values.OfType<DeviceBase>()) device.AllocateRoomOnStart();
 
