@@ -26,7 +26,7 @@ jobs:
         id: setup-dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
           cache: true
           cache-dependency-path: "${{ env.PROJECT_NAME }}/packages.lock.json"
 
@@ -45,10 +45,11 @@ jobs:
           echo "Looking at tags:\n$tags"
           count=$(echo $tags | grep -o $version-rc- | wc -l)
           count=$((count+1))
-          echo "Next rc tag is $count"
-          echo "VERSION=$version-rc-$count" >> $GITHUB_ENV
-          echo "TAG=v$version-rc-$count" >> $GITHUB_ENV
-          echo "VERSION_TITLE=v$version RC $count" >> $GITHUB_ENV
+          padded_count=$(printf "%02d" $count)
+          echo "Next rc tag is $padded_count"
+          echo "VERSION=$version-rc-$padded_count" >> $GITHUB_ENV
+          echo "TAG=v$version-rc-$padded_count" >> $GITHUB_ENV
+          echo "VERSION_TITLE=v$version RC $padded_count" >> $GITHUB_ENV
 
       - name: Rewrite version number
         id: rewrite-version
