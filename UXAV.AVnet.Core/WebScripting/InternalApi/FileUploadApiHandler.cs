@@ -45,6 +45,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
 
         private static async Task<long> SaveToDiskAsync(string path)
         {
+            Logger.Debug($"Saving file to disk: {path}");
             using var file = File.Create(path);
             var streams = UploadStreams[path].OrderBy(i => i.Key).Select(i => i.Value).ToArray();
             var chunk = 0;
@@ -67,7 +68,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public async void Post()
+        public async Task Post()
         {
             try
             {
@@ -101,7 +102,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                                 if (!string.IsNullOrEmpty(Request.Query["chunked"]))
                                     // name should be chunk_1 etc
                                     chunkSequence = int.Parse(name.Substring(6, name.Length - 6));
-                                //Logger.Debug($"Received chunk {chunkSequence:D3} of {fileName}");
+                                Logger.Debug($"Received chunk {chunkSequence:D3} of {fileName}");
 
                                 var size = await WriteFileAsync(path, chunkSequence, await httpContent.ReadAsStreamAsync());
                                 results[fileName] = size;

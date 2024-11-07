@@ -186,14 +186,15 @@ namespace UXAV.AVnet.Core.WebScripting
 
         public virtual async Task HandleErrorAsync(WebScriptingRequest request, Exception e)
         {
-            Logger.Error(e);
-            ErrorLog.Exception("Error handling request", e);
-            request.Response.StatusCode = 500;
-            request.Response.ContentType = "text/html";
-            var content = @"<!DOCTYPE html><html><body><h1>Error 500</h1><h2>" + request.Response.StatusCode +
-                          @"</h2><p>" + e.Message + @"</p><p><pre>" + e.StackTrace + @"</pre></p></body></html>";
             try
             {
+                Logger.Error(e);
+                ErrorLog.Exception("Error handling request", e);
+                request.Response.Clear();
+                request.Response.StatusCode = 500;
+                request.Response.ContentType = "text/html";
+                var content = @"<!DOCTYPE html><html><body><h1>Error 500</h1><h2>" + request.Response.StatusCode +
+                              @"</h2><p>" + e.Message + @"</p><p><pre>" + e.StackTrace + @"</pre></p></body></html>";
                 await request.Response.WriteAsync(content);
                 await request.Response.CompleteAsync();
             }
@@ -205,13 +206,14 @@ namespace UXAV.AVnet.Core.WebScripting
 
         public virtual async Task HandleErrorAsync(WebScriptingRequest request, int statusCode, string message)
         {
-            Logger.Warn($"Error {statusCode}: {message}");
-            request.Response.StatusCode = statusCode;
-            request.Response.ContentType = "text/html";
-            var content = @"<!DOCTYPE html><html><body><h1>Error " + statusCode + @"</h1><h2>" + ReasonPhrases.GetReasonPhrase(statusCode) +
-                          @"</h2><p>" + message + @"</p></body></html>";
             try
             {
+                Logger.Warn($"Error {statusCode}: {message}");
+                request.Response.Clear();
+                request.Response.StatusCode = statusCode;
+                request.Response.ContentType = "text/html";
+                var content = @"<!DOCTYPE html><html><body><h1>Error " + statusCode + @"</h1><h2>" + ReasonPhrases.GetReasonPhrase(statusCode) +
+                              @"</h2><p>" + message + @"</p></body></html>";
                 await request.Response.WriteAsync(content);
                 await request.Response.CompleteAsync();
             }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
@@ -16,7 +17,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public async void Get()
+        public async Task Get()
         {
             var files = new List<object>();
             try
@@ -32,7 +33,12 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                                 var info = ProgramFileVersion.Get(fileInfo.FullName);
                                 files.Add(new
                                 {
-                                    FileInfo = fileInfo,
+                                    FileInfo = new
+                                    {
+                                        Name = fileInfo.Name,
+                                        LastWriteTime = fileInfo.LastWriteTime,
+                                        Length = fileInfo.Length
+                                    },
                                     Size = Tools.PrettyByteSize(fileInfo.Length, 1),
                                     ProgramInfo = info
                                 });

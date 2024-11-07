@@ -1,8 +1,9 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
+using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting
 {
@@ -20,28 +21,37 @@ namespace UXAV.AVnet.Core.WebScripting
 
         protected async Task WriteResponseAsync(object response)
         {
-            var json = JsonConvert.SerializeObject(new
+            try
             {
-                Request = new
+                var json = JsonConvert.SerializeObject(new
                 {
-                    Request.Path,
-                    Request.Method,
-                    Request.RoutePattern,
-                    Request.RoutePatternArgs,
-                    Request.ContentLength,
-                    Request.RouteValues
-                },
-                Handler = GetType().FullName,
-                Code = Response.StatusCode,
-                Response = response
-            }, new JsonSerializerSettings
-            {
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                Converters = { new StringEnumConverter() }
-            });
+                    Request = new
+                    {
+                        Request.Path,
+                        Request.Method,
+                        Request.RoutePattern,
+                        Request.RoutePatternArgs,
+                        Request.ContentLength,
+                        Request.RouteValues
+                    },
+                    Handler = GetType().FullName,
+                    Code = Response.StatusCode,
+                    Response = response
+                }, new JsonSerializerSettings
+                {
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    Converters = { new StringEnumConverter() }
+                });
 
-            Response.ContentType = "application/json charset=utf-8";
-            await Response.WriteAsync(json);
+                Response.ContentType = "application/json charset=utf-8";
+                await Response.WriteAsync(json);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+                await HandleErrorAsync(e);
+                return;
+            }
         }
     }
 }

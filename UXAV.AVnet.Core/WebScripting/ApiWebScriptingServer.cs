@@ -27,24 +27,34 @@ namespace UXAV.AVnet.Core.WebScripting
 
         public override async Task HandleErrorAsync(WebScriptingRequest request, Exception e)
         {
-            Logger.Error(e);
-            request.Response.StatusCode = 500;
-            await request.Response.WriteAsJsonAsync(new
+            try
             {
-                Request = new
+                Logger.Error(e);
+                request.Response.Clear();
+                request.Response.StatusCode = 500;
+                var json = JToken.FromObject(new
                 {
-                    request.Path,
-                    request.Method,
-                    request.RouteValues
-                },
-                Code = request.Response.StatusCode,
-                Error = new
-                {
-                    Status = ReasonPhrases.GetReasonPhrase(request.Response.StatusCode),
-                    e.Message,
-                    e.StackTrace
-                }
-            });
+                    Request = new
+                    {
+                        request.Path,
+                        request.Method,
+                        request.RouteValues
+                    },
+                    Code = request.Response.StatusCode,
+                    Error = new
+                    {
+                        Status = ReasonPhrases.GetReasonPhrase(request.Response.StatusCode),
+                        e.Message,
+                        e.StackTrace
+                    }
+                });
+                request.Response.ContentType = "application/json charset=utf-8";
+                await request.Response.WriteAsync(json.ToString());
+            }
+            catch (Exception e2)
+            {
+                Logger.Error(e2);
+            }
         }
 
         public override async Task HandleErrorAsync(WebScriptingRequest request, int statusCode,
@@ -52,7 +62,7 @@ namespace UXAV.AVnet.Core.WebScripting
         {
             Logger.Warn($"\"{request.Path}\" Error {statusCode} {message}");
             request.Response.StatusCode = statusCode;
-            await request.Response.WriteAsJsonAsync(new
+            var json = JToken.FromObject(new
             {
                 Request = new
                 {
@@ -63,11 +73,13 @@ namespace UXAV.AVnet.Core.WebScripting
                 Code = request.Response.StatusCode,
                 Error = new
                 {
-                    Status = ReasonPhrases.GetReasonPhrase((int)request.Response.StatusCode),
+                    Status = ReasonPhrases.GetReasonPhrase(statusCode),
                     Message = message,
                     StackTrace = ""
                 }
             });
+            request.Response.ContentType = "application/json charset=utf-8";
+            await request.Response.WriteAsync(json.ToString());
         }
     }
 }
