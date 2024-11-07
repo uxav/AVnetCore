@@ -87,6 +87,21 @@ public class WebServer
             context.Response.Redirect("/cws/app");
             return Task.CompletedTask;
         });
+        if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+        {
+            _app.Map("/index_device_webui.html", context =>
+            {
+                var newPort = UxEnvironment.ApplianceCurrentWebPort;
+                context.Response.Redirect($"http://{context.Request.Host}:{newPort}/index_device_webui.html");
+                return Task.CompletedTask;
+            });
+            _app.Map("/setup", context =>
+            {
+                var newPort = UxEnvironment.ApplianceCurrentWebPort;
+                context.Response.Redirect($"http://{context.Request.Host}:{newPort}/index_device_webui.html");
+                return Task.CompletedTask;
+            });
+        }
 
         _app.UseWebSockets();
 
