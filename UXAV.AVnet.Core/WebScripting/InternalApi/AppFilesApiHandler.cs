@@ -40,7 +40,11 @@ internal class AppFilesApiHandler : ApiRequestHandler
                 directories.Add(new DirectoryInfo("/ftp/temp"));
             }
 
-            var result = directories.Select(x => GetDirectory(x)).ToArray();
+            var result = directories.Select(x =>
+            {
+                if (!x.Exists) return null;
+                return GetDirectory(x);
+            }).ToArray();
 
             await WriteResponseAsync(result);
         }
