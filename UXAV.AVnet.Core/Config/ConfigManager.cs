@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -41,16 +42,29 @@ namespace UXAV.AVnet.Core.Config
         private static readonly Mutex PasswordMutex = new Mutex();
         private static string _plistPath;
         private static JObject _plist;
+        private static bool _init;
 
-        static ConfigManager()
+        /// <summary>
+        ///   Initialize the ConfigManager. You must do this before using it!
+        /// </summary>
+        /// <param name="assembly">The calling assembly so it can work out the namespace</param>
+        /// <exception cref="InvalidOperationException">The config is not inititalized</exception>
+        public static void Initialize(Assembly assembly)
         {
+            if (_init) throw new InvalidOperationException("ConfigManager already initialized");
+            _init = true;
             Logger.AddCommand(ConfigPrintToConsole, "ConfigPrint", "Print the current config");
             Logger.AddCommand(ConfigPrintInfoToConsole, "ConfigInfo",
                 "Print the current config file path and last save time");
-            ConfigNameSpace = Assembly.GetCallingAssembly().GetName().Name.ToLower();
+            ConfigNameSpace = assembly.GetName().Name.ToLower();
             Logger.Highlight($"Config namespace is \"{ConfigNameSpace}\"");
             Logger.AddCommand((argString, args, connection, respond) => WriteCurrentConfigToDefaultPath(),
                 "ConfigWriteToDefault", $"Writes current loaded config to {DefaultConfigPath}");
+        }
+
+        private static void ThrowIfNotInitialized()
+        {
+            if (!_init) throw new InvalidOperationException("ConfigManager not initialized");
         }
 
         /// <summary>
@@ -72,7 +86,7 @@ namespace UXAV.AVnet.Core.Config
         ///   The namespace of the config file
         ///   <para>Defaults to the calling assembly name in lowercase</para>
         ///  </summary>
-        public static string ConfigNameSpace { get; }
+        public static string ConfigNameSpace { get; private set; }
 
         /// <summary>
         ///   The default config file path
@@ -88,6 +102,7 @@ namespace UXAV.AVnet.Core.Config
         {
             get
             {
+                ThrowIfNotInitialized();
                 var path = ConfigDirectory + "/";
                 if (!string.IsNullOrEmpty(ConfigNameSpace)) path = path + ConfigNameSpace + ".";
 
@@ -96,7 +111,14 @@ namespace UXAV.AVnet.Core.Config
             }
         }
 
-        private static Regex FilePattern => new Regex($"(?:(\\w+)\\.)?{ConfigNameSpace}\\.config\\.json");
+        private static Regex FilePattern
+        {
+            get
+            {
+                ThrowIfNotInitialized();
+                return new Regex($"(?:(\\w+)\\.)?{ConfigNameSpace}\\.config\\.json");
+            }
+        }
 
         /// <summary>
         ///     The current config file path
@@ -108,6 +130,7 @@ namespace UXAV.AVnet.Core.Config
         {
             get
             {
+                ThrowIfNotInitialized();
                 if (!string.IsNullOrEmpty(_filePath)) return _filePath;
 
                 _filePath = DefaultConfigPath;
@@ -153,6 +176,7 @@ namespace UXAV.AVnet.Core.Config
         {
             get
             {
+                ThrowIfNotInitialized();
                 if (!string.IsNullOrEmpty(_plistPath)) return _plistPath;
                 _plistPath = ConfigDirectory + $"/{ConfigNameSpace}.plist.json";
                 return _plistPath;
@@ -166,6 +190,7 @@ namespace UXAV.AVnet.Core.Config
         {
             get
             {
+                ThrowIfNotInitialized();
                 var file = new FileInfo(ConfigPath).Name;
                 var match = FilePattern.Match(file);
                 return match.Success && !match.Groups[1].Success;
@@ -176,6 +201,7 @@ namespace UXAV.AVnet.Core.Config
         {
             get
             {
+                ThrowIfNotInitialized();
                 if (File.Exists(ConfigPath))
                 {
                     Logger.Log("Config file exists at \"{0}\", getting contents", ConfigPath);
@@ -187,6 +213,7 @@ namespace UXAV.AVnet.Core.Config
             }
             set
             {
+                ThrowIfNotInitialized();
                 lock (ConfigLockWrite)
                 {
                     try
@@ -209,6 +236,7 @@ namespace UXAV.AVnet.Core.Config
         {
             get
             {
+                ThrowIfNotInitialized();
                 if (File.Exists(PListPath))
                 {
                     Logger.Log("plist file exists at \"{0}\", getting contents", PListPath);
@@ -220,6 +248,7 @@ namespace UXAV.AVnet.Core.Config
             }
             set
             {
+                ThrowIfNotInitialized();
                 lock (PListLockWrite)
                 {
                     try
@@ -242,6 +271,7 @@ namespace UXAV.AVnet.Core.Config
         {
             get
             {
+                ThrowIfNotInitialized();
                 if (_config != null) return _config;
 
                 var configString = ConfigData;
@@ -265,6 +295,7 @@ namespace UXAV.AVnet.Core.Config
             }
             set
             {
+                ThrowIfNotInitialized();
                 _config = value;
                 SaveConfig();
                 EventService.Notify(EventMessageType.ConfigChanged);
@@ -280,6 +311,7 @@ namespace UXAV.AVnet.Core.Config
         {
             get
             {
+                ThrowIfNotInitialized();
                 if (_plist != null) return _plist;
 
                 var data = PListData;
@@ -332,6 +364,7 @@ namespace UXAV.AVnet.Core.Config
         {
             get
             {
+                ThrowIfNotInitialized();
                 return new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
                     HasHeaderRecord = true,
@@ -349,6 +382,7 @@ namespace UXAV.AVnet.Core.Config
         /// <typeparam name="T">The type of the config which should be of base type ConfigBase</typeparam>
         public static T GetConfig<T>() where T : ConfigBase, new()
         {
+            ThrowIfNotInitialized();
             if (Schema == null)
             {
                 var generator = new JSchemaGenerator { DefaultRequired = Required.DisallowNull };
@@ -381,6 +415,7 @@ namespace UXAV.AVnet.Core.Config
         /// <param name="config">The config class to save</param>
         public static void SetConfig(ConfigBase config)
         {
+            ThrowIfNotInitialized();
             Logger.Highlight(nameof(SetConfig));
             JConfig = JToken.FromObject(config);
         }
@@ -395,6 +430,7 @@ namespace UXAV.AVnet.Core.Config
         /// </remarks>
         public static void SetConfig(ConfigBase config, string filePath)
         {
+            ThrowIfNotInitialized();
             Logger.Highlight(nameof(SetConfig));
             var data = JToken.FromObject(config);
             lock (ConfigLockWrite)
@@ -421,6 +457,7 @@ namespace UXAV.AVnet.Core.Config
         /// </exception>
         public static void WriteCurrentConfigToDefaultPath()
         {
+            ThrowIfNotInitialized();
             if (_filePath == DefaultConfigPath) throw new Exception("Cannot write from default config");
             Logger.Highlight($"Writing config from {_filePath} to default path {DefaultConfigPath}");
             lock (ConfigLockWrite)
@@ -443,6 +480,7 @@ namespace UXAV.AVnet.Core.Config
         /// <return>An array of <see cref="ConfigFileDetails" /> objects</return>
         public static ConfigFileDetails[] GetFileDetails()
         {
+            ThrowIfNotInitialized();
             var directory = new DirectoryInfo(ConfigDirectory);
             var files = new List<ConfigFileDetails>();
             foreach (var file in directory.GetFiles())
@@ -474,6 +512,7 @@ namespace UXAV.AVnet.Core.Config
         /// <param name="filePath"></param>
         public static void SetConfigPath(string filePath)
         {
+            ThrowIfNotInitialized();
             try
             {
                 Logger.Highlight("Setting config file path to: " + filePath);
@@ -494,6 +533,7 @@ namespace UXAV.AVnet.Core.Config
         /// <exception cref="InvalidOperationException">Thrown if config already exists</exception>
         public static void CreateNewFileWithName(string configName)
         {
+            ThrowIfNotInitialized();
             var name = Regex.Replace(configName, " ", "_");
             if (name.ToLower() == "default")
                 throw new InvalidOperationException("Cannot have a file with the name " + configName);
@@ -513,6 +553,7 @@ namespace UXAV.AVnet.Core.Config
         /// </exception>
         public static void DeleteCurrentFile()
         {
+            ThrowIfNotInitialized();
             if (ConfigIsDefaultFile) throw new InvalidOperationException("You cannot delete the default config file");
             File.Delete(ConfigPath);
             SetConfigPath(GetFileDetails().First().Filepath);
@@ -534,6 +575,7 @@ namespace UXAV.AVnet.Core.Config
         /// <returns>The object defined by the key</returns>
         public static object GetPropertyListItemWithKey(string key)
         {
+            ThrowIfNotInitialized();
             // ReSharper disable once PossibleNullReferenceException
             return !PropertyList.ContainsKey(key) ? null : PropertyList[key].ToObject<object>();
         }
@@ -547,6 +589,7 @@ namespace UXAV.AVnet.Core.Config
         /// <returns></returns>
         public static T GetOrCreatePropertyListItem<T>(string key, T defaultValue)
         {
+            ThrowIfNotInitialized();
             try
             {
                 if (PropertyList.TryGetValue(key, out var value))
@@ -572,6 +615,7 @@ namespace UXAV.AVnet.Core.Config
         /// <returns>The object defined by the key</returns>
         public static string GetPropertyListStringWithKey(string key)
         {
+            ThrowIfNotInitialized();
             if (!PropertyList.ContainsKey(key))
             {
                 SetPropertyListItemWithKey(key, string.Empty);
@@ -591,6 +635,7 @@ namespace UXAV.AVnet.Core.Config
         /// <returns>A dynamic data type of the values in the csv path</returns>
         public static async Task<IEnumerable<dynamic>> GetCloudCsvDataAsync(string url)
         {
+            ThrowIfNotInitialized();
             Logger.Debug($"Getting cloud template data from: {url}");
             _client ??= new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             var stream = await _client.GetStreamAsync(url);
@@ -606,6 +651,7 @@ namespace UXAV.AVnet.Core.Config
         /// <returns>A dynamic data type of the values in the csv file</returns>
         public static IEnumerable<dynamic> GetCsvData(string filePath)
         {
+            ThrowIfNotInitialized();
             Logger.Debug($"Getting template data from: {filePath}");
             var stream = File.OpenRead(filePath);
             var reader = new StreamReader(stream);
@@ -621,6 +667,7 @@ namespace UXAV.AVnet.Core.Config
         /// <remarks>The config file will auto save 2 seconds after the last call by this method</remarks>
         public static void SetPropertyListItemWithKey(string key, object item)
         {
+            ThrowIfNotInitialized();
             lock (PropertyList)
             {
                 PropertyList[key] = new JValue(item);
@@ -636,6 +683,7 @@ namespace UXAV.AVnet.Core.Config
         /// <returns>True if the PList contains item defined by key</returns>
         public static bool PropertyListContainsKey(string key)
         {
+            ThrowIfNotInitialized();
             return PropertyList.ContainsKey(key);
         }
 
@@ -731,6 +779,7 @@ namespace UXAV.AVnet.Core.Config
         /// <exception cref="Exception">An error thrown retrieving the value</exception>
         public static string PasswordGet(string passwordKey)
         {
+            ThrowIfNotInitialized();
             if (!CrestronSecureStorage.Supported)
             {
                 Logger.Warn("Firmware does not support CrestronSecureStorage, will use config file plist!");
@@ -765,6 +814,7 @@ namespace UXAV.AVnet.Core.Config
         /// <returns>The string value of the password</returns>
         public static string PasswordGetOrCreate(string passwordKey, string defaultValue)
         {
+            ThrowIfNotInitialized();
             if (!CrestronSecureStorage.Supported)
             {
                 Logger.Warn("Firmware does not support CrestronSecureStorage, will use config file plist!");
@@ -798,6 +848,7 @@ namespace UXAV.AVnet.Core.Config
         /// <exception cref="Exception">Thrown if the password could not be stored</exception>
         public static void PasswordSet(string passwordKey, string value)
         {
+            ThrowIfNotInitialized();
             if (!CrestronSecureStorage.Supported)
             {
                 Logger.Warn("Firmware does not support CrestronSecureStorage, will use config file plist!");
