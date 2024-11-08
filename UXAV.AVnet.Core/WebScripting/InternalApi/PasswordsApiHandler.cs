@@ -39,7 +39,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             try
             {
                 var reader = new StreamReader(Request.InputStream);
-                var json = JToken.Parse(reader.ReadToEnd());
+                var json = JToken.Parse(await reader.ReadToEndAsync());
                 //Logger.Debug("Json received\r\n{0}", json.ToString());
                 if (json["method"] == null) throw new ArgumentException("No method stated in payload");
 
