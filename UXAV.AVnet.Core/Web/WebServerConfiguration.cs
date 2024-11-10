@@ -100,42 +100,42 @@ public class WebServerConfiguration
         if (certificate == null || certificate.NotAfter < DateTime.Now)
         {
             Logger.Warn("Certificate not found or expired. Generating new self signed certificate.");
+
+            var hostname = SystemBase.HostName;
+            var directoryName = Path.GetDirectoryName(selfSignedCertificatePath);
+            if (!Directory.Exists(directoryName))
+            {
+                Logger.Warn($"Certificate directory not found. Creating new directory: {directoryName}");
+                Directory.CreateDirectory(directoryName!);
+            }
+
+            var ipAddress = SystemBase.IpAddress;
+            using var rsa = RSA.Create();
+            var sanBuilder = new SubjectAlternativeNameBuilder();
+            sanBuilder.AddDnsName(hostname);
+            sanBuilder.AddIpAddress(System.Net.IPAddress.Parse(ipAddress));
+            var distinguishedName = new X500DistinguishedName($"CN={hostname}");
+            var certRequest = new CertificateRequest(
+                distinguishedName,
+                rsa,
+                HashAlgorithmName.SHA256,
+                RSASignaturePadding.Pkcs1);
+            certRequest.CertificateExtensions.Add(
+                sanBuilder.Build());
+            certRequest.CertificateExtensions.Add(
+                new X509BasicConstraintsExtension(false, false, 0, false));
+            certRequest.CertificateExtensions.Add(
+                new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, false));
+            certRequest.CertificateExtensions.Add(
+                new X509SubjectKeyIdentifierExtension(certRequest.PublicKey, false));
+
+            var cert = certRequest.CreateSelfSigned(
+                DateTimeOffset.Now,
+                DateTimeOffset.Now.AddYears(5));
+
+            File.WriteAllBytes(selfSignedCertificatePath, cert.Export(X509ContentType.Pfx, "password"));
+            certificate = new X509Certificate2(cert.Export(X509ContentType.Pfx, "password"), "password");
         }
-
-        var hostname = SystemBase.HostName;
-        var directoryName = Path.GetDirectoryName(selfSignedCertificatePath);
-        if (!Directory.Exists(directoryName))
-        {
-            Logger.Warn($"Certificate directory not found. Creating new directory: {directoryName}");
-            Directory.CreateDirectory(directoryName!);
-        }
-
-        var ipAddress = SystemBase.IpAddress;
-        using var rsa = RSA.Create();
-        var sanBuilder = new SubjectAlternativeNameBuilder();
-        sanBuilder.AddDnsName(hostname);
-        sanBuilder.AddIpAddress(System.Net.IPAddress.Parse(ipAddress));
-        var distinguishedName = new X500DistinguishedName($"CN={hostname}");
-        var certRequest = new CertificateRequest(
-            distinguishedName,
-            rsa,
-            HashAlgorithmName.SHA256,
-            RSASignaturePadding.Pkcs1);
-        certRequest.CertificateExtensions.Add(
-            sanBuilder.Build());
-        certRequest.CertificateExtensions.Add(
-            new X509BasicConstraintsExtension(false, false, 0, false));
-        certRequest.CertificateExtensions.Add(
-            new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, false));
-        certRequest.CertificateExtensions.Add(
-            new X509SubjectKeyIdentifierExtension(certRequest.PublicKey, false));
-
-        var cert = certRequest.CreateSelfSigned(
-            DateTimeOffset.Now,
-            DateTimeOffset.Now.AddYears(5));
-
-        File.WriteAllBytes(selfSignedCertificatePath, cert.Export(X509ContentType.Pfx, "password"));
-        certificate = new X509Certificate2(cert.Export(X509ContentType.Pfx, "password"), "password");
 
         var config = new WebServerConfiguration
         {
