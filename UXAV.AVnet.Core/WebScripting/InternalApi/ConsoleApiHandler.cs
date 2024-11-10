@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Runtime.InteropServices;
+using System.Threading;
 using Crestron.SimplSharp;
 using Newtonsoft.Json.Linq;
 
@@ -8,6 +9,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
 {
     internal class ConsoleApiHandler : ApiRequestHandler
     {
+        private static readonly object _lock = new();
         public ConsoleApiHandler(WebScriptingServer server, WebScriptingRequest request)
             : base(server, request, true)
         {
@@ -39,9 +41,22 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 foreach (var command in json["commands"])
                 {
                     var cmd = command.Value<string>();
-                    CrestronConsole.SendControlSystemCommand(cmd, ref r);
-                    //Logger.Debug($"Received response for \"{cmd}\":\r\n{r}");
-                    response.Add(r);
+                    if (Monitor.TryEnter(_lock, 10000))
+                    {
+                        try
+                        {
+                            CrestronConsole.SendControlSystemCommand(cmd, ref r);
+                            response.Add(r);
+                        }
+                        finally
+                        {
+                            Monitor.Exit(_lock);
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("Timeout waiting for access to console");
+                    }
                 }
 
                 await WriteResponseAsync(response);
