@@ -67,6 +67,8 @@ public class WebServerConfiguration
     public static WebServerConfiguration Create(int port, int securePort, string certificatePath = null, string cetificatePassword = null)
     {
         X509Certificate2 certificate = null;
+        var selfSignedCertificatePath = Path.Combine(SystemBase.ProgramNvramDirectory, "certs", "server.pfx");
+
         if (!string.IsNullOrEmpty(certificatePath) && !string.IsNullOrEmpty(cetificatePassword))
         {
             Logger.Log("Loading certificate from {0}", certificatePath);
@@ -88,13 +90,11 @@ public class WebServerConfiguration
         {
             Logger.Warn("Certificate not found or expired. Will attempt to load self signed certificate.");
             certificate = null;
-        }
-
-        var selfSignedCertificatePath = Path.Combine(SystemBase.ProgramNvramDirectory, "certs", "server.pfx");
-        if (Path.Exists(selfSignedCertificatePath))
-        {
-            Logger.Log("Self signed certificate found. Loading certificate.");
-            certificate = new X509Certificate2(selfSignedCertificatePath, "password");
+            if (Path.Exists(selfSignedCertificatePath))
+            {
+                Logger.Log("Self signed certificate found. Loading certificate.");
+                certificate = new X509Certificate2(selfSignedCertificatePath, "password");
+            }
         }
 
         if (certificate == null || certificate.NotAfter < DateTime.Now)
@@ -109,30 +109,15 @@ public class WebServerConfiguration
                 Directory.CreateDirectory(directoryName!);
             }
 
-            var ipAddress = SystemBase.IpAddress;
             using var rsa = RSA.Create();
-            var sanBuilder = new SubjectAlternativeNameBuilder();
-            sanBuilder.AddDnsName(hostname);
-            sanBuilder.AddIpAddress(System.Net.IPAddress.Parse(ipAddress));
-            var distinguishedName = new X500DistinguishedName($"CN={hostname}");
-            var certRequest = new CertificateRequest(
-                distinguishedName,
+            var orgranization = "UXAV";
+            var country = "GB";
+            var request = new CertificateRequest(
+                new X500DistinguishedName($"CN={hostname}, O={orgranization}, OU={country}"),
                 rsa,
                 HashAlgorithmName.SHA256,
                 RSASignaturePadding.Pkcs1);
-            certRequest.CertificateExtensions.Add(
-                sanBuilder.Build());
-            certRequest.CertificateExtensions.Add(
-                new X509BasicConstraintsExtension(false, false, 0, false));
-            certRequest.CertificateExtensions.Add(
-                new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, false));
-            certRequest.CertificateExtensions.Add(
-                new X509SubjectKeyIdentifierExtension(certRequest.PublicKey, false));
-
-            var cert = certRequest.CreateSelfSigned(
-                DateTimeOffset.Now,
-                DateTimeOffset.Now.AddYears(5));
-
+            var cert = request.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(10));
             File.WriteAllBytes(selfSignedCertificatePath, cert.Export(X509ContentType.Pfx, "password"));
             certificate = new X509Certificate2(cert.Export(X509ContentType.Pfx, "password"), "password");
         }
