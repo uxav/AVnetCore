@@ -818,7 +818,6 @@ namespace UXAV.AVnet.Core.Models
                     {
                         Logger.Error("Error registering app webscripting handlers, {0}", e.Message);
                     }
-                    _ = WebServer.StartAsync();
                 }
             }
             catch (Exception e)
@@ -1005,6 +1004,16 @@ namespace UXAV.AVnet.Core.Models
             UpdateBootStatus(EBootStatus.Initializing, "Initializing UI Controllers", 90);
             Logger.Log("Initializing UI Controllers");
             InitializeCore3Controllers();
+
+            try
+            {
+                Logger.Log("Starting web server");
+                _ = WebServer.StartAsync();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
 
             try
             {
