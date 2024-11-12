@@ -34,6 +34,10 @@ namespace UXAV.AVnet.Core.Cloud
         {
             try
             {
+                if (!CloudConnector.IsInitialized)
+                {
+                    return null;
+                }
                 var uri = new Uri($"https://{CloudConnector.Host}/api/updates/v1/" +
                                   $"{WebUtility.UrlEncode(CloudConnector.ApplicationName)}?token={CloudConnector.Token}");
                 //Logger.Debug($"Looking for software updates from: {uri}");
