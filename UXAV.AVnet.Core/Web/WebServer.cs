@@ -8,6 +8,7 @@ using Crestron.SimplSharpPro.EthernetCommunication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
@@ -135,15 +136,40 @@ public class WebServer
         _app.Map(path, handler);
     }
 
+    /// <summary>
+    /// Adds a route to the web server with a synchronous handler.
+    /// </summary>
+    /// <param name="middleware"></param>
+    public void Use(Func<HttpContext, Func<Task>, Task> middleware)
+    {
+        _app.Use(middleware);
+    }
+
+    /// <summary>
+    /// Setup HTML UI for the web server. Maps <paramref name="requestPath"/> + "/ws/{id}" to a WebSocket handler and serves static files from the specified directory.
+    /// </summary>
+    /// <param name="requestPath">Base request path</param>
+    /// <param name="physicalPath"></param>
     public void SetupUI(string requestPath, string physicalPath)
     {
-        _app.Map("/ui/ws/{*id}", async (HttpContext context, string id) =>
+        if (requestPath.EndsWith("/"))
+        {
+            requestPath = requestPath.Substring(0, requestPath.Length - 1);
+        }
+        if (!requestPath.StartsWith("/"))
+        {
+            requestPath = $"/{requestPath}";
+        }
+
+        // setup websocket handler
+        var pattern = RoutePatternFactory.Parse(requestPath + "/ws/{*id}");
+        _app.Map(pattern, async (HttpContext context, string id) =>
         {
             if (context.WebSockets.IsWebSocketRequest)
             {
                 Logger.Debug($"WebSocket request received for id: {id}");
                 using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                var path = $"/ui/ws/{id}";
+                var path = $"{requestPath}/ws/{id}";
                 if (_apiHandlers.ContainsKey(path))
                 {
                     var handler = _apiHandlers[path]();
@@ -171,6 +197,7 @@ public class WebServer
                 ServeUnknownFileTypes = true,
                 OnPrepareResponse = ctx =>
                 {
+                    Logger.Debug($"Request for file at path {ctx.Context.Request.Path} - Serving file: {ctx.File.Name}");
                     if (!ctx.File.Name.Equals("index.html", StringComparison.OrdinalIgnoreCase))
                     {
                         ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=604800");
