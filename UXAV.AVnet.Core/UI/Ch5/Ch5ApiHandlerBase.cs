@@ -209,13 +209,15 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             try
             {
+                if (Logger.Level == Logger.LoggerLevel.Debug)
+                    Logger.Debug($"Processing request from {Connection.RemoteIpAddress}: {message.Method} with params {message.RequestParams}");
                 if (message.Method == "ping") return new ResponseMessage((int)message.Id, "pong");
-
                 var result = await FindAndInvokeMethodAsync<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
                 return new ResponseMessage((int)message.Id, result);
             }
             catch (Exception e)
             {
+                Logger.Error($"Error processing request from {Connection.RemoteIpAddress}: {message.Method} with params {message.RequestParams}");
                 Logger.Error(e);
                 while (true)
                 {
@@ -323,7 +325,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         [ApiTargetMethod("Log")]
         public void Log(string message)
         {
-            Logger.Log($"WS Connection Log: {message}");
+            Logger.Log($"WS Log ({Connection.RemoteIpAddress}): {message}");
         }
 
         [ApiTargetMethod("Subscribe")]
