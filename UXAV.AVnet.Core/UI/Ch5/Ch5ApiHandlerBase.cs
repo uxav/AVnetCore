@@ -209,8 +209,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
             try
             {
-                if (Logger.Level == Logger.LoggerLevel.Debug)
-                    Logger.Debug($"Processing request from {Connection.RemoteIpAddress}: {message.Method} with params {message.RequestParams}");
                 if (message.Method == "ping") return new ResponseMessage((int)message.Id, "pong");
                 var result = await FindAndInvokeMethodAsync<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
                 return new ResponseMessage((int)message.Id, result);
