@@ -377,15 +377,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             lock (_eventSubscriptions)
             {
-                if (!_eventSubscriptions.ContainsKey(id))
-                    throw new KeyNotFoundException($"Subscription with ID {id} does not exist");
-            }
-
-            lock (_eventSubscriptions)
-            {
-                var sub = _eventSubscriptions[id];
-                sub.Unsubscribe();
-                _eventSubscriptions.Remove(id);
+                if (_eventSubscriptions.TryGetValue(id, out var subscription))
+                {
+                    subscription.Unsubscribe();
+                    _eventSubscriptions.Remove(id);
+                }
             }
         }
 
