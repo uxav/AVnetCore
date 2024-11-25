@@ -216,14 +216,13 @@ namespace UXAV.AVnet.Core.UI.Ch5
             catch (Exception e)
             {
                 Logger.Error($"Error processing request from {Connection.RemoteIpAddress}: {message.Method} with params {message.RequestParams}");
-                Logger.Error(e);
                 while (true)
                 {
                     if (e.InnerException == null)
                         break;
                     e = e.InnerException;
-                    Logger.Error(e);
                 }
+                Logger.Error(e);
                 return new ResponseMessage((int)message.Id, e);
             }
         }
