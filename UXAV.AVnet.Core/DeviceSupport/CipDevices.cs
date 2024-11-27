@@ -22,6 +22,8 @@ namespace UXAV.AVnet.Core.DeviceSupport
         private static readonly ConcurrentDictionary<uint, string> XPanelFilePaths =
             new ConcurrentDictionary<uint, string>();
 
+        private static readonly Dictionary<string, Type> TypeCache = new Dictionary<string, Type>();
+
         public static CrestronControlSystem ControlSystem { get; private set; }
 
         public static void Init(CrestronControlSystem controlSystem)
@@ -147,42 +149,43 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         private static Type GetType(string typeName)
         {
-            //Logger.Debug($"Looking for assembly for {typeName}");
-            var search = Regex.Match(typeName, @"^(?:([\w\.]+)\.)([\w\.]+)$").Groups[1].Value;
-            var directory = new DirectoryInfo(SystemBase.ProgramApplicationDirectory);
-            while (true)
+            if (TypeCache.TryGetValue(typeName, out var cachedType))
             {
-                //Logger.Debug($"Looking at files matching pattern: {search}.dll");
-                foreach (var file in directory.GetFiles($"{search}.dll"))
-                    //Logger.Debug($"Will try load assembly file: {file.Name}");
-                    try
+                return cachedType;
+            }
+
+            var match = Regex.Match(typeName, @"^(?:([\w\.]+)\.)([\w\.]+)$");
+            if (!match.Success)
+            {
+                throw new ArgumentException($"Invalid type name: {typeName}", nameof(typeName));
+            }
+
+            var assemblyName = match.Groups[1].Value;
+            var type = Type.GetType(typeName);
+
+            if (type != null)
+            {
+                TypeCache[typeName] = type;
+                return type;
+            }
+
+            var directory = new DirectoryInfo(SystemBase.ProgramApplicationDirectory);
+            foreach (var file in directory.GetFiles($"{assemblyName}.dll"))
+            {
+                try
+                {
+                    var assembly = Assembly.LoadFrom(file.FullName);
+                    type = assembly.GetType(typeName);
+                    if (type != null)
                     {
-                        var assembly = Assembly.LoadFile(file.FullName);
-                        var type = assembly.GetType(typeName);
-                        if (type == null) continue;
-                        //Logger.Debug($"Found type: {type.Name}");
+                        TypeCache[typeName] = type;
                         return type;
                     }
-                    catch (Exception e)
-                    {
-                        Logger.Warn($"Error trying to load assembly file: {file.Name}, {e.Message}");
-                    }
-
-                if (search == "*") break;
-                if (!search.EndsWith("*"))
-                {
-                    search = search + "*";
-                    continue;
                 }
-
-                //Logger.Debug($"Could not find using search: {search}.dll");
-                if (search != "Crestron.*")
+                catch (Exception e)
                 {
-                    search = "Crestron.*";
-                    continue;
+                    Logger.Warn($"Error trying to load assembly file: {file.Name}, {e.Message}");
                 }
-
-                search = "*";
             }
 
             throw new Exception($"Could not load assembly for {typeName}");
