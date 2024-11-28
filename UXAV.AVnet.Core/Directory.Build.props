@@ -25,7 +25,7 @@
         <NOWARN>CS1591</NOWARN>
 
         <!--Set the version as X.X.X  ... DO NOT PUSH WITH -beta, -rc etc-->
-        <Version>3.0.1</Version>
+        <Version>3.0.0</Version>
         <AssemblyVersion>3.0.*</AssemblyVersion>
 
     </PropertyGroup>
