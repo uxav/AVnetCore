@@ -509,6 +509,7 @@ namespace UXAV.AVnet.Core.Models
         {
             get
             {
+                if (WebServer.SecurePort == 443) return $"https://{IpAddress}/cws";
                 return $"https://{IpAddress}:{WebServer.SecurePort}/cws";
             }
         }
