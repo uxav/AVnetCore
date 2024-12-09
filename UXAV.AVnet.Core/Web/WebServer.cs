@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
-using Crestron.SimplSharpPro.EthernetCommunication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -242,13 +241,28 @@ public class WebServer
 
         await _app.RunAsync();
     }
-    internal void AddDeviceService<THandler>(Ch5UIController<THandler> controller)
+
+    internal void AddDeviceService<THandler>(Ch5UIController<THandler> controller, string baseUri, string path)
             where THandler : Ch5ApiHandlerBase
     {
-        var path = $"/ui/ws/{controller.Device.ID:x2}";
-        var ipAddress = SystemBase.IpAddress;
-        var url = $"ws://{ipAddress}:{Port}{path}";
-        controller.WebSocketUrl = url;
+        if (!(baseUri.StartsWith("wss://") || baseUri.StartsWith("ws://")))
+        {
+            throw new InvalidOperationException("Invalid baseUri. Must start with 'ws://' or 'wss://'");
+        }
+        if (!path.StartsWith("/"))
+        {
+            path = $"/{path}";
+        }
+        if (!path.EndsWith("/"))
+        {
+            path += "/";
+        }
+        path += $"{controller.Device.ID:x2}";
+        if (baseUri.EndsWith("/"))
+        {
+            baseUri = baseUri.Substring(0, baseUri.Length - 1);
+        }
+        controller.WebSocketUrl = baseUri + path;
         if (_apiHandlers.ContainsKey(path))
         {
             throw new InvalidOperationException($"Device service already exists for path: {path}");

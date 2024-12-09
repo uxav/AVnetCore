@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
@@ -9,7 +8,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Models;
 using UXAV.AVnet.Core.UI.ReservedJoins;
-using UXAV.AVnet.Core.Web;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.UI.Ch5
@@ -18,10 +16,21 @@ namespace UXAV.AVnet.Core.UI.Ch5
     {
         private readonly Mutex _settingsMutex = new Mutex();
         private string _webSocketUrl;
-        private System.Threading.Timer _onlineDelay;
+        private Timer _onlineDelay;
+        private string _websocketBaseUrl;
 
+        /// <summary>
+        /// Constructor for Ch5 UI Controller
+        /// </summary>
+        /// <param name="system">The main system which derives from <see cref="SystemBase"/>/></param>
+        /// <param name="roomId">Default room ID for this panel</param>
+        /// <param name="typeName">Type name for the device</param>
+        /// <param name="ipId">IP ID as numeric value</param>
+        /// <param name="description">Description which sets description field in device table</param>
+        /// <param name="pathOfPanelArchiveFile">The relative path to the auto update archive file for the panel to load.</param>
+        /// <param name="websocketBaseUrl">The base url of the websocket. Ie ws://host:port/ui/ws</param>
         protected Ch5UIController(SystemBase system, uint roomId, string typeName, uint ipId, string description,
-            string pathOfPanelArchiveFile)
+            string pathOfPanelArchiveFile, string websocketBaseUrl)
             : base(system, roomId, typeName, ipId, description, pathOfPanelArchiveFile)
         {
             Device.StringInput[Serial.DeviceIdString].StringValue = Device.ID.ToString("X2");
@@ -34,6 +43,8 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     return;
                 }
             };
+
+            this._websocketBaseUrl = websocketBaseUrl;
         }
 
         public string WebSocketUrl
@@ -135,7 +146,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             try
             {
-                SystemBase.WebServer.AddDeviceService(this);
+                var uri = new Uri(_websocketBaseUrl);
+                var baseUri = new UriBuilder(uri.Scheme, uri.Host, uri.Port).Uri;
+                SystemBase.WebServer.AddDeviceService(this, baseUri.ToString(), uri.AbsolutePath);
             }
             catch (Exception e)
             {
