@@ -170,10 +170,12 @@ namespace UXAV.AVnet.Core.DeviceSupport
             }
 
             var directory = new DirectoryInfo(SystemBase.ProgramApplicationDirectory);
-            foreach (var file in directory.GetFiles($"{assemblyName}.dll"))
+            foreach (var file in directory.GetFiles("*.dll"))
             {
                 try
                 {
+                    var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FullName);
+                    if (!assemblyName.StartsWith(fileNameWithoutExtension)) continue;
                     var assembly = Assembly.LoadFrom(file.FullName);
                     type = assembly.GetType(typeName);
                     if (type != null)
