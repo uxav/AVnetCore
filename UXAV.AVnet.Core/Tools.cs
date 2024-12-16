@@ -237,10 +237,17 @@ namespace UXAV.AVnet.Core
         public static string GetSigPropertyName(this DeviceExtender extender, Sig sig)
         {
             if (extender == null) throw new ArgumentNullException(nameof(extender));
-            return (from property in extender.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    let s = property.GetValue(extender) as Sig
-                    where s != null && s == sig
-                    select property.Name).FirstOrDefault();
+            try
+            {
+                return (from property in extender.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                        let s = property.GetValue(extender) as Sig
+                        where s != null && s == sig
+                        select property.Name).FirstOrDefault();
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public static void InvokeMethod(this DeviceExtender extender, string methodName)
