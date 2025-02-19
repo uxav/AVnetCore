@@ -16,7 +16,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         {
         }
 
-        public void Get()
+        public async void Get()
         {
             var results = new List<object>();
             var roomCounts = new Dictionary<uint, int>();
@@ -71,7 +71,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 });
             }
 
-            WriteResponse(results);
+            await WriteResponseAsync(results);
         }
     }
 }

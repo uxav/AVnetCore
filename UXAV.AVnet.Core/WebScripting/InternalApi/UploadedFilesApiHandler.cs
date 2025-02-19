@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -14,7 +17,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public void Get()
+        public async Task Get()
         {
             var files = new List<object>();
             try
@@ -30,7 +33,12 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                                 var info = ProgramFileVersion.Get(fileInfo.FullName);
                                 files.Add(new
                                 {
-                                    FileInfo = fileInfo,
+                                    FileInfo = new
+                                    {
+                                        Name = fileInfo.Name,
+                                        LastWriteTime = fileInfo.LastWriteTime,
+                                        Length = fileInfo.Length
+                                    },
                                     Size = Tools.PrettyByteSize(fileInfo.Length, 1),
                                     ProgramInfo = info
                                 });
@@ -52,19 +60,17 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 Logger.Error(e);
             }
 
-            WriteResponse(files);
+            await WriteResponseAsync(files);
         }
 
         public void Options()
         {
-            Response.Headers.Add("Access-Control-Allow-Methods", "GET, OPTIONS, DELETE");
+            Response.Headers.Append("Access-Control-Allow-Methods", "GET, OPTIONS, DELETE");
             Response.StatusCode = 204;
-            Response.StatusDescription = "No Content";
-            Response.Flush();
         }
 
         [SecureRequest]
-        public void Delete()
+        public async void Delete()
         {
             Logger.Highlight($"File Delete Request: {Request.PathAndQueryString}");
             var fileName = Request.Query["file"];
@@ -74,17 +80,17 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     if (File.Exists(SystemBase.ProgramApplicationDirectory + "/" + fileName))
                         File.Delete(SystemBase.ProgramApplicationDirectory + "/" + fileName);
 
-                    WriteResponse(true);
+                    await WriteResponseAsync(true);
                     return;
                 case "nvram":
                     if (File.Exists(SystemBase.ProgramNvramAppInstanceDirectory + "/" + fileName))
                         File.Delete(SystemBase.ProgramNvramAppInstanceDirectory + "/" + fileName);
 
-                    WriteResponse(true);
+                    await WriteResponseAsync(true);
                     return;
             }
 
-            WriteResponse(false);
+            await WriteResponseAsync(false);
         }
     }
 }

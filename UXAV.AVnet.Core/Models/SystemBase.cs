@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -20,6 +19,7 @@ using UXAV.AVnet.Core.DeviceSupport;
 using UXAV.AVnet.Core.Models.Diagnostics;
 using UXAV.AVnet.Core.UI;
 using UXAV.AVnet.Core.UI.Ch5;
+using UXAV.AVnet.Core.Web;
 using UXAV.AVnet.Core.WebScripting;
 using UXAV.AVnet.Core.WebScripting.Download;
 using UXAV.AVnet.Core.WebScripting.InternalApi;
@@ -58,11 +58,12 @@ namespace UXAV.AVnet.Core.Models
         private static string _domainName;
         private static string _hostName;
         private static string _appVersion;
+        private static WebServer _webServer;
         private readonly string _initialConfig;
         private readonly List<IInitializable> _itemsToInitialize = new List<IInitializable>();
         internal readonly Dictionary<uint, IDevice> DevicesDict = new Dictionary<uint, IDevice>();
 
-        protected SystemBase(CrestronControlSystem controlSystem)
+        protected SystemBase(CrestronControlSystem controlSystem, WebServerConfiguration webServerConfiguration = null)
         {
             CrestronEnvironment.ProgramStatusEventHandler += SystemStoppingInternal;
             Logger.MessageLogged += message => { EventService.Notify(EventMessageType.LogEntry, message); };
@@ -86,6 +87,18 @@ namespace UXAV.AVnet.Core.Models
             RoomClock.Start();
             Scheduler.Init();
             UpdateBootStatus(EBootStatus.Booting, "System is booting", 0);
+
+            try
+            {
+                if (webServerConfiguration != null)
+                {
+                    _webServer = new WebServer(webServerConfiguration);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
 
             try
             {
@@ -241,60 +254,6 @@ namespace UXAV.AVnet.Core.Models
                 Logger.Log("App is not upgrading. Remains at {0}", AppAssembly.GetName().Version);
             }
 
-            UpdateBootStatus(EBootStatus.Booting, "Starting web scripting services", 0);
-            Logger.Highlight("Loading static file web scripting server at \"/files\"");
-            try
-            {
-                FileServer = new WebScriptingServer(this, "files");
-                FileServer.AddRoute(@"/files/static/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(InternalFileHandler));
-                FileServer.AddRoute(@"/files/user/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(UserFileRequestHandler));
-                FileServer.AddRoute(@"/files/nvram/<filepath:[\/\w\.\-\[\]\(\)\x20]+>",
-                    typeof(NvramFileRequestHandler));
-                FileServer.AddRoute(@"/files/xpanels/<filename:Core3XPanel_\w{2}\.(?:vtz|c3p)$>",
-                    typeof(XPanelResourceFileHandler));
-                FileServer.AddRoute(@"/files/service", typeof(ServicePackageFileHandler));
-            }
-            catch (Exception e)
-            {
-                Logger.Warn("Could not load static file web scripting server, {0}", e.Message);
-            }
-
-            Logger.Highlight("Loading API web scripting server at \"/api\"");
-            try
-            {
-                ApiServer = new ApiWebScriptingServer(this, "api");
-                ApiServer.AddRoute(@"/api/status/<function:\w+>", typeof(StatusApiHandler));
-                ApiServer.AddRoute(@"/api/status", typeof(StatusApiHandler));
-                ApiServer.AddRoute(@"/api/virtualcontrol/<method:\w+>", typeof(Vc4StatusApiHandler));
-                ApiServer.AddRoute(@"/api/config/<function:plist>/<key:\w+>", typeof(ConfigApiHandler));
-                ApiServer.AddRoute(@"/api/config/<function:\w+>", typeof(ConfigApiHandler));
-                ApiServer.AddRoute(@"/api/config", typeof(ConfigApiHandler));
-                ApiServer.AddRoute(@"/api/rooms", typeof(RoomsApiHandler));
-                ApiServer.AddRoute(@"/api/rooms/<id:\d+>", typeof(RoomsApiHandler));
-                ApiServer.AddRoute(@"/api/rooms/<id:\d+>/<method:\w+>", typeof(RoomsApiHandler));
-                ApiServer.AddRoute(@"/api/sources", typeof(SourcesApiHandler));
-                ApiServer.AddRoute(@"/api/events/<method:\w+>", typeof(EventsApiHandler));
-                ApiServer.AddRoute(@"/api/events/<method:\w+>/<id:\d+>", typeof(EventsApiHandler));
-                ApiServer.AddRoute(@"/api/logs", typeof(LoggerApiHandler));
-                ApiServer.AddRoute(@"/api/plog", typeof(PlogApiHandler));
-                ApiServer.AddRoute(@"/api/authentication", typeof(AuthenticationApiHandler));
-                ApiServer.AddRoute(@"/api/passwords", typeof(PasswordsApiHandler));
-                ApiServer.AddRoute(@"/api/appcontrol", typeof(AppControlApiHandler));
-                ApiServer.AddRoute(@"/api/autodiscovery", typeof(AutoDiscoveryApiHandler));
-                ApiServer.AddRoute(@"/api/console", typeof(ConsoleApiHandler));
-                ApiServer.AddRoute(@"/api/diagnostics", typeof(DiagnosticsApiHandler));
-                ApiServer.AddRoute(@"/api/sysmon", typeof(SystemMonitorApiHandler));
-                ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
-                ApiServer.AddRoute(@"/api/upload/uploadedfiles/<fileType:\w+>", typeof(UploadedFilesApiHandler));
-                ApiServer.AddRoute(@"/api/xpanels", typeof(XPanelDetailsApiHandler));
-                ApiServer.AddRoute(@"/api/ch5/<page:\w+>", typeof(Ch5StatusApiHandler));
-                ApiServer.AddRoute(@"/api/swupdate", typeof(UpdatesApiHandler));
-            }
-            catch (Exception e)
-            {
-                Logger.Warn("Could not load API web scripting server, {0}", e.Message);
-            }
-
             // Wait for above handlers to start accepting requests and update.
             Thread.Sleep(1000);
             Logger.Success(".ctor() Complete", true);
@@ -303,9 +262,9 @@ namespace UXAV.AVnet.Core.Models
 
         public CrestronControlSystem ControlSystem { get; }
 
-        protected WebScriptingServer FileServer { get; }
+        protected WebScriptingServer FileServer { get; private set; }
 
-        protected WebScriptingServer ApiServer { get; }
+        protected WebScriptingServer ApiServer { get; private set; }
 
         protected WebScriptingServer WebAppServer { get; private set; }
 
@@ -550,12 +509,12 @@ namespace UXAV.AVnet.Core.Models
         {
             get
             {
-                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                    return $"https://{IpAddress}/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws";
-
-                return $"https://{IpAddress}/cws";
+                if (WebServer.SecurePort == 443) return $"https://{IpAddress}/cws";
+                return $"https://{IpAddress}:{WebServer.SecurePort}/cws";
             }
         }
+
+        public static WebServer WebServer => _webServer;
 
         /// <summary>
         ///  The date and time the program was built
@@ -572,9 +531,7 @@ namespace UXAV.AVnet.Core.Models
         /// </summary>
         public string Include4DatInfo { get; }
 
-        public static string CwsPath => CrestronEnvironment.DevicePlatform == eDevicePlatform.Server
-            ? $"/VirtualControl/Rooms/{InitialParametersClass.RoomId}/cws"
-            : "/cws";
+        public static string CwsPath => "/cws";
 
         /// <summary>
         ///     Default URL for control system appliances to redirect.
@@ -630,37 +587,17 @@ namespace UXAV.AVnet.Core.Models
 
         private void InitWebApp()
         {
-            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                try
-                {
-                    var path = ProgramApplicationDirectory + "/webapp/index.html";
-                    if (File.Exists(path))
-                    {
-                        var contents = File.ReadAllText(path);
-                        if (Regex.IsMatch(contents, @"<base href=""/cws/app/"">"))
-                        {
-                            var baseHref = $"{CwsPath}/app/";
-                            Logger.Warn($"Replacing base href value in \"{path}\" to \"{baseHref}\"");
-                            contents = Regex.Replace(contents, @"<base href="".*"">",
-                                $"<base href=\"{baseHref}\"");
-                            File.WriteAllText(path, contents);
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e);
-                }
-
             Logger.Highlight("Loading WebApp server for Angular app");
             try
             {
                 WebAppServer = new WebScriptingServer(this, "app");
-                if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
-                    WebAppServer.AddRedirect(@"/app", @"/cws/app/");
-                else
-                    WebAppServer.AddRoute(@"/app", typeof(WebAppFileHandler));
+                // if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+                //     WebAppServer.AddRedirect(@"/app", @"/cws/app/");
+                // else
+                //     WebAppServer.AddRoute(@"/app", typeof(WebAppFileHandler));
 
+                WebAppServer.AddRedirect(@"/app/boot/startup", @"/");
+                WebAppServer.AddRoute(@"/app", typeof(WebAppFileHandler));
                 WebAppServer.AddRoute(@"/app/", typeof(WebAppFileHandler));
                 WebAppServer.AddRoute(@"/app/<filepath:[~\/\w\.\-\[\]\(\)\x20]+>", typeof(WebAppFileHandler));
             }
@@ -670,35 +607,59 @@ namespace UXAV.AVnet.Core.Models
                 return;
             }
 
-            if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Appliance)
+            Logger.Highlight("Loading static file web scripting server at \"/files\"");
+            try
             {
-                Logger.Log("Device is appliance, Creating default index redirect to cws app");
-                try
-                {
-                    var path = ProgramHtmlDirectory + "/index.html";
-                    using (var file = File.CreateText(path))
-                    {
-                        file.Write($"<meta http-equiv=\"refresh\" content=\"0; URL={ApplianceWebServerRedirect}\" />");
-                    }
+                FileServer = new WebScriptingServer(this, "files");
+                FileServer.AddRoute(@"/files/static/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(InternalFileHandler));
+                FileServer.AddRoute(@"/files/system/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(SystemFileHandler));
+                FileServer.AddRoute(@"/files/user/<filepath:[\/\w\.\-\[\]\(\)\x20]+>", typeof(UserFileRequestHandler));
+                FileServer.AddRoute(@"/files/nvram/<filepath:[\/\w\.\-\[\]\(\)\x20]+>",
+                    typeof(NvramFileRequestHandler));
+                FileServer.AddRoute(@"/files/xpanels/<filename:Core3XPanel_\w{2}\.(?:vtz|c3p)$>",
+                    typeof(XPanelResourceFileHandler));
+                FileServer.AddRoute(@"/files/service", typeof(ServicePackageFileHandler));
+            }
+            catch (Exception e)
+            {
+                Logger.Warn("Could not load static file web scripting server, {0}", e.Message);
+            }
 
-                    Logger.Log($"Created file: \"{path}\"");
-
-                    path = ProgramHtmlDirectory + "/_config_ini_";
-                    using (var file = File.CreateText(path))
-                    {
-                        file.Write(@"webdefault=index.html");
-                    }
-
-                    Logger.Log($"Created file: \"{path}\"");
-
-                    var response = string.Empty;
-                    CrestronConsole.SendControlSystemCommand("webinit", ref response);
-                    Logger.Highlight($"webinit response: {response}");
-                }
-                catch (Exception e)
-                {
-                    Logger.Error($"Error trying to init web server index, {e.Message}");
-                }
+            Logger.Highlight("Loading API web scripting server at \"/api\"");
+            try
+            {
+                ApiServer = new ApiWebScriptingServer(this, "api");
+                ApiServer.AddRoute(@"/api/status/<function:\w+>", typeof(StatusApiHandler));
+                ApiServer.AddRoute(@"/api/status", typeof(StatusApiHandler));
+                ApiServer.AddRoute(@"/api/virtualcontrol/<method:\w+>", typeof(Vc4StatusApiHandler));
+                ApiServer.AddRoute(@"/api/config/<function:plist>/<key:\w+>", typeof(ConfigApiHandler));
+                ApiServer.AddRoute(@"/api/config/<function:\w+>", typeof(ConfigApiHandler));
+                ApiServer.AddRoute(@"/api/config", typeof(ConfigApiHandler));
+                ApiServer.AddRoute(@"/api/rooms", typeof(RoomsApiHandler));
+                ApiServer.AddRoute(@"/api/rooms/<id:\d+>", typeof(RoomsApiHandler));
+                ApiServer.AddRoute(@"/api/rooms/<id:\d+>/<method:\w+>", typeof(RoomsApiHandler));
+                ApiServer.AddRoute(@"/api/sources", typeof(SourcesApiHandler));
+                ApiServer.AddRoute(@"/api/events/<method:\w+>", typeof(EventsApiHandler));
+                ApiServer.AddRoute(@"/api/events/<method:\w+>/<id:\d+>", typeof(EventsApiHandler));
+                ApiServer.AddRoute(@"/api/logs", typeof(LoggerApiHandler));
+                ApiServer.AddRoute(@"/api/plog", typeof(PlogApiHandler));
+                ApiServer.AddRoute(@"/api/authentication", typeof(AuthenticationApiHandler));
+                ApiServer.AddRoute(@"/api/appfiles", typeof(AppFilesApiHandler));
+                ApiServer.AddRoute(@"/api/passwords", typeof(PasswordsApiHandler));
+                ApiServer.AddRoute(@"/api/appcontrol", typeof(AppControlApiHandler));
+                ApiServer.AddRoute(@"/api/autodiscovery", typeof(AutoDiscoveryApiHandler));
+                ApiServer.AddRoute(@"/api/console", typeof(ConsoleApiHandler));
+                ApiServer.AddRoute(@"/api/diagnostics", typeof(DiagnosticsApiHandler));
+                ApiServer.AddRoute(@"/api/sysmon", typeof(SystemMonitorApiHandler));
+                ApiServer.AddRoute(@"/api/upload/<fileType:\w+>", typeof(FileUploadApiHandler));
+                ApiServer.AddRoute(@"/api/upload/uploadedfiles/<fileType:\w+>", typeof(UploadedFilesApiHandler));
+                ApiServer.AddRoute(@"/api/xpanels", typeof(XPanelDetailsApiHandler));
+                ApiServer.AddRoute(@"/api/ch5/<page:\w+>", typeof(Ch5StatusApiHandler));
+                ApiServer.AddRoute(@"/api/swupdate", typeof(UpdatesApiHandler));
+            }
+            catch (Exception e)
+            {
+                Logger.Warn("Could not load API web scripting server, {0}", e.Message);
             }
         }
 
@@ -746,10 +707,13 @@ namespace UXAV.AVnet.Core.Models
         ///  <para>For Crestron hardware this will restart the app using the built in console command</para>
         /// </summary>
         /// <returns>The returned value of the command run</returns>
-        public string RestartApp()
+        public async Task<string> RestartAppAsync()
         {
             if (CrestronEnvironment.DevicePlatform == eDevicePlatform.Server)
-                return Vc4WebApi.RestartApp().Result.ToString();
+            {
+                var result = await Vc4WebApi.RestartApp();
+                return result.ToString();
+            }
 
             var response = "";
             CrestronConsole.SendControlSystemCommand($"progres -P:{InitialParametersClass.ApplicationNumber}",
@@ -776,8 +740,6 @@ namespace UXAV.AVnet.Core.Models
 
         private void SystemStoppingInternal(eProgramStatusEventType eventType)
         {
-            if (eventType == eProgramStatusEventType.Stopping) Ch5WebSocketServer.Stop();
-
             try
             {
                 OnProgramStatusEventHandler(eventType);
@@ -802,10 +764,6 @@ namespace UXAV.AVnet.Core.Models
                     new DiagnosticMessage(MessageLevel.Warning, $"Logger connection from {connection}",
                         "Console Connection", GetType().Name)));
             }
-
-            if (Ch5WebSocketServer.Running)
-                messages.Add(new DiagnosticMessage(MessageLevel.Info, "CH5 websocket service listening",
-                    Ch5WebSocketServer.WebSocketBaseUrl, nameof(Ch5WebSocketServer)));
 
             messages.AddRange(CipDevices.GetDiagnosticMessages());
 
@@ -845,25 +803,55 @@ namespace UXAV.AVnet.Core.Models
         public void Initialize()
         {
             Logger.Highlight("Initialize()");
-            UpdateBootStatus(EBootStatus.Initializing, "System Initializing", 0);
 
-            Logger.Log("Starting system initialize task");
-            var task = new Task(InitializeTask);
-            task.ContinueWith(t =>
+            try
             {
-                if (t.Status == TaskStatus.RanToCompletion)
+                if (WebServer != null)
                 {
-                    Logger.Success("System Initialized OK");
-                    UpdateBootStatus(EBootStatus.Running, "System Running", 100);
+                    Logger.Debug("Starting web server");
+                    InitWebApp();
+                    Logger.Debug("WebScriptingHandlersShouldRegister()");
+                    try
+                    {
+                        WebScriptingHandlersShouldRegister();
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error("Error registering app webscripting handlers, {0}", e.Message);
+                    }
                 }
-                else
-                {
-                    Logger.Warn("System initialize task ended and status is: {0}", t.Status);
-                }
-            });
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
 
-            UpdateBootStatus(EBootStatus.Initializing, $"Starting {GetType().Name}.Initialize()", 2);
-            task.Start();
+            try
+            {
+                UpdateBootStatus(EBootStatus.Initializing, "System Initializing", 0);
+
+                Logger.Log("Starting system initialize task");
+                var task = new Task(InitializeTask);
+                _ = task.ContinueWith(t =>
+                {
+                    if (t.Status == TaskStatus.RanToCompletion)
+                    {
+                        Logger.Success("System Initialized OK");
+                        UpdateBootStatus(EBootStatus.Running, "System Running", 100);
+                    }
+                    else
+                    {
+                        Logger.Warn("System initialize task ended and status is: {0}", t.Status);
+                    }
+                });
+
+                UpdateBootStatus(EBootStatus.Initializing, $"Starting {GetType().Name}.Initialize()", 2);
+                task.Start();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+            }
         }
 
         private void InitializeTask()
@@ -872,20 +860,10 @@ namespace UXAV.AVnet.Core.Models
             Thread.Sleep(500);
 
             UpdateBootStatus(EBootStatus.Initializing, "Initializing web app if installed", 7);
-            InitWebApp();
+
 
             UpdateBootStatus(EBootStatus.Initializing, "Registering CIP devices not already registered", 10);
             CipDevices.RegisterDevices();
-
-            Logger.Debug("WebScriptingHandlersShouldRegister()");
-            try
-            {
-                WebScriptingHandlersShouldRegister();
-            }
-            catch (Exception e)
-            {
-                Logger.Error("Error registering app webscripting handlers, {0}", e.Message);
-            }
 
             foreach (var device in DevicesDict.Values.OfType<DeviceBase>()) device.AllocateRoomOnStart();
 
@@ -1024,22 +1002,18 @@ namespace UXAV.AVnet.Core.Models
                 CipDevices.RegisterFusionRooms();
             }
 
-            Thread.Sleep(500);
-            UpdateBootStatus(EBootStatus.Initializing, "Starting CH5 websocket services", 90);
-            Thread.Sleep(500);
-            if (Ch5WebSocketServer.InitCalled)
-            {
-                Logger.Log("Starting CH5 websocket services");
-                Thread.Sleep(1000);
-                Ch5WebSocketServer.Start();
-                Thread.Sleep(2000);
-            }
+            UpdateBootStatus(EBootStatus.Initializing, "Initializing UI Controllers", 90);
+            Logger.Log("Initializing UI Controllers");
+            InitializeCore3Controllers();
 
-            if (Core3Controllers.Count > 0)
+            try
             {
-                UpdateBootStatus(EBootStatus.Initializing, "Initializing Core 3 UI Controllers", 95);
-                Logger.Log("Initializing Core 3 UI Controllers");
-                InitializeCore3Controllers();
+                Logger.Log("Starting web server");
+                _ = WebServer.StartAsync();
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
             }
 
             try
@@ -1172,10 +1146,10 @@ namespace UXAV.AVnet.Core.Models
                 case "restart":
                     Logger.Warn("Remote restart requested from cloud service");
 
-                    Task.Run(() =>
+                    Task.Run(async () =>
                     {
                         Task.Delay(TimeSpan.FromSeconds(5)).Wait();
-                        UxEnvironment.System.RestartApp();
+                        await UxEnvironment.System.RestartAppAsync();
                     });
                     break;
                 case "reboot":

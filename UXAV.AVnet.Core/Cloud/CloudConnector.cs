@@ -109,6 +109,8 @@ namespace UXAV.AVnet.Core.Cloud
 
         public static string Token { get; private set; } = "";
 
+        public static bool IsInitialized => _init;
+
         public static string LogsUploadUrl
         {
             get

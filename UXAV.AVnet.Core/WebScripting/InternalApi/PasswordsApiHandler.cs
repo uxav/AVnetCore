@@ -1,5 +1,5 @@
 using System;
-using Crestron.SimplSharp.CrestronIO;
+using System.IO;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
 using UXAV.Logging;
@@ -19,27 +19,27 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public void Get()
+        public async void Get()
         {
             try
             {
                 var passwords = ConfigManager.PasswordsGetAll();
-                WriteResponse(passwords);
+                await WriteResponseAsync(passwords);
             }
             catch (Exception e)
             {
                 Logger.Error(e);
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
 
         [SecureRequest]
-        public void Post()
+        public async void Post()
         {
             try
             {
                 var reader = new StreamReader(Request.InputStream);
-                var json = JToken.Parse(reader.ReadToEnd());
+                var json = JToken.Parse(await reader.ReadToEndAsync());
                 //Logger.Debug("Json received\r\n{0}", json.ToString());
                 if (json["method"] == null) throw new ArgumentException("No method stated in payload");
 
@@ -59,12 +59,12 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         throw new ArgumentException($"\"{method}\" not known");
                 }
 
-                WriteResponse("OK");
+                await WriteResponseAsync("OK");
             }
             catch (Exception e)
             {
                 Logger.Error(e);
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

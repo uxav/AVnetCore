@@ -1,6 +1,6 @@
 using System;
-using Crestron.SimplSharp.CrestronIO;
-using Crestron.SimplSharp.WebScripting;
+using System.IO;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 
 namespace UXAV.AVnet.Core.WebScripting.InternalApi
@@ -16,12 +16,11 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         {
         }
 
-        public void Post()
+        public async void Post()
         {
             try
             {
-                var reader = new StreamReader(Request.InputStream);
-                var json = JToken.Parse(reader.ReadToEnd());
+                var json = JToken.Parse(await Request.GetStringContentsAsync());
                 var method = (json["method"] ?? throw new InvalidOperationException("No method stated"))
                     .Value<string>();
                 switch (method)
@@ -29,11 +28,11 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     case "check":
                         try
                         {
-                            WriteResponse(ValidateSession(true));
+                            await WriteResponseAsync(ValidateSession(true));
                         }
                         catch (Exception e)
                         {
-                            HandleError(e);
+                            await HandleErrorAsync(e);
                         }
 
                         break;
@@ -50,42 +49,40 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                                 (json["rememberme"] ?? false)
                                 .Value<bool>();
                             var session = AppAuthentication.StartSession(username, password, rememberme);
-                            Response.SetCookie(new HttpCwsCookie("sessionId")
+                            Response.Cookies.Append("sessionId", session.SessionId, new CookieOptions
                             {
-                                Value = session.SessionId,
                                 Expires = session.ExpiryTime.ToUniversalTime(),
                                 Path = "/",
                                 HttpOnly = true,
                                 Secure = false
                             });
-                            WriteResponse(session);
+                            await WriteResponseAsync(session);
                         }
                         catch (UnauthorizedAccessException)
                         {
-                            HandleError(401, "Unauthorized", "Incorrect login details");
+                            await HandleErrorAsync(401, "Incorrect login details");
                         }
                         catch (Exception e)
                         {
-                            HandleError(401, "Unauthorized", e.Message);
+                            await HandleErrorAsync(401, e.Message);
                         }
 
                         break;
                     case "logout":
-                        var token = Request.Cookies.Get("sessionId").Value;
+                        Request.Cookies.TryGetValue("sessionId", out var token);
                         AppAuthentication.InvalidateSession(token);
-                        Response.SetCookie(new HttpCwsCookie("sessionId")
+                        Response.Cookies.Append("sessionId", string.Empty, new CookieOptions
                         {
-                            Value = string.Empty,
                             Expires = new DateTime(),
                             Path = "/"
                         });
-                        WriteResponse(null);
+                        await WriteResponseAsync(null);
                         break;
                 }
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

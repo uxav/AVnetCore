@@ -1,8 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Text.RegularExpressions;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -17,6 +19,7 @@ namespace UXAV.AVnet.Core
         public string Name { get; internal set; } = string.Empty;
 
         public Version Version { get; internal set; }
+        public string FileVersion { get; private set; }
 
         public bool IsRunningProgram
         {
@@ -65,19 +68,19 @@ namespace UXAV.AVnet.Core
                             var typeName = reader.GetString(typeDef.Name);
                             var typeNamespace = reader.GetString(typeDef.Namespace);
 #if DEBUG
-                            Logger.Debug($"Found type '{typeNamespace}.{typeName}' in assembly '{entry.FullName}'");
+                            //Logger.Debug($"Found type '{typeNamespace}.{typeName}' in assembly '{entry.FullName}'");
 #endif
 
                             var baseTypeHandle = typeDef.BaseType;
 #if DEBUG
-                            Logger.Debug($"Base type handle: {baseTypeHandle.Kind}");
+                            //Logger.Debug($"Base type handle: {baseTypeHandle.Kind}");
 #endif
                             if (baseTypeHandle.Kind != HandleKind.TypeReference) continue;
                             var baseType = reader.GetTypeReference((TypeReferenceHandle)baseTypeHandle);
                             var baseTypeName = reader.GetString(baseType.Name);
                             var baseTypeNamespace = reader.GetString(baseType.Namespace);
 #if DEBUG
-                            Logger.Debug($"Base type: '{baseTypeNamespace}.{baseTypeName}'");
+                            //Logger.Debug($"Base type: '{baseTypeNamespace}.{baseTypeName}'");
 #endif
 
                             // This is a simple check, you might need to enhance this for nested types or generics
@@ -86,10 +89,18 @@ namespace UXAV.AVnet.Core
                                 var assemblyDef = reader.GetAssemblyDefinition();
                                 var assemblyName = reader.GetString(assemblyDef.Name);
                                 var version = assemblyDef.Version;
-
-                                Logger.Success($"Found CrestronControlSystem derived class '{typeName}' in assembly '{assemblyName}', version '{version}'");
+                                var vi = FileVersionInfo.GetVersionInfo(entry.FullName);
+                                var fileVersion = string.Empty;
+                                var r = new Regex(@"^(\d+\.\d+\.\d+[^+]*)");
+                                if (r.IsMatch(vi.ProductVersion))
+                                    fileVersion = r.Match(vi.ProductVersion).Groups[1].Value;
+                                else
+                                    fileVersion = $"{vi.ProductMajorPart}.{vi.ProductMinorPart}.{vi.ProductBuildPart}";
+                                Logger.Success($"Found CrestronControlSystem derived class '{typeName}' in assembly '{assemblyName}', version '{version}, file version '{fileVersion}'");
                                 result.Name = assemblyName;
                                 result.Version = version;
+                                result.FileVersion = fileVersion;
+                                return result;
                             }
                         }
                     }

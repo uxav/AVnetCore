@@ -1,4 +1,3 @@
-extern alias doNotUse;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,7 +6,7 @@ using System.Runtime.Serialization;
 using System.Threading;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronAuthentication;
-using doNotUse::Newtonsoft.Json;
+using Newtonsoft.Json;
 using UXAV.AVnet.Core.Models;
 using UXAV.Logging;
 
@@ -35,7 +34,7 @@ namespace UXAV.AVnet.Core.WebScripting
             }
             catch (Exception e)
             {
-                Logger.Error(e);
+                Logger.Error("Error initializing AppAuthentication: {0}", e.Message);
                 throw;
             }
         }
@@ -68,10 +67,10 @@ namespace UXAV.AVnet.Core.WebScripting
                 var now = DateTime.Now;
                 var expiredSessions =
                     (from key in keys
-                        let date = Sessions[key].ExpiryTime
-                        let expired = now > date
-                        where expired
-                        select key).ToArray();
+                     let date = Sessions[key].ExpiryTime
+                     let expired = now > date
+                     where expired
+                     select key).ToArray();
 
                 foreach (var key in expiredSessions)
                 {

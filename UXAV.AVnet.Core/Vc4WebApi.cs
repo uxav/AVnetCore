@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Crestron.SimplSharp;
 using Newtonsoft.Json.Linq;
+using UXAV.Logging;
 
 namespace UXAV.AVnet.Core
 {
@@ -32,12 +33,10 @@ namespace UXAV.AVnet.Core
 
             var uri = new Uri($"http://localhost:5000{path}");
 
-            using (var response = await HttpClient.PutAsync(uri, content))
-            {
-                response.EnsureSuccessStatusCode();
-                var receivedContent = await response.Content.ReadAsStringAsync();
-                return JObject.Parse(receivedContent);
-            }
+            using var response = await HttpClient.PutAsync(uri, content);
+            response.EnsureSuccessStatusCode();
+            var receivedContent = await response.Content.ReadAsStringAsync();
+            return JObject.Parse(receivedContent);
         }
 
         private static void ThrowIfNotCorrectPlatform()

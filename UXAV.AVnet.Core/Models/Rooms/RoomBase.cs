@@ -57,8 +57,7 @@ namespace UXAV.AVnet.Core.Models.Rooms
         public abstract bool Occupied { get; }
         public abstract bool HasConferenceFacility { get; }
         public abstract bool InCall { get; }
-
-        public string HtmlUiUrl { get; protected set; }
+        public virtual string HtmlUiPath { get; } = string.Empty;
 
         public RoomBase ParentRoom
         {

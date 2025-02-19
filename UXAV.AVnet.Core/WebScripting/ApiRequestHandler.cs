@@ -1,5 +1,9 @@
+using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Converters;
+using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.WebScripting
 {
@@ -15,24 +19,39 @@ namespace UXAV.AVnet.Core.WebScripting
         {
         }
 
-        protected void WriteResponse(object response)
+        protected async Task WriteResponseAsync(object response)
         {
-            Response.ContentType = "application/json";
-            var json = JToken.FromObject(new
+            try
             {
-                Request = new
+                var json = JsonConvert.SerializeObject(new
                 {
-                    Request.Path,
-                    Request.Method,
-                    Request.RoutePattern,
-                    Request.RoutePatternArgs,
-                    Request.ContentLength
-                },
-                Handler = GetType().FullName,
-                Code = Response.StatusCode,
-                Response = response
-            });
-            Response.Write(json.ToString(Formatting.None), true);
+                    Request = new
+                    {
+                        Request.Path,
+                        Request.Method,
+                        Request.RoutePattern,
+                        Request.RoutePatternArgs,
+                        Request.ContentLength,
+                        Request.RouteValues
+                    },
+                    Handler = GetType().FullName,
+                    Code = Response.StatusCode,
+                    Response = response
+                }, new JsonSerializerSettings
+                {
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    Converters = { new StringEnumConverter() }
+                });
+
+                Response.ContentType = "application/json charset=utf-8";
+                await Response.WriteAsync(json);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+                await HandleErrorAsync(e);
+                return;
+            }
         }
     }
 }

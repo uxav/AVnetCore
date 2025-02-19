@@ -14,7 +14,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public void Get()
+        public async void Get()
         {
             var result = new List<object>();
 
@@ -28,7 +28,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 }
                 catch (Exception e)
                 {
-                    HandleError(e);
+                    await HandleErrorAsync(e);
                     return;
                 }
 
@@ -47,13 +47,13 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         .Select(r => r.Id)
                 });
 
-            WriteResponse(result);
+            await WriteResponseAsync(result);
         }
 
         [SecureRequest]
-        public void Post()
+        public async void Post()
         {
-            var json = JToken.Parse(Request.GetStringContents());
+            var json = JToken.Parse(await Request.GetStringContentsAsync());
 
             var roomId = json["RoomId"].Value<uint>();
             var sourceId = json["SourceId"].Value<uint>();
@@ -61,7 +61,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             var result = UxEnvironment.GetRooms()[roomId]
                 .SelectSourceAsync(sourceId > 0 ? UxEnvironment.GetSources()[sourceId] : null);
 
-            WriteResponse(result);
+            await WriteResponseAsync(result);
         }
     }
 }

@@ -13,60 +13,60 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public void Get()
+        public async void Get()
         {
             if (Request.RoutePatternArgs.ContainsKey("id"))
             {
                 var id = uint.Parse(Request.RoutePatternArgs["id"]);
                 if (!UxEnvironment.GetRooms().Contains(id))
                 {
-                    HandleNotFound($"Room with ID: {id}, does not exist");
+                    await HandleNotFoundAsync($"Room with ID: {id}, does not exist");
                     return;
                 }
 
                 if (Request.RoutePatternArgs.ContainsKey("method"))
                 {
-                    HandleError(400, "Bad Request", "Use post for room methods");
+                    await HandleErrorAsync(400, "Use post for room methods");
                     return;
                 }
 
-                WriteResponse(GetRoomObject(UxEnvironment.GetRoom(id)));
+                await WriteResponseAsync(GetRoomObject(UxEnvironment.GetRoom(id)));
                 return;
             }
 
             var rooms = UxEnvironment.GetRooms().Select(GetRoomObject);
 
-            WriteResponse(rooms);
+            await WriteResponseAsync(rooms);
         }
 
         [SecureRequest]
-        public void Post()
+        public async void Post()
         {
             if (!Request.RoutePatternArgs.ContainsKey("id") || !Request.RoutePatternArgs.ContainsKey("method"))
             {
-                HandleError(400, "Bad Request", "Invalid request url");
+                await HandleErrorAsync(400, "Invalid request url");
                 return;
             }
 
             var id = uint.Parse(Request.RoutePatternArgs["id"]);
             if (!UxEnvironment.GetRooms().Contains(id))
             {
-                HandleNotFound($"Room with ID: {id}, does not exist");
+                await HandleNotFoundAsync($"Room with ID: {id}, does not exist");
                 return;
             }
 
             var room = UxEnvironment.GetRoom(id);
             var method = Request.RoutePatternArgs["method"];
-            var json = JToken.Parse(Request.GetStringContents());
+            var json = JToken.Parse(await Request.GetStringContentsAsync());
             switch (method)
             {
                 case "power":
                     var power = json["value"].Value<bool>();
                     var result = room.SetPower(power);
-                    WriteResponse(result);
+                    await WriteResponseAsync(result);
                     return;
                 default:
-                    HandleError(400, "Bad Request", $"No room method named: {method}");
+                    await HandleErrorAsync(400, $"No room method named: {method}");
                     break;
             }
         }

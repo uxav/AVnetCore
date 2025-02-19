@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Crestron.SimplSharp.CrestronIO;
+using System.IO;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
 using UXAV.Logging;
@@ -16,7 +17,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
 
         // ReSharper disable once UnusedMember.Global
         [SecureRequest]
-        public void Get()
+        public async void Get()
         {
             try
             {
@@ -26,7 +27,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         case "plist":
                             if (!Request.RoutePatternArgs.ContainsKey("key"))
                             {
-                                WriteResponse(ConfigManager.PropertyList);
+                                await WriteResponseAsync(ConfigManager.PropertyList);
                                 return;
                             }
 
@@ -35,43 +36,41 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                                 throw new KeyNotFoundException(
                                     $"PropertyList does not contain key with name \"{key}\"");
 
-                            WriteResponse(ConfigManager.GetPropertyListItemWithKey(key));
+                            await WriteResponseAsync(ConfigManager.GetPropertyListItemWithKey(key));
                             return;
                         default:
-                            HandleNotFound();
+                            await HandleNotFoundAsync();
                             return;
                     }
 
                 var restartRequired = Server.System.ConfigCheckIfRestartIsRequired(ConfigManager.JConfig.ToString());
                 var files = ConfigManager.GetFileDetails();
 
-                WriteResponse(new
+                await WriteResponseAsync(new
                 {
                     ConfigManager.ConfigPath,
                     LastRevisionTime = ConfigManager.LastRevisionTime.ToUniversalTime(),
                     RestartRequired = restartRequired,
                     AvailableFiles = files,
                     IsDefault = ConfigManager.ConfigIsDefaultFile,
-                    Config = ConfigManager.JConfig,
+                    Config = ConfigManager.JConfig.ToObject<object>(),
                     ConfigManager.Schema
                 });
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
 
         public void Options()
         {
-            Response.Headers.Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+            Response.Headers.Append("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
             Response.StatusCode = 204;
-            Response.StatusDescription = "No Content";
-            Response.Flush();
         }
 
         [SecureRequest]
-        public void Delete()
+        public async void Delete()
         {
             if (Request.RoutePatternArgs.ContainsKey("function"))
             {
@@ -79,17 +78,17 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                 {
                     case "current":
                         ConfigManager.DeleteCurrentFile();
-                        WriteResponse(ConfigManager.ConfigPath);
+                        await WriteResponseAsync(ConfigManager.ConfigPath);
                         return;
                 }
 
-                HandleNotFound();
+                await HandleNotFoundAsync();
             }
         }
 
         // ReSharper disable once UnusedMember.Global
         [SecureRequest]
-        public void Post()
+        public async void Post()
         {
             try
             {
@@ -100,36 +99,36 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     {
                         case "plist":
                             reader = new StreamReader(Request.InputStream);
-                            var list = JObject.Parse(reader.ReadToEnd()).ToObject<Dictionary<string, object>>();
+                            var list = JObject.Parse(await reader.ReadToEndAsync()).ToObject<Dictionary<string, object>>();
                             foreach (var item in list) ConfigManager.SetPropertyListItemWithKey(item.Key, item.Value);
 
-                            WriteResponse(new
+                            await WriteResponseAsync(new
                             {
                                 UpdatedValues = list
                             });
                             return;
                         case "new":
                             reader = new StreamReader(Request.InputStream);
-                            ConfigManager.CreateNewFileWithName(reader.ReadToEnd());
-                            WriteResponse(ConfigManager.ConfigPath);
+                            ConfigManager.CreateNewFileWithName(await reader.ReadToEndAsync());
+                            await WriteResponseAsync(ConfigManager.ConfigPath);
                             return;
                         case "filepath":
                             reader = new StreamReader(Request.InputStream);
-                            ConfigManager.SetConfigPath(reader.ReadToEnd());
-                            WriteResponse(ConfigManager.ConfigPath);
+                            ConfigManager.SetConfigPath(await reader.ReadToEndAsync());
+                            await WriteResponseAsync(ConfigManager.ConfigPath);
                             return;
                         default:
-                            HandleNotFound();
+                            await HandleNotFoundAsync();
                             return;
                     }
 
                 try
                 {
                     reader = new StreamReader(Request.InputStream);
-                    var json = JToken.Parse(reader.ReadToEnd());
+                    var json = JToken.Parse(await reader.ReadToEndAsync());
                     Logger.Debug("Json received\r\n{0}", json.ToString());
                     ConfigManager.JConfig = json;
-                    WriteResponse("OK");
+                    await WriteResponseAsync("OK");
                 }
                 catch (Exception e)
                 {
@@ -139,7 +138,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
             catch (Exception e)
             {
                 Logger.Error(e);
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using UXAV.AVnet.Core.Config;
 using UXAV.AVnet.Core.Models;
 using UXAV.AVnet.Core.UI.Ch5.MessageHandling;
+using UXAV.AVnet.Core.Web;
 using UXAV.Logging;
 
 namespace UXAV.AVnet.Core.UI.Ch5
@@ -209,20 +210,19 @@ namespace UXAV.AVnet.Core.UI.Ch5
             try
             {
                 if (message.Method == "ping") return new ResponseMessage((int)message.Id, "pong");
-
                 var result = await FindAndInvokeMethodAsync<ApiTargetMethodAttribute>(message.Method, message.RequestParams);
                 return new ResponseMessage((int)message.Id, result);
             }
             catch (Exception e)
             {
-                Logger.Error(e);
+                Logger.Error($"Error processing request from {Connection.RemoteIpAddress}: {message.Method} with params {message.RequestParams}");
                 while (true)
                 {
                     if (e.InnerException == null)
                         break;
                     e = e.InnerException;
-                    Logger.Error(e);
                 }
+                Logger.Error(e);
                 return new ResponseMessage((int)message.Id, e);
             }
         }
@@ -231,15 +231,11 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             object target = this;
             var namedArgs = args;
-            if (Ch5WebSocketServer.DebugIsOn)
-                Logger.Debug("Looking for method: " + method);
 
             switch (method)
             {
                 case "Room.Invoke":
                     {
-                        if (Ch5WebSocketServer.DebugIsOn)
-                            Logger.Debug("Room.Invoke found");
                         if (args["room"] == null || args["method"] == null)
                             throw new Exception("Room.Invoke requires a room and method parameter");
                         var roomId = args["room"].Value<uint>();
@@ -326,7 +322,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
         [ApiTargetMethod("Log")]
         public void Log(string message)
         {
-            Logger.Log($"WS Connection Log: {message}");
+            Logger.Log($"WS Log ({Connection.RemoteIpAddress}): {message}");
         }
 
         [ApiTargetMethod("Subscribe")]
@@ -355,8 +351,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
 
         private async Task Subscribe(int id, string name, object targetObject, JToken @params)
         {
-            if (Ch5WebSocketServer.DebugIsOn)
-                Logger.Debug($"Subscribe with id: {id}, name: {name}, params: {@params}");
             lock (_eventSubscriptions)
             {
                 if (_eventSubscriptions.ContainsKey(id))
@@ -380,19 +374,13 @@ namespace UXAV.AVnet.Core.UI.Ch5
         [ApiTargetMethod("Unsubscribe")]
         public void Unsubscribe(int id)
         {
-            if (Ch5WebSocketServer.DebugIsOn)
-                Logger.Debug($"Unsubscribe with id: {id}");
             lock (_eventSubscriptions)
             {
-                if (!_eventSubscriptions.ContainsKey(id))
-                    throw new KeyNotFoundException($"Subscription with ID {id} does not exist");
-            }
-
-            lock (_eventSubscriptions)
-            {
-                var sub = _eventSubscriptions[id];
-                sub.Unsubscribe();
-                _eventSubscriptions.Remove(id);
+                if (_eventSubscriptions.TryGetValue(id, out var subscription))
+                {
+                    subscription.Unsubscribe();
+                    _eventSubscriptions.Remove(id);
+                }
             }
         }
 
@@ -413,7 +401,6 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 ConfigManager.ConfigPath,
                 UpTime = SystemBase.UpTime.ToPrettyFormat(),
                 BooTime = SystemBase.BootTime,
-                Ch5WebSocketServer.WebSocketBaseUrl,
                 SystemBase.SerialNumber,
                 UxEnvironment.System.AppVersion,
                 AVNetVersion = UxEnvironment.Version.ToString()

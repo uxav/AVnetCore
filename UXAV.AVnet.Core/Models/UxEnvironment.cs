@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
 using UXAV.AVnet.Core.Models.Rooms;
 using UXAV.AVnet.Core.Models.Sources;
@@ -24,6 +25,8 @@ namespace UXAV.AVnet.Core.Models
         private static string _version;
         private static string _productVersion;
         private static string _assemblyVersion;
+        private static int? _applianceCurrentWebPort;
+        private static int? _applianceCurrentWebSecurePort;
 
         static UxEnvironment()
         {
@@ -207,6 +210,58 @@ namespace UXAV.AVnet.Core.Models
         public static DisplayCollection<DisplayControllerBase> GetDisplays()
         {
             return DisplayCollection;
+        }
+
+        public static int ApplianceCurrentWebPort
+        {
+            get
+            {
+                if (CrestronEnvironment.DevicePlatform != eDevicePlatform.Appliance)
+                {
+                    throw new NotSupportedException("This property is only supported on appliances");
+                }
+                if (_applianceCurrentWebPort == null)
+                {
+                    try
+                    {
+                        var regex = new Regex(@"=\s*(\d+)");
+                        CrestronConsole.SendControlSystemCommand($"WEBPORT", out var webportResponse);
+                        _applianceCurrentWebPort = int.Parse(regex.Match(webportResponse!.ToString()).Groups[1].Value);
+                    }
+                    catch
+                    {
+                        Logger.Error("Failed to get appliance web port, returning 0");
+                        return 0;
+                    }
+                }
+                return _applianceCurrentWebPort.Value;
+            }
+        }
+
+        public static int ApplianceCurrentWebSecurePort
+        {
+            get
+            {
+                if (CrestronEnvironment.DevicePlatform != eDevicePlatform.Appliance)
+                {
+                    throw new NotSupportedException("This property is only supported on appliances");
+                }
+                if (_applianceCurrentWebSecurePort == null)
+                {
+                    try
+                    {
+                        var regex = new Regex(@"=\s*(\d+)");
+                        CrestronConsole.SendControlSystemCommand($"SECUREWEBPORT", out var webportSecureResponse);
+                        _applianceCurrentWebSecurePort = int.Parse(regex.Match(webportSecureResponse!.ToString()).Groups[1].Value);
+                    }
+                    catch
+                    {
+                        Logger.Error("Failed to get appliance secure web port, returning 0");
+                        return 0;
+                    }
+                }
+                return _applianceCurrentWebSecurePort.Value;
+            }
         }
     }
 }

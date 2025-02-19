@@ -11,16 +11,16 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public void Get()
+        public async void Get()
         {
             try
             {
                 var logs = Logger.GetHistory();
-                WriteResponse(logs);
+                await WriteResponseAsync(logs);
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }

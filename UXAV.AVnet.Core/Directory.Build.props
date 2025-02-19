@@ -3,7 +3,7 @@
         <OutputType>Library</OutputType>
         <RootNamespace>UXAV.AVnet.Core</RootNamespace>
         <AssemblyName>UXAV.AVnet.Core</AssemblyName>
-        <TargetFrameworks>net8.0;net6.0;net472</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <LangVersion>default</LangVersion>
         <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
         <Deterministic>false</Deterministic>
@@ -25,8 +25,8 @@
         <NOWARN>CS1591</NOWARN>
 
         <!--Set the version as X.X.X  ... DO NOT PUSH WITH -beta, -rc etc-->
-        <Version>2.2.0</Version>
-        <AssemblyVersion>2.2.*</AssemblyVersion>
+        <Version>3.0.0</Version>
+        <AssemblyVersion>3.0.*</AssemblyVersion>
 
     </PropertyGroup>
 </Project>

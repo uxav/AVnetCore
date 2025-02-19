@@ -375,26 +375,33 @@ namespace UXAV.AVnet.Core.UI
 
         protected void OnDeviceExtenderSigChange(DeviceExtender extender, SigEventArgs args)
         {
-            var extenderName = _deviceExtenderNames.TryGetValue(extender, out var name)
+            try
+            {
+                var extenderName = _deviceExtenderNames.TryGetValue(extender, out var name)
                 ? name
                 : extender.GetType().Name;
-            var sigName = extender.GetSigPropertyName(args.Sig);
-            if (string.IsNullOrEmpty(sigName)) return;
-            //if (sigName != "LightSensorValueFeedback") Logger.Debug($"{Device} {extenderName}.{sigName} = {args.Sig}");
+                var sigName = extender.GetSigPropertyName(args.Sig);
+                if (string.IsNullOrEmpty(sigName)) return;
+                //if (sigName != "LightSensorValueFeedback") Logger.Debug($"{Device} {extenderName}.{sigName} = {args.Sig}");
 
-            switch (sigName)
+                switch (sigName)
+                {
+                    case "IpAddressFeedback":
+                        //Logger.Log($"{this} IP Address changed: {args.Sig.StringValue}");
+                        IpAddress = args.Sig.StringValue;
+                        break;
+                    case "MacAddressFeedback":
+                        //Logger.Log($"{this} MAC Address changed: {args.Sig.StringValue}");
+                        MacAddress = args.Sig.StringValue;
+                        break;
+                    case "LightSensorValueFeedback":
+                        OnLightSensorValueChanged(args.Sig.UShortValue);
+                        break;
+                }
+            }
+            finally
             {
-                case "IpAddressFeedback":
-                    //Logger.Log($"{this} IP Address changed: {args.Sig.StringValue}");
-                    IpAddress = args.Sig.StringValue;
-                    break;
-                case "MacAddressFeedback":
-                    //Logger.Log($"{this} MAC Address changed: {args.Sig.StringValue}");
-                    MacAddress = args.Sig.StringValue;
-                    break;
-                case "LightSensorValueFeedback":
-                    OnLightSensorValueChanged(args.Sig.UShortValue);
-                    break;
+                //Logger.Error(e);
             }
         }
 

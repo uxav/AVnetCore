@@ -1,5 +1,7 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
+using Crestron.SimplSharp;
 using Crestron.SimplSharp.CrestronDataStore;
 using Crestron.SimplSharpPro;
 using Newtonsoft.Json;
@@ -14,9 +16,21 @@ namespace UXAV.AVnet.Core.UI.Ch5
     {
         private readonly Mutex _settingsMutex = new Mutex();
         private string _webSocketUrl;
+        private Timer _onlineDelay;
+        private string _websocketBaseUrl;
 
+        /// <summary>
+        /// Constructor for Ch5 UI Controller
+        /// </summary>
+        /// <param name="system">The main system which derives from <see cref="SystemBase"/>/></param>
+        /// <param name="roomId">Default room ID for this panel</param>
+        /// <param name="typeName">Type name for the device</param>
+        /// <param name="ipId">IP ID as numeric value</param>
+        /// <param name="description">Description which sets description field in device table</param>
+        /// <param name="pathOfPanelArchiveFile">The relative path to the auto update archive file for the panel to load.</param>
+        /// <param name="websocketBaseUrl">The base url of the websocket. Ie ws://host:port/ui/ws</param>
         protected Ch5UIController(SystemBase system, uint roomId, string typeName, uint ipId, string description,
-            string pathOfPanelArchiveFile)
+            string pathOfPanelArchiveFile, string websocketBaseUrl)
             : base(system, roomId, typeName, ipId, description, pathOfPanelArchiveFile)
         {
             Device.StringInput[Serial.DeviceIdString].StringValue = Device.ID.ToString("X2");
@@ -28,14 +42,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
                     Logger.Log($"Received log over CIP from Device {device}: {args.Sig.StringValue}");
                     return;
                 }
-
-                if (args.Event != eSigEvent.BoolChange || args.Sig.Number != 10 || !args.Sig.BoolValue) return;
-                if (string.IsNullOrEmpty(WebSocketUrl)) return;
-                Logger.Log($"Device received high join on 10, sending websocket URL: {WebSocketUrl}");
-                device.StringInput[Serial.WebsocketUrl].StringValue = "";
-                device.StringInput[Serial.WebsocketUrl].StringValue = WebSocketUrl;
-                device.StringInput[Serial.DeviceIdString].StringValue = device.ID.ToString("X2");
             };
+
+            this._websocketBaseUrl = websocketBaseUrl;
         }
 
         public string WebSocketUrl
@@ -44,19 +53,26 @@ namespace UXAV.AVnet.Core.UI.Ch5
             internal set
             {
                 _webSocketUrl = value;
+                Logger.Log($"Setting websocket URL: {_webSocketUrl}");
                 Device.StringInput[Serial.WebsocketUrl].StringValue = _webSocketUrl;
             }
         }
 
-        private string StorageTagForSettings => $"UI_SETTINGS_{Device.ID:X2}";
+        private string StorageTagForSettings => $"UI_SETTINGS_APP-{InitialParametersClass.ApplicationNumber:D2}_IPID-{Device.ID:X2}";
 
         protected override void OnOnlineStatusChange(GenericBase currentDevice, OnlineOfflineEventArgs args)
         {
             base.OnOnlineStatusChange(currentDevice, args);
             if (!args.DeviceOnLine) return;
-            Logger.Log("Device online, sending websocket URL");
-            Device.StringInput[Serial.WebsocketUrl].StringValue = WebSocketUrl;
-            Device.StringInput[Serial.DeviceIdString].StringValue = Device.ID.ToString("X2");
+            _onlineDelay?.Dispose();
+            _onlineDelay = new System.Threading.Timer(async (e) =>
+            {
+                Logger.Log("Device online, sending websocket URL");
+                Device.StringInput[Serial.WebsocketUrl].StringValue = "";
+                await Task.Delay(500);
+                Device.StringInput[Serial.WebsocketUrl].StringValue = WebSocketUrl;
+                Device.StringInput[Serial.DeviceIdString].StringValue = Device.ID.ToString("X2");
+            }, null, 2000, 0);
         }
 
         internal override void WebsocketConnected(Ch5ApiHandlerBase ch5ApiHandlerBase)
@@ -66,10 +82,13 @@ namespace UXAV.AVnet.Core.UI.Ch5
                 var settings = GetSettings();
                 if (settings == null)
                 {
+                    Logger.Warn("No UI settings found, sending default settings");
                     var newSettings = GetDefaultUiSettings();
                     settings = JToken.FromObject(newSettings);
                     SaveSettings(settings);
                 }
+
+                Logger.Debug("Sending UI settings to websocket:\r\n" + settings.ToString(Formatting.Indented));
 
                 OnNotifyWebsocket("SettingsInit", settings);
             }
@@ -113,6 +132,7 @@ namespace UXAV.AVnet.Core.UI.Ch5
             _settingsMutex.WaitOne(TimeSpan.FromSeconds(5));
             try
             {
+                Logger.Debug("Getting UI settings with tag: " + StorageTagForSettings);
                 CrestronDataStoreStatic.GetLocalStringValue(StorageTagForSettings, out var settingsString);
                 return string.IsNullOrEmpty(settingsString) ? null : JToken.Parse(settingsString);
             }
@@ -126,8 +146,9 @@ namespace UXAV.AVnet.Core.UI.Ch5
         {
             try
             {
-                // ReSharper disable once RedundantTypeArgumentsOfMethod
-                Ch5WebSocketServer.AddDeviceService<THandler>(this);
+                var uri = new Uri(_websocketBaseUrl);
+                var baseUri = new UriBuilder(uri.Scheme, uri.Host, uri.Port).Uri;
+                SystemBase.WebServer.AddDeviceService(this, baseUri.ToString(), uri.AbsolutePath);
             }
             catch (Exception e)
             {

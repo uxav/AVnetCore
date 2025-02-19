@@ -16,7 +16,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
         }
 
         [SecureRequest]
-        public void Get()
+        public async void Get()
         {
             try
             {
@@ -40,7 +40,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         throw new ArgumentOutOfRangeException();
                 }
 
-                if ((Request.Query.GetValues("raw") ?? Array.Empty<string>()).Any())
+                if (Request.Query.ContainsKey("raw"))
                 {
                     var contents = string.Empty;
                     foreach (var fileInfo in files.OrderBy(f => f.Name))
@@ -52,7 +52,7 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                         }
                     }
 
-                    WriteResponse(contents);
+                    await WriteResponseAsync(contents);
                     return;
                 }
 
@@ -80,11 +80,11 @@ namespace UXAV.AVnet.Core.WebScripting.InternalApi
                     }
                 }
 
-                WriteResponse(logs);
+                await WriteResponseAsync(logs);
             }
             catch (Exception e)
             {
-                HandleError(e);
+                await HandleErrorAsync(e);
             }
         }
     }
