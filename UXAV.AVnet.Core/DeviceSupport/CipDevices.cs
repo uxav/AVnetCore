@@ -149,6 +149,7 @@ namespace UXAV.AVnet.Core.DeviceSupport
 
         private static Type GetType(string typeName)
         {
+            // Logger.Debug($"Trying to get type for {typeName}");
             if (TypeCache.TryGetValue(typeName, out var cachedType))
             {
                 return cachedType;
@@ -160,14 +161,19 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 throw new ArgumentException($"Invalid type name: {typeName}", nameof(typeName));
             }
 
+            // Logger.Debug($"Type name: {typeName}, Assembly: {match.Groups[1].Value}, Type: {match.Groups[2].Value}");
+
             var assemblyName = match.Groups[1].Value;
             var type = Type.GetType(typeName);
 
             if (type != null)
             {
+                // Logger.Debug($"Found type {typeName} in loaded assemblies.");
                 TypeCache[typeName] = type;
                 return type;
             }
+
+            // Logger.Debug($"Type {typeName} not found in loaded assemblies, trying to load from files.");
 
             var directory = new DirectoryInfo(SystemBase.ProgramApplicationDirectory);
             foreach (var file in directory.GetFiles("*.dll"))
@@ -175,11 +181,22 @@ namespace UXAV.AVnet.Core.DeviceSupport
                 try
                 {
                     var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FullName);
-                    if (!assemblyName.StartsWith(fileNameWithoutExtension)) continue;
+                    // Logger.Debug($"Checking dll file to see if {assemblyName} starts with {fileNameWithoutExtension}");
+                    if (!assemblyName.StartsWith(fileNameWithoutExtension))
+                    {
+                        // Logger.Debug($"Checking if {fileNameWithoutExtension} starts with {assemblyName}");
+                        if (!fileNameWithoutExtension.StartsWith(assemblyName))
+                        {
+                            // Logger.Debug($"Skipping file {file.Name} as it does not match the assembly name {assemblyName}");
+                            continue;
+                        }
+                    }
+                    // Logger.Debug($"Loading assembly: {file.FullName}");
                     var assembly = Assembly.LoadFrom(file.FullName);
                     type = assembly.GetType(typeName);
                     if (type != null)
                     {
+                        // Logger.Debug($"Successfully loaded type {typeName} from assembly {fileNameWithoutExtension}");
                         TypeCache[typeName] = type;
                         return type;
                     }
